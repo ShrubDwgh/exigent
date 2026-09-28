@@ -1,0 +1,1 @@
+{ "rewrites": [{ "source": "/card/:id", "destination": "/card.html" }] }

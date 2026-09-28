@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <title>Dashboard · Emergency Card</title>
+</head>
+<body class="dash">
+  <aside class="side">
+    <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
+    <nav aria-label="Menu utama">
+      <button class="nav-btn active" data-tab="ringkasan"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span>Ringkasan</span></button>
+      <button class="nav-btn" data-tab="profil"><i data-lucide="user" aria-hidden="true"></i><span>Profil darurat</span></button>
+      <a class="nav-btn" href="/medical-search.html"><i data-lucide="map-pin" aria-hidden="true"></i><span>Medis</span></a>
+      <button class="nav-btn" id="logout"><i data-lucide="log-out" aria-hidden="true"></i><span>Keluar</span></button>
+    </nav>
+  </aside>
+  <main class="main">
+    <section id="tab-ringkasan"><div class="spinner" role="status" aria-label="Memuat"></div></section>
+    <section id="tab-profil" hidden></section>
+  </main>
+  <script type="module" src="/dashboard.js"></script>
+</body>
+</html>

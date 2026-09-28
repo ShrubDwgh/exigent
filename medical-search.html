@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#DC2626">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <title>Cari Fasilitas Medis Terdekat</title>
+</head>
+<body>
+  <main class="wrap">
+    <a class="brand" href="/" style="text-decoration:none;color:inherit"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card NFC</a>
+    <h1>Cari Fasilitas Medis Terdekat</h1>
+    <p class="muted" style="margin-top:8px">Gunakan lokasi Anda untuk menemukan fasilitas medis di sekitar.</p>
+    <div class="chips" role="group" aria-label="Kategori fasilitas">
+      <button class="chip" data-cat="rumah_sakit" aria-pressed="true">Rumah Sakit</button>
+      <button class="chip" data-cat="puskesmas" aria-pressed="false">Puskesmas</button>
+      <button class="chip" data-cat="klinik" aria-pressed="false">Klinik</button>
+      <button class="chip" data-cat="igd" aria-pressed="false">IGD</button>
+      <button class="chip" data-cat="apotek" aria-pressed="false">Apotek</button>
+    </div>
+    <button class="btn btn-secondary btn-block" id="locate"><i data-lucide="map-pin" aria-hidden="true"></i>Izinkan Akses Lokasi</button>
+    <p id="status" class="muted" role="status" style="margin-top:12px"></p>
+    <div id="results" aria-live="polite"></div>
+    <p class="muted small" style="margin-top:24px">Data dari OpenStreetMap dan bisa saja tidak lengkap. Dalam keadaan darurat, hubungi 112.</p>
+  </main>
+  <script type="module" src="/medical.js"></script>
+</body>
+</html>

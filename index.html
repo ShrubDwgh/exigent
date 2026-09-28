@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#DC2626">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <title>Emergency Card NFC</title>
+  <meta name="description" content="Informasi penting Anda, tersedia saat dibutuhkan.">
+</head>
+<body>
+  <header class="site-head">
+    <a class="brand" href="/"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card NFC</a>
+    <a class="btn btn-outline btn-sm" href="/login.html">Masuk</a>
+  </header>
+  <main>
+    <section class="wrap hero">
+      <h1>Emergency Card NFC</h1>
+      <p class="lead">Informasi penting Anda, tersedia saat dibutuhkan.</p>
+      <p class="muted">Simpan golongan darah, alergi, dan kontak darurat di satu kartu. Siapa pun yang menempelkan HP ber-NFC ke kartu bisa melihatnya dalam hitungan detik, tanpa aplikasi.</p>
+      <div class="btns">
+        <a class="btn" href="/register.html">Daftar / Buat Kartu</a>
+        <a class="btn btn-outline" href="#cara-kerja">Cara Kerja</a>
+      </div>
+    </section>
+    <section class="wrap" id="cara-kerja">
+      <h2>Cara kerja</h2>
+      <ol class="flow">
+        <li><div class="step"><i data-lucide="credit-card" aria-hidden="true"></i><div><strong>Kartu NFC</strong><span class="muted">Berisi tautan unik, bukan data pribadi.</span></div></div></li>
+        <li><div class="step"><i data-lucide="smartphone" aria-hidden="true"></i><div><strong>Scan / Tap</strong><span class="muted">Tempelkan HP ber-NFC pada kartu.</span></div></div></li>
+        <li><div class="step"><i data-lucide="user" aria-hidden="true"></i><div><strong>Emergency Profile</strong><span class="muted">Profil terbaru dibaca langsung dari server.</span></div></div></li>
+        <li><div class="step"><i data-lucide="droplet" aria-hidden="true"></i><div><strong>Informasi medis</strong><span class="muted">Golongan darah, alergi, dan kontak darurat langsung terlihat.</span></div></div></li>
+      </ol>
+      <p class="muted">Tempelkan HP ber-NFC pada kartu untuk membuka halaman emergency.</p>
+    </section>
+  </main>
+  <script>window.addEventListener('load', function () { window.lucide && window.lucide.createIcons(); });</script>
+</body>
+</html>
