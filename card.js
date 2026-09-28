@@ -73,6 +73,30 @@ function contactRow(c) {
   return row;
 }
 
+function askEmergency(phone) {
+  const wrap = el('div', 'modal');
+  wrap.setAttribute('role', 'alertdialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-labelledby', 'mt');
+  const box = el('div', 'modal-box');
+  const h = el('h2', null, '⚠️ Konfirmasi Keadaan Darurat'); h.id = 'mt';
+  const no = el('button', 'btn btn-outline', 'TIDAK');
+  const yes = el('button', 'btn btn-danger', 'YA, DARURAT');
+  const actions = el('div', 'modal-actions'); actions.append(no, yes);
+  box.append(h, el('p', null, 'Apakah Anda yakin ingin memberi tahu keluarga bahwa anggota ini sedang mengalami keadaan darurat?'), actions);
+  wrap.append(box); document.body.append(wrap); no.focus();
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey); };
+  document.addEventListener('keydown', onKey);
+  no.onclick = close; // TIDAK: batal, tidak ada event dan tidak menelepon
+  yes.onclick = async () => {
+    yes.classList.add('loading'); yes.disabled = true; no.disabled = true;
+    // Catat event, tapi jangan menahan panggilan lebih dari 1,5 dtk; jika gagal, telepon tetap dilanjutkan.
+    const log = supabase.rpc('trigger_emergency', { p_card_id: cardId }).then(() => {}, () => {});
+    await Promise.race([log, new Promise((r) => setTimeout(r, 1500))]);
+    location.href = 'tel:+' + intl(phone);
+    setTimeout(close, 800);
+  };
+}
+
 function render(d) {
   document.title = 'Emergency Card · ' + (d.full_name || d.card_id);
   const none = () => el('p', 'muted', 'Tidak ada data');
@@ -91,12 +115,20 @@ function render(d) {
     section('heart-pulse', 'Kondisi medis', d.conditions.length ? tags(d.conditions, 'tag-cond') : none()),
     section('phone', 'Kontak darurat', ...(d.contacts.length ? d.contacts.map(contactRow) : [el('p', 'muted', 'Belum ada kontak')]))
   );
+  if (d.home_phone) {
+    const row = el('div', 'contact'), info = el('div'), acts = el('div', 'actions');
+    info.append(el('strong', null, d.home_contact_name || 'Keluarga'), el('span', 'phone', d.home_phone));
+    const call = withIcon('button', 'btn btn-sm', 'phone', 'Telepon Keluarga');
+    call.type = 'button'; call.onclick = () => askEmergency(d.home_phone);
+    acts.append(call, linkBtn('WhatsApp', 'https://wa.me/' + intl(d.home_phone), 'btn-sm btn-success', 'message-circle'));
+    row.append(info, acts);
+    ec.append(section('home', 'Telepon Rumah / Kepala Keluarga', row));
+  }
   if (d.emergency_notes) ec.append(section('file-text', 'Catatan emergency', el('p', 'notes', d.emergency_notes)));
   if (d.organ_donor) ec.append(section('heart', 'Donor organ', withIcon('span', 'badge badge-active', 'check', 'Bersedia menjadi donor organ')));
 
   const actions = el('div', 'stack');
   if (d.contacts[0]) actions.append(linkBtn('Panggil Kontak Darurat', 'tel:+' + intl(d.contacts[0].phone), 'btn-block', 'phone-call'));
-  if (d.phone) actions.append(linkBtn('Telepon pemilik kartu', 'tel:+' + intl(d.phone), 'btn-outline btn-block', 'user'));
   actions.append(linkBtn('Cari Fasilitas Medis Terdekat', '/medical-search.html', 'btn-secondary btn-block', 'map-pin'));
 
   const updated = el('p', 'muted small', 'Diperbarui ' + new Date(d.updated_at).toLocaleString('id-ID'));
