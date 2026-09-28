@@ -28,6 +28,15 @@
     <section id="tab-profil" hidden></section>
     <section id="tab-ktp" hidden></section>
   </main>
+  <div id="ktp-cam" class="cam-wrap" hidden>
+    <video id="ktp-video" autoplay playsinline muted></video>
+    <div class="cam-frame"></div>
+    <p class="cam-hint">Posisikan KTP agar mengisi kotak ini</p>
+    <div class="cam-actions">
+      <button class="btn cam-cancel" id="ktp-cam-cancel" type="button">Batal</button>
+      <button class="btn cam-shot" id="ktp-cam-shot" type="button" aria-label="Ambil foto"><i data-lucide="camera" aria-hidden="true"></i></button>
+    </div>
+  </div>
   <script type="module" src="/dashboard.js"></script>
 </body>
 </html>
