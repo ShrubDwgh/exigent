@@ -135,3 +135,46 @@ textarea.input { resize:vertical; }
 .place h3 { margin:0; font-size:1.0625rem; }
 .place p { margin:0; }
 .dist { font-weight:700; }
+
+/* Layering: nav < modal < toast (akar bug toast tertutup nav bawah) */
+:root { --z-nav:10; --z-modal:900; --z-toast:1000; }
+.side { z-index:var(--z-nav); padding-bottom:env(safe-area-inset-bottom, 0px); }
+.toast { z-index:var(--z-toast); width:max-content; max-width:calc(100vw - 32px); text-align:center; }
+.dash .toast { bottom:calc(76px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width:1024px) { .dash .toast { bottom:24px; } }
+.main { padding-bottom:calc(104px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width:1024px) { .main { padding-bottom:40px; } }
+
+/* Modal konfirmasi darurat, QR, fieldset */
+.modal { position:fixed; inset:0; z-index:var(--z-modal); display:grid; place-items:center; padding:16px; background:rgba(15,23,42,.55); }
+.modal-box { width:100%; max-width:420px; padding:24px; background:#fff; border-radius:20px; box-shadow:0 12px 40px rgba(15,23,42,.25); }
+.modal-box h2 { color:var(--red-dark); }
+.modal-box p { margin:12px 0 20px; }
+.modal-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.qr { width:max-content; max-width:100%; padding:12px; background:#fff; border:1px solid var(--border); border-radius:16px; }
+.qr svg { display:block; max-width:100%; height:auto; }
+.stack-sm { display:grid; gap:8px; justify-items:start; }
+.fs { border:0; padding:0; margin:0 0 16px; }
+.fs legend { padding:0; margin-bottom:8px; font-size:.875rem; font-weight:600; }
+.fs .field { margin-bottom:12px; }
+
+/* Wajib mode portrait: layar sentuh yang landscape menampilkan overlay penuh */
+@media (orientation:landscape) and (pointer:coarse) {
+  html, body { overflow:hidden !important; }
+  body > * { visibility:hidden !important; }
+  html::before, html::after { position:fixed; left:0; right:0; z-index:2147483647; text-align:center; font-family:Inter, system-ui, sans-serif; color:#0F172A; }
+  html::before { content:"Gunakan Mode Vertikal"; top:0; bottom:0; display:flex; align-items:center; justify-content:center; padding:0 32px; font-size:1.5rem; font-weight:700;
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23DC2626' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='2' width='10' height='20' rx='2'/%3E%3Cpath d='M11 18h2'/%3E%3C/svg%3E") no-repeat center calc(50% - 56px) / 48px; }
+  html::after { content:"Silakan putar perangkat Anda ke posisi vertikal untuk menggunakan EXIGENT."; top:calc(50% + 24px); padding:0 32px; font-size:1rem; color:#64748B; }
+}
+
+/* Family Hub & Tree (halaman privat) */
+.badge-attention { background:#FEF3C7; color:#92400E; }
+.switcher { margin-bottom:16px; }
+.switcher .btns { flex-wrap:nowrap; align-items:center; }
+.switcher select { flex:1 1 160px; min-width:0; width:auto; }
+.tree, .tree ul { list-style:none; margin:0; padding:0; }
+.tree ul { margin-left:12px; padding-left:16px; border-left:2px solid var(--border); }
+.tree li { margin-top:10px; }
+.tnode { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:12px; }
+.tnode.hot { background:#FEF2F2; border-color:#FCA5A5; }
