@@ -169,13 +169,56 @@ const KTP_FIELDS = [
   ['marital_status', 'Status perkawinan', 'text'], ['occupation', 'Pekerjaan', 'text'],
   ['nationality', 'Kewarganegaraan', 'text'],
 ];
-let ocrPreviewUrl = null;
+const KTP_MARKERS = [/\bNIK\b/i, /Jenis\W?Kelamin/i, /Tempat\W{0,3}Tgl\W{0,3}Lahir/i, /Kewarganegaraan/i, /Kecamatan/i, /Kel\W?Desa/i, /Status\W?Perkawinan/i, /Berlaku\W?Hingga/i, /Alamat/i, /Agama/i, /Pekerjaan/i, /Provinsi/i, /Kabupaten|Kota/i];
+const NON_KTP_DOCS = [
+  { re: /BPJS|JAMINAN\s+SOSIAL|KARTU\s+INDONESIA\s+SEHAT|\bFASKES\b/i, label: 'kartu BPJS' },
+  { re: /SURAT\s+IZIN\s+MENGEMUDI|\bSIM\b/i, label: 'SIM' },
+  { re: /PASPOR|PASSPORT/i, label: 'paspor' },
+  { re: /NPWP/i, label: 'kartu NPWP' },
+  { re: /KARTU\s+KELUARGA|\bKK\b/i, label: 'Kartu Keluarga' },
+];
+function checkDocType(text) {
+  for (const d of NON_KTP_DOCS) if (d.re.test(text)) return { ok: false, message: `Foto ini sepertinya ${d.label}, bukan KTP. Pastikan yang difoto adalah KTP (kartu tanda penduduk).` };
+  const hits = KTP_MARKERS.filter((re) => re.test(text)).length;
+  if (hits < 2) return { ok: false, message: 'Foto ini sepertinya bukan KTP, atau tulisannya belum cukup jelas terbaca. Pastikan yang difoto benar KTP dan ikuti tips di atas.' };
+  return { ok: true };
+}
+const FIELD_MSGS = ['Membaca NIK…', 'Membaca nama lengkap…', 'Membaca tempat & tanggal lahir…', 'Membaca alamat…', 'Membaca kecamatan & kelurahan…', 'Menyusun hasil…'];
+const spin = (t) => `<span class="spin-sm"></span>${t}`;
+let ocrPreviewUrl = null, fieldTimer = null, camStream = null;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('gagal memuat mesin OCR'));
     document.head.append(s);
+  });
+}
+
+function startFieldMessages(status) {
+  if (fieldTimer) return;
+  let i = 0;
+  status.innerHTML = spin(FIELD_MSGS[0]);
+  fieldTimer = setInterval(() => { i = (i + 1) % FIELD_MSGS.length; status.innerHTML = spin(FIELD_MSGS[i]); }, 1400);
+}
+function stopFieldMessages() { clearInterval(fieldTimer); fieldTimer = null; }
+
+// Pastikan dulu FOTONYA sendiri tidak bermasalah, sebelum menyalahkan mesin OCR.
+function validateImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file.type || !file.type.startsWith('image/')) return reject(new Error('File yang dipilih bukan gambar. Pilih foto KTP berformat JPG atau PNG.'));
+    if (file.size > 15 * 1024 * 1024) return reject(new Error('Ukuran foto terlalu besar (maksimal 15MB). Coba ambil ulang.'));
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth, h = img.naturalHeight;
+      URL.revokeObjectURL(url);
+      if (!w || !h) return reject(new Error('Foto tidak valid atau rusak. Coba ambil ulang.'));
+      if (w < 300 || h < 200) return reject(new Error('Foto beresolusi terlalu kecil. Coba ambil foto lebih dekat dan jelas.'));
+      resolve();
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Foto tidak dapat dibuka, kemungkinan file rusak. Coba ambil ulang.')); };
+    img.src = url;
   });
 }
 
@@ -230,42 +273,104 @@ function bindKtpForm() {
 
 async function runOcr(file) {
   const status = $('ktp-status');
+  stopFieldMessages();
+  $('ktp-review').innerHTML = '';
+  $('ktp-preview').innerHTML = '';
+  status.textContent = 'Memeriksa foto…';
+  try {
+    await validateImage(file);
+  } catch (err) {
+    status.textContent = '⚠️ ' + err.message;
+    return;
+  }
   if (ocrPreviewUrl) URL.revokeObjectURL(ocrPreviewUrl);
   ocrPreviewUrl = URL.createObjectURL(file);
   $('ktp-preview').innerHTML = `<img src="${ocrPreviewUrl}" alt="Pratinjau KTP" class="ktp-preview-img">`;
-  $('ktp-review').innerHTML = '';
-  status.innerHTML = '<span class="spin-sm"></span>Menyiapkan mesin OCR (pertama kali mengunduh beberapa MB, sebaiknya pakai WiFi)…';
+  status.innerHTML = spin('Menyiapkan mesin OCR…');
   try {
     if (!window.Tesseract) await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
-    status.innerHTML = '<span class="spin-sm"></span>Membaca teks pada KTP…';
+    const onLog = (m) => {
+      const s = (m.status || '').toLowerCase();
+      if (s.includes('recogniz')) startFieldMessages(status);
+      else if (s.includes('language')) status.innerHTML = spin('Mengunduh data bahasa Indonesia (beberapa MB, sekali saja)…');
+      else if (s.includes('core')) status.innerHTML = spin('Memuat mesin OCR…');
+      else if (s.includes('init')) status.innerHTML = spin('Menyiapkan pembaca teks…');
+    };
     let worker;
-    try { worker = await Tesseract.createWorker('ind'); } catch (_) { worker = await Tesseract.createWorker('eng'); }
+    try { worker = await Tesseract.createWorker('ind', 1, { logger: onLog }); }
+    catch (_) { worker = await Tesseract.createWorker('eng', 1, { logger: onLog }); }
     const { data: { text } } = await worker.recognize(file);
     await worker.terminate();
+    stopFieldMessages();
+    const check = checkDocType(text);
+    if (!check.ok) {
+      status.textContent = '⚠️ ' + check.message;
+      $('ktp-review').innerHTML = '<button class="btn btn-outline btn-block" id="ktp-anyway" type="button">Tetap isi manual</button>';
+      $('ktp-anyway').onclick = () => { $('ktp-review').innerHTML = ktpForm(null); bindKtpForm(); };
+      return;
+    }
     status.textContent = 'Hasil OCR di bawah. Hasil OCR tidak selalu akurat (terutama NIK) — periksa dan perbaiki dulu sebelum menyimpan.';
     $('ktp-review').innerHTML = ktpForm(parseKtp(text));
     bindKtpForm();
   } catch (err) {
-    status.textContent = 'OCR gagal (' + err.message + '). Isi manual di bawah.';
+    stopFieldMessages();
+    status.textContent = 'Fotonya sudah terbaca baik, tapi mesin OCR gagal memprosesnya (' + err.message + '). Coba lagi, atau isi manual di bawah.';
     $('ktp-review').innerHTML = ktpForm(null);
     bindKtpForm();
   }
+}
+
+async function openCamera() {
+  if (!window.isSecureContext) return toast('Kamera hanya bisa dipakai lewat koneksi aman (HTTPS).');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return toast('Kamera tidak didukung di browser ini. Pilih dari galeri.');
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+  } catch (err) {
+    toast('Tidak bisa membuka kamera (' + (err.message || err.name || 'izin ditolak') + '). Coba pilih dari galeri.');
+    return;
+  }
+  $('ktp-video').srcObject = camStream;
+  $('ktp-cam').hidden = false;
+}
+function closeCamera() {
+  if (camStream) { camStream.getTracks().forEach((t) => t.stop()); camStream = null; }
+  $('ktp-cam').hidden = true;
+}
+function shootPhoto() {
+  const video = $('ktp-video');
+  const c = document.createElement('canvas');
+  c.width = video.videoWidth || 1280; c.height = video.videoHeight || 720;
+  c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+  c.toBlob((blob) => {
+    closeCamera();
+    if (blob) runOcr(new File([blob], 'ktp.jpg', { type: 'image/jpeg' }));
+  }, 'image/jpeg', 0.92);
 }
 
 function renderKtp() {
   const box = $('tab-ktp');
   if (!card) { box.innerHTML = '<h1>Data KTP</h1><p class="muted">Buat kartu dulu di menu Ringkasan.</p>'; return; }
   box.innerHTML = `<h1>Data KTP</h1>
-    <p class="muted small">Data ini privat, tidak pernah tampil di halaman kartu publik. Foto KTP hanya diproses di HP ini dan tidak diunggah ke server — hanya hasil teks yang kamu simpan.</p>
+    <p class="muted small">Data ini privat, tidak pernah tampil di halaman kartu publik. Foto hanya diproses di HP ini, tidak diunggah ke server — hanya hasil teks yang kamu simpan.</p>
     <div class="card stack-lg">
-      <label class="btn btn-secondary btn-block" for="ktp-file">📷 Pindai / Unggah Foto KTP</label>
-      <input type="file" id="ktp-file" accept="image/*" capture="environment" hidden>
+      <div><p class="label">Tips agar OCR terbaca jelas</p>
+        <ul class="tips muted small">
+          <li>Foto di tempat terang, hindari cahaya yang memantul dan menutupi tulisan</li>
+          <li>Letakkan KTP di permukaan rata dan gelap, kamera tegak lurus (tidak miring)</li>
+          <li>Isi seluruh kotak panduan dengan KTP, jangan sampai terpotong</li>
+          <li>Tunggu gambar fokus (tidak buram) sebelum menekan tombol foto</li>
+        </ul>
+      </div>
+      <button class="btn btn-secondary btn-block" id="ktp-open-cam" type="button"><i data-lucide="camera" aria-hidden="true"></i>Pindai Foto KTP</button>
+      <label class="btn btn-outline btn-block" for="ktp-file">Pilih dari Galeri</label>
+      <input type="file" id="ktp-file" accept="image/*" hidden>
       <div id="ktp-preview"></div>
       <p id="ktp-status" class="muted small"></p>
     </div>
     <div id="ktp-review" style="margin-top:12px">${identity ? ktpForm(identity) : ''}</div>
     ${identity ? '' : '<button class="btn btn-outline btn-block" id="ktp-manual" style="margin-top:12px">Isi manual tanpa scan</button>'}`;
   if (identity) bindKtpForm();
+  $('ktp-open-cam').onclick = openCamera;
   $('ktp-file').onchange = (e) => { const f = e.target.files[0]; if (f) runOcr(f); };
   if ($('ktp-manual')) $('ktp-manual').onclick = (e) => { $('ktp-review').innerHTML = ktpForm(null); bindKtpForm(); e.currentTarget.hidden = true; };
 }
@@ -274,5 +379,7 @@ document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => {
   document.querySelectorAll('[data-tab]').forEach((x) => x.classList.toggle('active', x === b));
   ['ringkasan', 'profil', 'ktp'].forEach((t) => ($('tab-' + t).hidden = t !== b.dataset.tab));
 }));
+$('ktp-cam-cancel').onclick = closeCamera;
+$('ktp-cam-shot').onclick = shootPhoto;
 $('logout').onclick = signOut;
 requireSession().then((s) => s && load());
