@@ -7,101 +7,34 @@ const list = (v) => v.split(',').map((x) => x.trim()).filter(Boolean);
 const opts = (arr, cur) => arr.map((o) => `<option value="${o}"${o === cur ? ' selected' : ''}>${o}</option>`).join('');
 const BLOOD = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const CATS = ['keluarga', 'pasangan', 'teman', 'dokter', 'lainnya'];
+const GENDERS = ['LAKI-LAKI', 'PEREMPUAN'];
 const fail = (e) => toast('Gagal: ' + e.message);
 const sub = (e) => e.submitter || e.target.querySelector('button[type="submit"]');
-let card = null, profile = null, contacts = [], lastEvent = null, cards = [], activeId = null, latest = {};
+const when = (t) => new Date(t).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+let card = null, profile = null, contacts = [], lastEvent = null, identity = null;
 
 async function load() {
-  const { data, error } = await supabase.from('cards').select('*, emergency_profiles(full_name, blood_type)').order('created_at');
+  const { data, error } = await supabase.from('cards').select('*').order('created_at').limit(1).maybeSingle();
   if (error) return fail(error);
-  cards = data || [];
-  card = cards.find((c) => c.id === activeId) || cards[0] || null;
-  activeId = card ? card.id : null;
-  profile = null; contacts = []; lastEvent = null; latest = {};
-  if (cards.length) {
-    const ev = await supabase.from('emergency_events').select('*').in('card_uuid', cards.map((c) => c.id)).order('triggered_at', { ascending: false });
-    (ev.data || []).forEach((e) => { if (!latest[e.card_uuid]) latest[e.card_uuid] = e; });
-  }
+  card = data; profile = null; contacts = []; lastEvent = null; identity = null;
   if (card) {
-    const [p, k] = await Promise.all([
+    const [p, k, ev, idn] = await Promise.all([
       supabase.from('emergency_profiles').select('*').eq('card_uuid', card.id).single(),
       supabase.from('emergency_contacts').select('*').eq('card_uuid', card.id).order('sort_order').order('name'),
+      supabase.from('emergency_events').select('*').eq('card_uuid', card.id).order('triggered_at', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('identity_documents').select('*').eq('card_uuid', card.id).maybeSingle(),
     ]);
-    profile = p.data; contacts = k.data || []; lastEvent = latest[card.id] || null;
+    profile = p.data; contacts = k.data || []; lastEvent = ev.data || null; identity = idn.data || null;
   }
-  renderSwitcher(); renderSummary(); renderProfile(); renderHub(); renderTree();
+  renderSummary(); renderProfile(); renderKtp();
   window.lucide && window.lucide.createIcons();
-}
-
-const when = (t) => new Date(t).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-
-const nameOf = (c) => {
-  const pr = [].concat(c.emergency_profiles || [])[0];
-  return (pr && pr.full_name) || 'Anggota ' + c.card_id.slice(-4);
-};
-const stat = (ev) => !ev ? { cls: 'badge-active', txt: '🟢 Normal' }
-  : ev.status === 'active' ? { cls: 'badge-emergency', txt: '🔴 DARURAT', hot: true }
-  : ev.status === 'attention' ? { cls: 'badge-attention', txt: '🟠 Perlu Perhatian' }
-  : Date.now() - new Date(ev.resolved_at || ev.triggered_at) < 864e5 ? { cls: '', txt: '⚪ Selesai' }
-  : { cls: 'badge-active', txt: '🟢 Normal' };
-
-const TABS = ['ringkasan', 'profil', 'keluarga', 'pohon'];
-function show(t) {
-  document.querySelectorAll('[data-tab]').forEach((x) => x.classList.toggle('active', x.dataset.tab === t));
-  TABS.forEach((n) => ($('tab-' + n).hidden = n !== t));
-  window.scrollTo(0, 0);
-}
-
-function renderSwitcher() {
-  const box = $('switcher');
-  if (!cards.length) { box.innerHTML = ''; return; }
-  box.innerHTML = `<label for="sw" class="label">Anggota yang dikelola</label><div class="btns"><select class="input" id="sw">${cards.map((c) => `<option value="${c.id}"${c.id === activeId ? ' selected' : ''}>${esc(nameOf(c))}${c.relation ? ' · ' + esc(c.relation) : ''}</option>`).join('')}</select><button class="btn btn-secondary btn-sm" id="addm">Tambah anggota</button></div>`;
-  $('sw').onchange = (e) => { activeId = e.target.value; load(); };
-  $('addm').onclick = (e) => busy(e.currentTarget, async () => {
-    const { data, error } = await supabase.rpc('create_card');
-    if (error) return fail(error);
-    activeId = data.id; await load(); show('profil'); toast('Anggota baru dibuat. Isi profilnya.');
-  });
-}
-
-function renderHub() {
-  const box = $('tab-keluarga');
-  if (!cards.length) { box.innerHTML = '<h1>Family Hub</h1><p class="muted">Buat kartu dulu di menu Ringkasan.</p>'; return; }
-  box.innerHTML = '<h1>Family Hub</h1>' + cards.map((c) => {
-    const ev = latest[c.id], s = stat(ev), pr = [].concat(c.emergency_profiles || [])[0] || {}, act = ev && ev.status === 'active';
-    return `<div class="card stack-sm" style="margin-bottom:12px"><div class="row" style="width:100%"><h2>👤 ${esc(nameOf(c))}</h2><span class="badge ${s.cls}">${s.txt}</span></div>
-      <p class="muted small">${c.relation ? esc(c.relation) + ' · ' : ''}${pr.blood_type ? 'Gol. darah ' + esc(pr.blood_type) : 'Golongan darah belum diisi'}${c.is_active ? '' : ' · kartu nonaktif'}</p>
-      ${act ? `<p><strong>Terjadi insiden pada</strong><br>${when(ev.triggered_at)}</p>` : ''}
-      <div class="btns"><button class="btn btn-outline btn-sm" data-manage="${c.id}">Kelola</button>${act ? `<button class="btn btn-success btn-sm" data-done="${ev.id}">Tandai selesai</button>` : ''}</div></div>`;
-  }).join('');
-  box.querySelectorAll('[data-manage]').forEach((b) => (b.onclick = () => { activeId = b.dataset.manage; load().then(() => show('profil')); }));
-  box.querySelectorAll('[data-done]').forEach((b) => (b.onclick = () => busy(b, async () => {
-    const { error } = await supabase.from('emergency_events').update({ status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', b.dataset.done);
-    if (error) return fail(error);
-    await load(); toast('Status darurat ditandai selesai');
-  })));
-}
-
-function renderTree() {
-  const box = $('tab-pohon');
-  if (!cards.length) { box.innerHTML = '<h1>Family Tree</h1><p class="muted">Belum ada anggota.</p>'; return; }
-  const ids = new Set(cards.map((c) => c.id)), kids = {}, seen = new Set();
-  cards.forEach((c) => { const k = c.parent_card_uuid && ids.has(c.parent_card_uuid) ? c.parent_card_uuid : 'root'; (kids[k] = kids[k] || []).push(c); });
-  const node = (c) => {
-    seen.add(c.id);
-    const s = stat(latest[c.id]), sub = (kids[c.id] || []).filter((x) => !seen.has(x.id)).map(node).join('');
-    return `<li><div class="tnode${s.hot ? ' hot' : ''}"><strong>${esc(nameOf(c))}</strong>${c.relation ? ` <span class="muted small">${esc(c.relation)}</span>` : ''} <span class="badge ${s.cls}">${s.txt}</span></div>${sub ? `<ul>${sub}</ul>` : ''}</li>`;
-  };
-  const html = (kids.root || []).map(node).join('') + cards.filter((c) => !seen.has(c.id)).map(node).join('');
-  box.innerHTML = `<h1>Family Tree</h1><div class="card"><ul class="tree">${html}</ul></div><p class="muted small" style="margin-top:12px">Atur hubungan tiap anggota di menu Profil, bagian Hubungan keluarga.</p>`;
 }
 
 function statusHtml() {
   if (lastEvent && lastEvent.status === 'active') {
     return `<span class="badge badge-emergency">🔴 DARURAT</span><p class="muted small">Terjadi insiden pada ${when(lastEvent.triggered_at)}</p><button class="btn btn-success btn-block" id="resolve">Tandai selesai</button>`;
   }
-  const s = stat(lastEvent);
-  return `<span class="badge ${s.cls}">${s.txt}</span>`;
+  return lastEvent ? '<span class="badge">⚪ Selesai</span>' : '<span class="badge badge-active">🟢 Normal</span>';
 }
 
 function drawQR(url) {
@@ -168,7 +101,6 @@ function renderProfile() {
   const box = $('tab-profil');
   if (!card || !profile) { box.innerHTML = '<h1>Profil darurat</h1><p class="muted">Buat kartu dulu di menu Ringkasan.</p>'; return; }
   const p = profile;
-  const parentOpts = cards.filter((c) => c.id !== card.id).map((c) => `<option value="${c.id}"${c.id === card.parent_card_uuid ? ' selected' : ''}>${esc(nameOf(c))}</option>`).join('');
   box.innerHTML = `<h1>Profil darurat</h1>
     <form id="pform" class="card">
       <div class="field"><label for="f-name">Nama lengkap</label><input class="input" id="f-name" value="${esc(p.full_name)}" required></div>
@@ -179,9 +111,6 @@ function renderProfile() {
       <div class="field"><label for="f-allergies">Alergi (pisahkan dengan koma)</label><input class="input" id="f-allergies" value="${esc(p.allergies.join(', '))}"></div>
       <div class="field"><label for="f-conditions">Kondisi medis (pisahkan dengan koma)</label><input class="input" id="f-conditions" value="${esc(p.conditions.join(', '))}"></div>
       <div class="field"><label for="f-notes">Catatan emergency</label><textarea class="input" id="f-notes" rows="3">${esc(p.emergency_notes)}</textarea></div>
-      <fieldset class="fs"><legend>Hubungan keluarga (Family Tree)</legend>
-        <div class="field"><label for="f-rel">Hubungan</label><input class="input" id="f-rel" value="${esc(card.relation)}" placeholder="Mis. Ayah, Ibu, Anak"></div>
-        <div class="field"><label for="f-parent">Berada di bawah anggota</label><select class="input" id="f-parent"><option value="">Posisi teratas</option>${parentOpts}</select></div></fieldset>
       <label class="check"><input type="checkbox" id="f-organ"${p.organ_donor ? ' checked' : ''}> Bersedia menjadi donor organ</label>
       <button class="btn btn-success btn-block" type="submit">Simpan perubahan</button>
     </form>
@@ -208,8 +137,6 @@ function renderProfile() {
         organ_donor: $('f-organ').checked,
       }).eq('card_uuid', card.id);
       if (error) return fail(error);
-      const rel = await supabase.from('cards').update({ relation: $('f-rel').value.trim() || null, parent_card_uuid: $('f-parent').value || null }).eq('id', card.id);
-      if (rel.error) return fail(rel.error);
       await load(); toast('Perubahan disimpan');
     });
   };
@@ -231,6 +158,121 @@ function renderProfile() {
   })));
 }
 
-document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => show(b.dataset.tab)));
+/* ---------- Scan KTP / OCR ---------- */
+const KTP_FIELDS = [
+  ['nik', 'NIK', 'text'], ['full_name', 'Nama lengkap', 'text'],
+  ['birth_place', 'Tempat lahir', 'text'], ['birth_date', 'Tanggal lahir', 'date'],
+  ['gender', 'Jenis kelamin', 'gender'], ['address', 'Alamat', 'text'],
+  ['rt_rw', 'RT/RW', 'text'], ['village', 'Kelurahan/Desa', 'text'],
+  ['district', 'Kecamatan', 'text'], ['city', 'Kabupaten/Kota', 'text'],
+  ['province', 'Provinsi', 'text'], ['religion', 'Agama', 'text'],
+  ['marital_status', 'Status perkawinan', 'text'], ['occupation', 'Pekerjaan', 'text'],
+  ['nationality', 'Kewarganegaraan', 'text'],
+];
+let ocrPreviewUrl = null;
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('gagal memuat mesin OCR'));
+    document.head.append(s);
+  });
+}
+
+function parseKtp(raw) {
+  const t = raw.replace(/\r/g, '');
+  const lines = t.split('\n').map((l) => l.trim()).filter(Boolean);
+  const grab = (label) => {
+    const m = t.match(new RegExp(label + '\\s*[:;]?\\s*([^\\n]+)', 'i'));
+    return m ? m[1].replace(/[|_~]/g, '').replace(/\s+/g, ' ').trim() : '';
+  };
+  const nik = grab('NIK').replace(/[^0-9OIlLSBZ]/gi, '')
+    .replace(/O/gi, '0').replace(/[IlL]/g, '1').replace(/S/gi, '5').replace(/B/gi, '8').replace(/Z/gi, '2').slice(0, 16);
+  const ttl = grab('Tempat\\W{0,3}Tgl\\W{0,3}Lahir');
+  let birth_place = ttl, birth_date = '';
+  const dm = ttl.match(/^(.*?),?\s*(\d{1,2})[\-\/. ](\d{1,2})[\-\/. ](\d{4})/);
+  if (dm) { birth_place = dm[1].trim(); birth_date = `${dm[4]}-${dm[3].padStart(2, '0')}-${dm[2].padStart(2, '0')}`; }
+  const genderRaw = grab('Jenis\\W?Kelamin');
+  const gender = /PEREMPUAN/i.test(genderRaw) ? 'PEREMPUAN' : /LAKI/i.test(genderRaw) ? 'LAKI-LAKI' : '';
+  const head = lines.slice(0, 4).filter((l) => !/NIK|Nama/i.test(l));
+  return {
+    nik, full_name: grab('Nama'), birth_place, birth_date, gender,
+    address: grab('Alamat'), rt_rw: grab('RT\\W?RW').replace(/\s+/g, ''),
+    village: grab('Kel\\W?Desa'), district: grab('Kecamatan'),
+    city: head[1] || '', province: head[0] || '',
+    religion: grab('Agama'), marital_status: grab('Status\\W?Perkawinan'),
+    occupation: grab('Pekerjaan'), nationality: grab('Kewarganegaraan') || 'WNI',
+  };
+}
+
+function ktpForm(data) {
+  const g = (k) => esc((data && data[k]) || '');
+  const rows = KTP_FIELDS.map(([key, label, type]) => {
+    if (type === 'date') return `<div class="field"><label for="k-${key}">${label}</label><input class="input" id="k-${key}" type="date" value="${g(key)}"></div>`;
+    if (type === 'gender') return `<div class="field"><label for="k-${key}">${label}</label><select class="input" id="k-${key}"><option value="">Belum diisi</option>${opts(GENDERS, data && data[key])}</select></div>`;
+    return `<div class="field"><label for="k-${key}">${label}</label><input class="input" id="k-${key}" value="${g(key)}"></div>`;
+  }).join('');
+  return `<form id="kform" class="card">${rows}<button class="btn btn-success btn-block" type="submit">Simpan data KTP</button></form>`;
+}
+
+function bindKtpForm() {
+  $('kform').onsubmit = (e) => {
+    e.preventDefault();
+    busy(sub(e), async () => {
+      const row = { card_uuid: card.id };
+      KTP_FIELDS.forEach(([key]) => { row[key] = $('k-' + key).value.trim() || null; });
+      const { error } = await supabase.from('identity_documents').upsert(row, { onConflict: 'card_uuid' });
+      if (error) return fail(error);
+      await load(); toast('Data KTP disimpan');
+    });
+  };
+}
+
+async function runOcr(file) {
+  const status = $('ktp-status');
+  if (ocrPreviewUrl) URL.revokeObjectURL(ocrPreviewUrl);
+  ocrPreviewUrl = URL.createObjectURL(file);
+  $('ktp-preview').innerHTML = `<img src="${ocrPreviewUrl}" alt="Pratinjau KTP" class="ktp-preview-img">`;
+  $('ktp-review').innerHTML = '';
+  status.innerHTML = '<span class="spin-sm"></span>Menyiapkan mesin OCR (pertama kali mengunduh beberapa MB, sebaiknya pakai WiFi)…';
+  try {
+    if (!window.Tesseract) await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    status.innerHTML = '<span class="spin-sm"></span>Membaca teks pada KTP…';
+    let worker;
+    try { worker = await Tesseract.createWorker('ind'); } catch (_) { worker = await Tesseract.createWorker('eng'); }
+    const { data: { text } } = await worker.recognize(file);
+    await worker.terminate();
+    status.textContent = 'Hasil OCR di bawah. Hasil OCR tidak selalu akurat (terutama NIK) — periksa dan perbaiki dulu sebelum menyimpan.';
+    $('ktp-review').innerHTML = ktpForm(parseKtp(text));
+    bindKtpForm();
+  } catch (err) {
+    status.textContent = 'OCR gagal (' + err.message + '). Isi manual di bawah.';
+    $('ktp-review').innerHTML = ktpForm(null);
+    bindKtpForm();
+  }
+}
+
+function renderKtp() {
+  const box = $('tab-ktp');
+  if (!card) { box.innerHTML = '<h1>Data KTP</h1><p class="muted">Buat kartu dulu di menu Ringkasan.</p>'; return; }
+  box.innerHTML = `<h1>Data KTP</h1>
+    <p class="muted small">Data ini privat, tidak pernah tampil di halaman kartu publik. Foto KTP hanya diproses di HP ini dan tidak diunggah ke server — hanya hasil teks yang kamu simpan.</p>
+    <div class="card stack-lg">
+      <label class="btn btn-secondary btn-block" for="ktp-file">📷 Pindai / Unggah Foto KTP</label>
+      <input type="file" id="ktp-file" accept="image/*" capture="environment" hidden>
+      <div id="ktp-preview"></div>
+      <p id="ktp-status" class="muted small"></p>
+    </div>
+    <div id="ktp-review" style="margin-top:12px">${identity ? ktpForm(identity) : ''}</div>
+    ${identity ? '' : '<button class="btn btn-outline btn-block" id="ktp-manual" style="margin-top:12px">Isi manual tanpa scan</button>'}`;
+  if (identity) bindKtpForm();
+  $('ktp-file').onchange = (e) => { const f = e.target.files[0]; if (f) runOcr(f); };
+  if ($('ktp-manual')) $('ktp-manual').onclick = (e) => { $('ktp-review').innerHTML = ktpForm(null); bindKtpForm(); e.currentTarget.hidden = true; };
+}
+
+document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => {
+  document.querySelectorAll('[data-tab]').forEach((x) => x.classList.toggle('active', x === b));
+  ['ringkasan', 'profil', 'ktp'].forEach((t) => ($('tab-' + t).hidden = t !== b.dataset.tab));
+}));
 $('logout').onclick = signOut;
 requireSession().then((s) => s && load());
