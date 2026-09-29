@@ -27,9 +27,11 @@ async function overpass(query) {
   let reason = 'Server peta tidak merespons.';
   for (const url of API) {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 20000);
+    const timer = setTimeout(() => ctl.abort(), 15000);
     try {
-      const r = await fetch(url, { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'data=' + encodeURIComponent(query) });
+      // Catatan: browser tidak mengizinkan skrip mengganti header User-Agent (dilindungi/forbidden header),
+      // jadi UA asli browser tetap terkirim. X-Requested-With dipakai sebagai identitas aplikasi sebagai gantinya.
+      const r = await fetch(url, { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'ExigentOne-Web/1.0' }, body: 'data=' + encodeURIComponent(query) });
       if (r.status === 429) { reason = 'Server peta membatasi permintaan karena terlalu ramai. Tunggu sekitar satu menit lalu coba lagi.'; continue; }
       if (r.status >= 500) { reason = 'Server peta sedang sibuk atau bermasalah (kode ' + r.status + '). Coba lagi sebentar lagi.'; continue; }
       if (!r.ok) { reason = 'Server peta menolak permintaan (kode ' + r.status + ').'; continue; }
@@ -61,15 +63,22 @@ function card(p) {
   return c;
 }
 
+function skeleton() {
+  return Array.from({ length: 3 }).map(() =>
+    `<div class="skeleton-card"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div><div class="skeleton-line w90"></div><div class="skeleton-btn"></div></div>`
+  ).join('');
+}
+
 async function search() {
   if (!pos) return;
   const id = ++seq;
-  results.replaceChildren();
-  status.textContent = `Mencari ${CATS[cat].label} dalam ${radius / 1000} km…`;
+  results.innerHTML = skeleton();
+  status.innerHTML = '<span class="spin-sm"></span>Mencari ' + CATS[cat].label + ' dalam ' + (radius / 1000) + ' km…';
   const around = `(around:${radius},${pos.lat},${pos.lon})`;
   try {
-    const els = await overpass(`[out:json][timeout:20];(${CATS[cat].q(around)});out center tags 60;`);
+    const els = await overpass(`[out:json][timeout:10];(${CATS[cat].q(around)});out center tags 60;`);
     if (id !== seq) return;
+    results.replaceChildren();
     const items = els
       .map((e) => ({ tags: e.tags || {}, lat: e.lat ?? e.center?.lat, lon: e.lon ?? e.center?.lon }))
       .filter((e) => e.lat != null && !(cat === 'klinik' && /puskesmas/i.test(e.tags.name || '')))
@@ -87,7 +96,10 @@ async function search() {
     status.textContent = `${items.length} ${CATS[cat].label} terdekat, diurutkan berdasarkan jarak.`;
     results.append(...items.map(card));
   } catch (e) {
-    if (id === seq) status.textContent = e instanceof MapError ? e.message : 'Terjadi kesalahan tak terduga saat mencari: ' + e.message;
+    if (id === seq) {
+      results.replaceChildren();
+      status.textContent = e instanceof MapError ? e.message : 'Terjadi kesalahan tak terduga saat mencari: ' + e.message;
+    }
   }
 }
 
