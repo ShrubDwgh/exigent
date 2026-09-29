@@ -73,30 +73,6 @@ function contactRow(c) {
   return row;
 }
 
-function askEmergency(phone) {
-  const wrap = el('div', 'modal');
-  wrap.setAttribute('role', 'alertdialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-labelledby', 'mt');
-  const box = el('div', 'modal-box');
-  const h = el('h2', null, '⚠️ Konfirmasi Keadaan Darurat'); h.id = 'mt';
-  const no = el('button', 'btn btn-outline', 'TIDAK');
-  const yes = el('button', 'btn btn-danger', 'YA, DARURAT');
-  const actions = el('div', 'modal-actions'); actions.append(no, yes);
-  box.append(h, el('p', null, 'Apakah Anda yakin ingin memberi tahu keluarga bahwa anggota ini sedang mengalami keadaan darurat?'), actions);
-  wrap.append(box); document.body.append(wrap); no.focus();
-  const onKey = (e) => { if (e.key === 'Escape') close(); };
-  const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey); };
-  document.addEventListener('keydown', onKey);
-  no.onclick = close; // TIDAK: batal, tidak ada event dan tidak menelepon
-  yes.onclick = async () => {
-    yes.classList.add('loading'); yes.disabled = true; no.disabled = true;
-    // Catat event, tapi jangan menahan panggilan lebih dari 1,5 dtk; jika gagal, telepon tetap dilanjutkan.
-    const log = supabase.rpc('trigger_emergency', { p_card_id: cardId }).then(() => {}, () => {});
-    await Promise.race([log, new Promise((r) => setTimeout(r, 1500))]);
-    location.href = 'tel:+' + intl(phone);
-    setTimeout(close, 800);
-  };
-}
-
 function render(d) {
   document.title = 'Emergency Card · ' + (d.full_name || d.card_id);
   const none = () => el('p', 'muted', 'Tidak ada data');
@@ -118,9 +94,10 @@ function render(d) {
   if (d.home_phone) {
     const row = el('div', 'contact'), info = el('div'), acts = el('div', 'actions');
     info.append(el('strong', null, d.home_contact_name || 'Keluarga'), el('span', 'phone', d.home_phone));
-    const call = withIcon('button', 'btn btn-sm', 'phone', 'Telepon Keluarga');
-    call.type = 'button'; call.onclick = () => askEmergency(d.home_phone);
-    acts.append(call, linkBtn('WhatsApp', 'https://wa.me/' + intl(d.home_phone), 'btn-sm btn-success', 'message-circle'));
+    acts.append(
+      linkBtn('Telepon', 'tel:+' + intl(d.home_phone), 'btn-sm', 'phone'),
+      linkBtn('WhatsApp', 'https://wa.me/' + intl(d.home_phone), 'btn-sm btn-success', 'message-circle')
+    );
     row.append(info, acts);
     ec.append(section('home', 'Telepon Rumah / Kepala Keluarga', row));
   }
