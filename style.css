@@ -189,6 +189,7 @@ textarea.input { resize:vertical; }
   padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 14px; }
 .topbar .lucide { color:var(--red); }
 @media (min-width:1024px) { .topbar { display:none; } }
+body.card-page { padding-top:calc(60px + env(safe-area-inset-top, 0px)); }
 
 /* Floating Action Button: Edit Data Medis (khusus tab Dashboard) */
 .fab { position:fixed; right:20px; bottom:calc(84px + env(safe-area-inset-bottom, 0px)); z-index:var(--z-nav);
@@ -213,5 +214,32 @@ body { -webkit-user-select:none; user-select:none; }
 /* Footer */
 .site-footer { max-width:560px; margin:32px auto 0; padding:20px 16px; text-align:center; color:var(--muted); font-size:.8125rem; border-top:1px solid var(--border); }
 .site-footer p { margin:4px 0; }
-.site-footer .f-emg { color:var(--red-dark); font-weight:600; }
 .site-footer a { color:inherit; text-decoration:underline; }
+
+/* Foto profil pada kartu darurat & form edit */
+.avatar { width:72px; height:72px; flex:none; border-radius:50%; object-fit:cover; border:3px solid var(--surface); box-shadow:0 2px 8px rgba(15,23,42,.12); }
+.avatar-ph { display:flex; align-items:center; justify-content:center; background:#F1F5F9; color:var(--muted); }
+.avatar-ph .lucide { width:30px; height:30px; }
+.avatar-lg { width:88px; height:88px; border-radius:50%; object-fit:cover; display:block; }
+.id-row { display:flex; align-items:center; gap:14px; margin:14px 0; }
+.id-row h1 { font-size:1.5rem; }
+.blood-badge { display:inline-flex; align-items:center; gap:6px; margin-top:6px; padding:4px 14px; border-radius:999px; background:#FEE2E2; color:var(--red-dark); font-weight:800; font-size:1.0625rem; }
+
+/* Kontak darurat gaya ringkas: ikon inline, tanpa kotak tombol besar */
+.contact-mini { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-top:1px solid var(--border); }
+.contact-mini:first-of-type { border-top:0; padding-top:0; }
+.contact-mini .who { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px; }
+.contact-mini .phone { display:block; color:var(--muted); font-size:.9375rem; }
+.icon-actions { display:flex; gap:2px; flex-shrink:0; }
+.icon-link { display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; color:var(--text); text-decoration:none; }
+.icon-link:hover { background:#F1F5F9; }
+.icon-link.wa { color:#15803D; }
+.icon-link .lucide { width:20px; height:20px; }
+
+/* Welcome modal (helper) */
+.modal-box h2 { margin-bottom:8px; }
+
+/* Footer sederhana khusus Medical Search, selalu di bawah tanpa fixed */
+body.medis-page { display:flex; flex-direction:column; min-height:100vh; }
+body.medis-page > .wrap { flex:1 0 auto; }
+body.medis-page > .site-footer { flex-shrink:0; }

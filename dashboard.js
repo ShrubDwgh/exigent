@@ -20,14 +20,6 @@ function applyNavLabels() {
   document.querySelector('[data-tab="profil"] span').textContent = t('nav_profile');
 }
 
-function footerHtml() {
-  return `<footer class="site-footer">
-    <p>© 2026 Proximate Labs. All rights reserved.</p>
-    <p class="f-emg">${t('footer_emergency')}</p>
-    <p><a href="/privacy-policy.html">${t('footer_privacy')}</a> · <a href="/terms.html">${t('footer_terms')}</a> · <a href="/help.html">${t('footer_help')}</a></p>
-  </footer>`;
-}
-
 async function load() {
   const { data, error } = await supabase.from('cards').select('*').order('created_at').limit(1).maybeSingle();
   if (error) return fail(error);
@@ -41,7 +33,6 @@ async function load() {
   }
   applyNavLabels();
   renderDashboard(); renderAccount();
-  $('footer-slot').innerHTML = footerHtml();
   if (medisModal) renderMedisModal(medisModal.querySelector('.modal-box'));
   window.lucide && window.lucide.createIcons();
 }
@@ -135,7 +126,8 @@ function renderAccount() {
         </select>
       </div>
     </div>
-    <button class="btn btn-danger btn-block" id="logout-btn" style="margin-top:32px">${t('logout')}</button>`;
+    <a class="btn btn-outline btn-block" href="/settings" style="margin-top:16px"><i data-lucide="shield-check" aria-hidden="true"></i>Perizinan &amp; Pengaturan Lanjutan</a>
+    <button class="btn btn-danger btn-block" id="logout-btn" style="margin-top:16px">${t('logout')}</button>`;
   if ($('toggle')) $('toggle').onclick = (e) => {
     if (card.is_active && !confirm('Nonaktifkan kartu? Halaman kartu tidak akan bisa dibuka.')) return;
     busy(e.currentTarget, async () => {
@@ -147,18 +139,48 @@ function renderAccount() {
   $('lang-select').onchange = (e) => {
     lang = e.target.value; setLang(lang);
     applyNavLabels(); renderDashboard(); renderAccount();
-    $('footer-slot').innerHTML = footerHtml();
-    if (medisModal) renderMedisModal(medisModal.querySelector('.modal-box'));
+      if (medisModal) renderMedisModal(medisModal.querySelector('.modal-box'));
     window.lucide && window.lucide.createIcons();
   };
   $('logout-btn').onclick = signOut;
 }
 
 /* ---------- Modal: Edit Data Medis ---------- */
+let pendingPhoto;
+
+function photoFieldHtml(p) {
+  pendingPhoto = p.photo_data_url || null;
+  return `<div class="field">
+    <label>Foto profil</label>
+    <div id="photo-preview" style="margin-bottom:8px">${pendingPhoto ? `<img src="${pendingPhoto}" alt="" class="avatar-lg">` : '<p class="muted small">Belum ada foto.</p>'}</div>
+    <input type="file" id="f-photo" accept="image/*" hidden>
+    <div class="btns"><label class="btn btn-outline btn-sm" for="f-photo">Pilih foto</label>${pendingPhoto ? '<button type="button" class="btn btn-outline btn-sm" id="f-photo-remove">Hapus foto</button>' : ''}</div>
+  </div>`;
+}
+
+function compressPhoto(file, maxSize = 320, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = img.naturalWidth, h = img.naturalHeight;
+      const scale = Math.min(1, maxSize / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Foto tidak dapat dibaca.')); };
+    img.src = url;
+  });
+}
+
 function medisFormHtml() {
   const p = profile;
   return `<h2>Edit Data Medis</h2>
     <form id="pform">
+      ${photoFieldHtml(p)}
       <div class="field"><label for="f-name">Nama lengkap</label><input class="input" id="f-name" value="${esc(p.full_name)}" required></div>
       <div class="field"><label for="f-blood">Golongan darah</label><select class="input" id="f-blood"><option value="">Belum diisi</option>${opts(BLOOD, p.blood_type)}</select></div>
       <fieldset class="fs"><legend>Telepon Rumah / Kepala Keluarga</legend>
@@ -193,6 +215,7 @@ function bindMedisForm(box) {
         conditions: list(box.querySelector('#f-conditions').value),
         emergency_notes: box.querySelector('#f-notes').value.trim() || null,
         organ_donor: box.querySelector('#f-organ').checked,
+        photo_data_url: pendingPhoto,
       }).eq('card_uuid', card.id);
       if (error) return fail(error);
       await load(); toast('Perubahan disimpan');
@@ -215,6 +238,17 @@ function bindMedisForm(box) {
     await load(); toast('Kontak dihapus');
   })));
   box.querySelector('#medis-cancel').onclick = closeMedisModal;
+  box.querySelector('#f-photo').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      pendingPhoto = await compressPhoto(file);
+      box.querySelector('#photo-preview').innerHTML = `<img src="${pendingPhoto}" alt="" class="avatar-lg">`;
+    } catch (err) { fail(err); }
+  };
+  if (box.querySelector('#f-photo-remove')) box.querySelector('#f-photo-remove').onclick = () => {
+    pendingPhoto = null;
+    box.querySelector('#photo-preview').innerHTML = '<p class="muted small">Belum ada foto.</p>';
+  };
 }
 
 function renderMedisModal(box) {

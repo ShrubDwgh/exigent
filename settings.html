@@ -4,20 +4,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#DC2626">
-  <title>Emergency Card</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="/style.css">
   <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <title>Pengaturan · Emergency Card</title>
 </head>
 <body class="card-page">
   <div class="topbar"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
-  <main id="app" class="wrap" aria-live="polite">
-    <div class="spinner" role="status" aria-label="Memuat kartu"></div>
-    <p class="muted" style="text-align:center">Memuat kartu…</p>
+  <main class="wrap">
+    <h1>Pengaturan</h1>
+    <div class="card">
+      <a class="crow" href="/settings/permissions" style="text-decoration:none;color:inherit">
+        <div><strong>Perizinan</strong><div class="muted small">Status izin lokasi &amp; NFC di browser ini</div></div>
+        <i data-lucide="chevron-right" aria-hidden="true"></i>
+      </a>
+    </div>
+    <a class="btn btn-outline btn-block" href="/dashboard.html" style="margin-top:16px">Kembali ke Dashboard</a>
   </main>
-  <script type="module" src="/card.js"></script>
+  <script type="module">
+    import { requireSession } from '/auth.js';
+    requireSession();
+    window.lucide && window.lucide.createIcons();
+  </script>
 </body>
 </html>
