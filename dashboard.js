@@ -1,5 +1,6 @@
 import { supabase } from './supabase.js';
 import { requireSession, signOut, busy, toast } from './auth.js';
+import { STRINGS, getLang, setLang } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -10,6 +11,22 @@ const CATS = ['keluarga', 'pasangan', 'teman', 'dokter', 'lainnya'];
 const fail = (e) => toast('Gagal: ' + e.message);
 const sub = (e) => e.submitter || e.target.querySelector('button[type="submit"]');
 let card = null, profile = null, contacts = [], session = null, medisModal = null;
+let lang = getLang();
+const t = (k) => (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || k;
+
+function applyNavLabels() {
+  document.querySelector('[data-tab="dashboard"] span').textContent = t('nav_dashboard');
+  document.querySelector('a.nav-btn span').textContent = t('nav_medical');
+  document.querySelector('[data-tab="profil"] span').textContent = t('nav_profile');
+}
+
+function footerHtml() {
+  return `<footer class="site-footer">
+    <p>© 2026 Proximate Labs. All rights reserved.</p>
+    <p class="f-emg">${t('footer_emergency')}</p>
+    <p><a href="/privacy-policy.html">${t('footer_privacy')}</a> · <a href="/terms.html">${t('footer_terms')}</a> · <a href="/help.html">${t('footer_help')}</a></p>
+  </footer>`;
+}
 
 async function load() {
   const { data, error } = await supabase.from('cards').select('*').order('created_at').limit(1).maybeSingle();
@@ -22,7 +39,9 @@ async function load() {
     ]);
     profile = p.data; contacts = k.data || [];
   }
-  renderSummary(); renderAccount();
+  applyNavLabels();
+  renderDashboard(); renderAccount();
+  $('footer-slot').innerHTML = footerHtml();
   if (medisModal) renderMedisModal(medisModal.querySelector('.modal-box'));
   window.lucide && window.lucide.createIcons();
 }
@@ -44,7 +63,8 @@ function drawQR(url) {
   };
 }
 
-// Web NFC: hanya Chrome Android + HTTPS. Menulis URL kartu langsung ke tag NFC kosong.
+// Web NFC: Chrome Android + HTTPS saja. "nfc_written_at" ditandai di DB setelah
+// tulis sukses, supaya lain kali dashboard bisa menampilkan info "sudah terdaftar".
 async function writeNfc(url) {
   const status = $('nfc-status'), btn = $('nfc-write');
   if (!('NDEFReader' in window)) { status.textContent = 'Browser ini tidak mendukung tulis NFC langsung (perlu Chrome di Android). Salin URL di atas, lalu tulis lewat aplikasi seperti NFC Tools.'; return; }
@@ -53,22 +73,22 @@ async function writeNfc(url) {
   status.textContent = 'Dekatkan HP ke kartu NFC kosong…';
   try {
     await new NDEFReader().write({ records: [{ recordType: 'url', data: url }] });
-    status.textContent = '✅ Berhasil ditulis ke kartu NFC.';
+    toast('✅ Berhasil ditulis ke kartu NFC');
+    status.textContent = '';
+    supabase.from('cards').update({ nfc_written_at: new Date().toISOString() }).eq('id', card.id).then(() => load(), () => {});
   } catch (err) {
-    status.textContent = err.name === 'NotAllowedError' ? 'Izin NFC ditolak. Aktifkan izin NFC untuk situs ini, lalu coba lagi.'
-      : err.name === 'NotSupportedError' ? 'HP ini sepertinya tidak punya NFC, atau NFC belum diaktifkan di pengaturan HP.'
-      : 'Gagal menulis (' + err.message + '). Pastikan kartu menempel stabil di belakang HP, lalu coba lagi.';
+    status.innerHTML = `<span class="err-line">${esc(err.message || err.name || 'Gagal menulis')}</span>Pastikan kartu menempel stabil di belakang HP, lalu coba lagi.`;
   } finally {
     btn.classList.remove('loading'); btn.disabled = false;
   }
 }
 
-function renderSummary() {
-  const box = $('tab-ringkasan');
+function renderDashboard() {
+  const box = $('tab-dashboard');
   if (!card) {
-    box.innerHTML = `<h1>Ringkasan</h1><div class="card stack-lg"><h2>Kamu belum punya kartu</h2>
-      <p class="muted">Buat kartu untuk mendapat Card ID dan URL yang ditulis ke NFC.</p>
-      <button class="btn btn-block" id="create">Buat kartu</button></div>`;
+    box.innerHTML = `<h1>${t('dash_title')}</h1><div class="card stack-lg"><h2>${t('no_card_title')}</h2>
+      <p class="muted">${t('no_card_desc')}</p>
+      <button class="btn btn-block" id="create">${t('create_card')}</button></div>`;
     $('create').onclick = (e) => busy(e.currentTarget, async () => {
       const { error } = await supabase.rpc('create_card');
       if (error) return fail(error);
@@ -77,28 +97,46 @@ function renderSummary() {
     return;
   }
   const url = `${location.origin}/card/${card.card_id}`;
-  box.innerHTML = `<h1>Ringkasan</h1>
+  box.innerHTML = `<h1>${t('dash_title')}</h1>
     <div class="card stack-lg">
-      <div class="row"><h2>Status kartu</h2>${card.is_active ? '<span class="badge badge-active">Aktif</span>' : '<span class="badge badge-inactive">Nonaktif</span>'}</div>
-      <div><p class="label">Card ID</p><p class="big">${esc(card.card_id)}</p></div>
-      <div><p class="label">URL kartu</p><p class="url">${esc(url)}</p></div>
-      <div class="btns"><button class="btn btn-secondary" id="copy">Salin URL</button>
-        <a class="btn btn-outline" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">Lihat kartu</a></div>
+      <div class="row"><h2>${t('card_status')}</h2>${card.is_active ? `<span class="badge badge-active">${t('active')}</span>` : `<span class="badge badge-inactive">${t('inactive')}</span>`}</div>
+      <div><p class="label">${t('card_id')}</p><p class="big">${esc(card.card_id)}</p></div>
+      <div><p class="label">${t('card_url')}</p><p class="url">${esc(url)}</p></div>
+      <div class="btns"><button class="btn btn-secondary" id="copy">${t('copy_url')}</button>
+        <a class="btn btn-outline" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">${t('view_card')}</a></div>
     </div>
-    <div class="card stack-lg" style="margin-top:12px"><h2>QR Code</h2><div id="qr" class="qr"></div><button class="btn btn-outline btn-sm" id="qrdl">Unduh QR</button></div>
+    <div class="card stack-lg" style="margin-top:12px"><h2>${t('qr_title')}</h2><div id="qr" class="qr"></div><button class="btn btn-outline btn-sm" id="qrdl">${t('download_qr')}</button></div>
     <div class="card stack-lg" style="margin-top:12px">
-      <h2>Tulis ke Kartu NFC</h2>
-      <p class="muted small">Tempelkan HP ke kartu NFC kosong, lalu tekan tombol ini.</p>
-      <button class="btn btn-secondary btn-block" id="nfc-write" type="button"><i data-lucide="nfc" aria-hidden="true"></i>Tulis ke NFC</button>
+      <h2>${t('nfc_title')}</h2>
+      ${card.nfc_written_at ? `<p class="badge badge-active" style="margin-bottom:2px">${t('nfc_registered')}</p>` : ''}
+      <p class="muted small">${t('nfc_desc')}</p>
+      <button class="btn btn-secondary btn-block" id="nfc-write" type="button"><i data-lucide="nfc" aria-hidden="true"></i>${t('write_nfc')}</button>
       <p id="nfc-status" class="muted small"></p>
-    </div>
-    <button class="btn btn-block" id="edit-medis" type="button" style="margin-top:16px">Edit Data Medis</button>
-    <button class="btn btn-block ${card.is_active ? 'btn-danger' : 'btn-success'}" id="toggle" style="margin-top:12px">${card.is_active ? 'Nonaktifkan kartu' : 'Aktifkan kartu'}</button>`;
+    </div>`;
   $('copy').onclick = () => navigator.clipboard.writeText(url).then(() => toast('URL disalin'), () => toast('Salin manual dari teks URL'));
   drawQR(url);
   $('nfc-write').onclick = () => writeNfc(url);
-  $('edit-medis').onclick = openMedisModal;
-  $('toggle').onclick = (e) => {
+}
+
+function renderAccount() {
+  const box = $('tab-profil');
+  box.innerHTML = `<h1>${t('profile_title')}</h1>
+    <div class="card stack-lg">
+      <div><p class="label">${t('account_label')}</p><p style="font-weight:600">${esc((session && session.user && session.user.email) || '—')}</p></div>
+      ${card ? `<div><p class="label">${t('card_id')}</p><p>${esc(card.card_id)}</p></div>` : ''}
+      ${card ? `<button class="btn btn-block ${card.is_active ? 'btn-danger' : 'btn-success'}" id="toggle">${card.is_active ? t('deactivate_card') : t('activate_card')}</button>` : ''}
+    </div>
+    <div class="card stack-lg" style="margin-top:16px">
+      <div class="field" style="margin:0">
+        <label for="lang-select">${t('language_label')}</label>
+        <select class="input" id="lang-select">
+          <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
+          <option value="id"${lang === 'id' ? ' selected' : ''}>Bahasa Indonesia</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-danger btn-block" id="logout-btn" style="margin-top:32px">${t('logout')}</button>`;
+  if ($('toggle')) $('toggle').onclick = (e) => {
     if (card.is_active && !confirm('Nonaktifkan kartu? Halaman kartu tidak akan bisa dibuka.')) return;
     busy(e.currentTarget, async () => {
       const { error } = await supabase.from('cards').update({ is_active: !card.is_active }).eq('id', card.id);
@@ -106,16 +144,13 @@ function renderSummary() {
       await load(); toast('Status kartu diperbarui');
     });
   };
-}
-
-function renderAccount() {
-  const box = $('tab-profil');
-  box.innerHTML = `<h1>Profil</h1>
-    <div class="card stack-lg">
-      <div><p class="label">Akun</p><p style="font-weight:600">${esc(session && session.user && session.user.email || '—')}</p></div>
-      ${card ? `<div><p class="label">Card ID</p><p>${esc(card.card_id)}</p></div>` : ''}
-    </div>
-    <button class="btn btn-danger btn-block" id="logout-btn" style="margin-top:32px">Keluar</button>`;
+  $('lang-select').onchange = (e) => {
+    lang = e.target.value; setLang(lang);
+    applyNavLabels(); renderDashboard(); renderAccount();
+    $('footer-slot').innerHTML = footerHtml();
+    if (medisModal) renderMedisModal(medisModal.querySelector('.modal-box'));
+    window.lucide && window.lucide.createIcons();
+  };
   $('logout-btn').onclick = signOut;
 }
 
@@ -210,6 +245,8 @@ function closeMedisModal() {
 
 document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => {
   document.querySelectorAll('[data-tab]').forEach((x) => x.classList.toggle('active', x === b));
-  ['ringkasan', 'profil'].forEach((t) => ($('tab-' + t).hidden = t !== b.dataset.tab));
+  ['dashboard', 'profil'].forEach((tab) => ($('tab-' + tab).hidden = tab !== b.dataset.tab));
+  $('fab-edit').hidden = b.dataset.tab !== 'dashboard';
 }));
-requireSession().then((s) => { if (s) { session = s; load(); } });
+$('fab-edit').onclick = openMedisModal;
+requireSession().then((s) => { if (s) { session = s; applyNavLabels(); load(); } });
