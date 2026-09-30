@@ -2,7 +2,7 @@
 :root {
   --red:#DC2626; --red-dark:#B91C1C; --blue:#2563EB; --green:#16A34A;
   --bg:#F8FAFC; --surface:#FFFFFF; --text:#0F172A; --muted:#64748B; --border:#E2E8F0;
-  --shadow:0 4px 20px rgba(15,23,42,.06); --t:.2s ease;
+  --ice-blue:#E8F4FD; --shadow:0 4px 20px rgba(15,23,42,.06); --t:.2s ease;
   --font:Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 * { box-sizing:border-box; }
@@ -143,6 +143,7 @@ textarea.input { resize:vertical; }
 .dash .toast { bottom:calc(76px + env(safe-area-inset-bottom, 0px)); }
 @media (min-width:1024px) { .dash .toast { bottom:24px; } }
 .main { padding-bottom:calc(104px + env(safe-area-inset-bottom, 0px)); }
+@media (max-width:1023.98px) { .main { padding-top:calc(60px + env(safe-area-inset-top, 0px)); } }
 @media (min-width:1024px) { .main { padding-bottom:40px; } }
 
 /* Modal konfirmasi darurat, QR, fieldset */
@@ -181,3 +182,36 @@ textarea.input { resize:vertical; }
 .skeleton-line.w60 { width:60%; } .skeleton-line.w40 { width:40%; height:12px; } .skeleton-line.w90 { width:90%; height:12px; }
 .skeleton-btn { height:36px; width:110px; border-radius:10px; margin-top:8px; }
 .modal-box.tall { max-height:85vh; overflow-y:auto; }
+
+/* Top bar solid (mobile) */
+.topbar { position:fixed; top:0; left:0; right:0; z-index:var(--z-nav); display:flex; align-items:center; gap:8px;
+  background:var(--surface); border-bottom:1px solid var(--border); font-weight:700;
+  padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 14px; }
+.topbar .lucide { color:var(--red); }
+@media (min-width:1024px) { .topbar { display:none; } }
+
+/* Floating Action Button: Edit Data Medis (khusus tab Dashboard) */
+.fab { position:fixed; right:20px; bottom:calc(84px + env(safe-area-inset-bottom, 0px)); z-index:var(--z-nav);
+  width:56px; height:56px; border:0; border-radius:18px; background:var(--blue); color:#fff;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(37,99,235,.35); cursor:pointer;
+  transition:background var(--t), transform var(--t); }
+.fab:hover { background:#1D4ED8; }
+.fab:active { transform:scale(.95); }
+.fab .lucide { width:26px; height:26px; }
+@media (min-width:1024px) { .fab { bottom:24px; } }
+
+/* Hero card biru muda khusus Medical Search */
+.med-hero { background:var(--ice-blue); border-radius:16px 16px 28px 28px; padding:20px 16px 24px; min-height:300px; display:flex; flex-direction:column; }
+.med-hero .brand { color:var(--text); text-decoration:none; }
+
+/* Proteksi salin teks global; field yang memang boleh disalin dikecualikan */
+body { -webkit-user-select:none; user-select:none; }
+.big, .url, input, textarea, select, [contenteditable] { -webkit-user-select:text; user-select:text; }
+
+.err-line { display:block; color:var(--red); font-weight:600; margin-bottom:2px; }
+
+/* Footer */
+.site-footer { max-width:560px; margin:32px auto 0; padding:20px 16px; text-align:center; color:var(--muted); font-size:.8125rem; border-top:1px solid var(--border); }
+.site-footer p { margin:4px 0; }
+.site-footer .f-emg { color:var(--red-dark); font-weight:600; }
+.site-footer a { color:inherit; text-decoration:underline; }

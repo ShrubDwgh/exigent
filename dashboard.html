@@ -13,18 +13,24 @@
   <title>Dashboard · Emergency Card</title>
 </head>
 <body class="dash">
+  <div class="topbar"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
   <aside class="side">
     <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
     <nav aria-label="Menu utama">
-      <button class="nav-btn active" data-tab="ringkasan"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span>Ringkasan</span></button>
+      <button class="nav-btn active" data-tab="dashboard"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span>Dashboard</span></button>
       <a class="nav-btn" href="/medical-search.html"><i data-lucide="map-pin" aria-hidden="true"></i><span>Medis</span></a>
       <button class="nav-btn" data-tab="profil"><i data-lucide="user" aria-hidden="true"></i><span>Profil</span></button>
     </nav>
   </aside>
   <main class="main">
-    <section id="tab-ringkasan"><div class="spinner" role="status" aria-label="Memuat"></div></section>
+    <section id="tab-dashboard">
+      <div class="skeleton-card"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div></div>
+      <div class="skeleton-card"><div class="skeleton-line w90"></div><div class="skeleton-btn"></div></div>
+    </section>
     <section id="tab-profil" hidden></section>
+    <div id="footer-slot"></div>
   </main>
+  <button class="fab" id="fab-edit" type="button" aria-label="Edit Data Medis"><i data-lucide="plus" aria-hidden="true"></i></button>
   <script type="module" src="/dashboard.js"></script>
 </body>
 </html>
