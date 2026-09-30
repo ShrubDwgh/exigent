@@ -1,1 +1,5 @@
-{ "rewrites": [{ "source": "/card/:id", "destination": "/card.html" }] }
+{ "rewrites": [
+  { "source": "/card/:id", "destination": "/card.html" },
+  { "source": "/settings", "destination": "/settings.html" },
+  { "source": "/settings/permissions", "destination": "/settings-permissions.html" }
+] }

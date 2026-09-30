@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <title>Perizinan · Emergency Card</title>
+</head>
+<body class="card-page">
+  <div class="topbar"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
+  <main class="wrap">
+    <a href="/settings" class="muted small" style="display:inline-block;margin-bottom:12px">&larr; Pengaturan</a>
+    <h1>Perizinan</h1>
+    <p class="muted small">Status izin sistem yang dipakai aplikasi ini di browser kamu. Browser tidak mengizinkan situs mengubah izin secara langsung — kalau statusnya "Ditolak", aktifkan lewat pengaturan situs di browser (ikon di sebelah alamat situs).</p>
+    <div class="card stack-lg" style="margin-top:16px">
+      <div class="row"><div><strong>Izin Lokasi (GPS)</strong><p class="muted small" style="margin:2px 0 0">Dipakai untuk mencari fasilitas medis terdekat.</p></div><span id="perm-geo" class="badge">Memeriksa…</span></div>
+      <button class="btn btn-outline btn-sm" id="perm-geo-btn" hidden type="button">Minta izin</button>
+    </div>
+    <div class="card stack-lg" style="margin-top:12px">
+      <div class="row"><div><strong>Akses NFC</strong><p class="muted small" style="margin:2px 0 0">Dipakai untuk menulis Card URL ke kartu NFC.</p></div><span id="perm-nfc" class="badge">Memeriksa…</span></div>
+    </div>
+  </main>
+  <script type="module" src="/permissions.js"></script>
+</body>
+</html>
