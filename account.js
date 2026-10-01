@@ -1,0 +1,471 @@
+import { supabase } from './supabase.js';
+import { requireSession, signOut, busy, toast } from './auth.js';
+import { STRINGS, getLang, setLang, applyNavLabels } from './i18n.js';
+import { esc, openSheet } from './ui.js';
+import { watchPermission, requestGeolocation } from './permissions.js';
+import { FAQ_ROOT, FAQ_TREE } from './help-config.js';
+import { CS_CONTACT } from './cs-config.js';
+
+const $ = (id) => document.getElementById(id);
+const main = $('acct-main');
+const icons = () => window.lucide && window.lucide.createIcons();
+let lang = getLang();
+const t = (k) => (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || k;
+const T = (k) => esc(t(k)); // teks terjemahan siap dipakai di dalam HTML
+const pick = (o) => (o && (o[lang] ?? o.en ?? o.id)) ?? ''; // teks dwibahasa {id, en} dari file config
+const fail = (e) => toast(t('failed') + ((e && e.message) || e));
+
+let session = null, card = null, profile = null, loadFailed = false;
+
+/* ---------- Data ---------- */
+async function loadData() {
+  loadFailed = false; card = null; profile = null;
+  try {
+    const { data, error } = await supabase.from('cards').select('*').order('created_at').limit(1).maybeSingle();
+    if (error) throw error;
+    card = data;
+    if (card) {
+      const p = await supabase.from('emergency_profiles').select('full_name').eq('card_uuid', card.id).maybeSingle();
+      profile = p.data || null;
+    }
+  } catch (e) { // jaringan putus / error server: tampilkan pesan, layar tetap bisa dipakai
+    loadFailed = true; card = null; profile = null; fail(e);
+  }
+}
+
+const meta = () => session.user.user_metadata || {};
+const googleName = () => String(meta().full_name || meta().name || '').trim();
+// Nama sapaan: nama akun Google → (cadangan) nama di profil darurat → bagian depan email.
+const displayName = () => googleName() || String((profile && profile.full_name) || '').trim() || String(session.user.email || '').split('@')[0].trim();
+const providers = () => { const a = session.user.app_metadata || {}; return a.providers || [a.provider || 'email']; };
+const fmtDate = (iso) => {
+  if (!iso) return '—';
+  try { return new Intl.DateTimeFormat(lang === 'id' ? 'id-ID' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso)); } catch (_) { return String(iso); }
+};
+
+/* ---------- Potongan HTML ---------- */
+// Baris menu: ikon kiri · label tengah · chevron kanan.
+const row = ({ tag = 'a', href, id, icon, label, sub, value, danger, disabled, plain }) => {
+  const attrs = tag === 'a' ? `href="${esc(href)}"` : 'type="button"';
+  const off = disabled ? (tag === 'a' ? ' aria-disabled="true" tabindex="-1"' : ' disabled') : '';
+  return `<${tag} class="mrow${danger ? ' danger' : ''}${plain ? ' plain' : ''}" ${attrs}${id ? ` id="${id}"` : ''}${off}>
+    ${icon ? `<span class="mrow-ic"><i data-lucide="${icon}" aria-hidden="true"></i></span>` : ''}
+    <span class="mrow-tx"><strong>${esc(label)}</strong>${sub ? `<small>${esc(sub)}</small>` : ''}</span>
+    ${value ? `<span class="mrow-val">${esc(value)}</span>` : ''}
+    <i data-lucide="chevron-right" class="mrow-go" aria-hidden="true"></i>
+  </${tag}>`;
+};
+const kv = (rows) => `<dl class="kv">${rows.map(([k, v]) => `<div class="kv-row"><dt class="kv-k">${esc(k)}</dt><dd class="kv-v">${v}</dd></div>`).join('')}</dl>`;
+const badge = (cls, text) => `<span class="badge ${cls}">${esc(text)}</span>`;
+const empty = (icon, title, desc, extra = '') => `<div class="empty"><span class="empty-ic"><i data-lucide="${icon}" aria-hidden="true"></i></span><h2>${esc(title)}</h2>${desc ? `<p class="muted">${esc(desc)}</p>` : ''}${extra}</div>`;
+
+/* ---------- Layar ---------- */
+function renderHome() {
+  const name = displayName();
+  const greeting = name ? esc(t('greet')).replace('{name}', () => esc(name)) : T('greet_anon');
+  main.innerHTML = `<section class="screen">
+    <div class="greet"><h2 class="greet-title">${greeting}</h2><p class="muted">${T('greet_desc')}</p></div>
+    <nav class="card menu" aria-label="${T('acct_title')}">
+      ${row({ href: '#/security', icon: 'lock', label: t('menu_security') })}
+      ${row({ href: '#/settings', icon: 'settings', label: t('menu_settings') })}
+      ${row({ href: '#/help', icon: 'circle-help', label: t('menu_help') })}
+      ${row({ tag: 'button', id: 'row-cs', icon: 'headset', label: t('menu_cs') })}
+      ${row({ href: '#/legal', icon: 'gavel', label: t('menu_legal') })}
+      ${row({ href: '#/about', icon: 'info', label: t('menu_about') })}
+      ${row({ tag: 'button', id: 'row-logout', icon: 'log-out', label: t('menu_logout'), danger: true })}
+    </nav>
+  </section>`;
+  $('row-cs').onclick = openCs;
+  $('row-logout').onclick = askLogout;
+}
+
+function renderSettings() {
+  const c = card;
+  const cardLabel = c && !c.is_active ? t('set_activate') : t('set_deactivate');
+  const cardSub = loadFailed ? t('set_card_error') : !c ? t('set_no_card') : '';
+  main.innerHTML = `<section class="screen"><nav class="card menu" aria-label="${T('menu_settings')}">
+    ${row({ href: '#/settings/gmail', icon: 'mail', label: t('set_gmail') })}
+    ${row({ href: '#/settings/idcard', icon: 'credit-card', label: t('set_idcard') })}
+    ${row({ tag: 'button', id: 'row-lang', icon: 'languages', label: t('set_language'), value: lang === 'id' ? 'Bahasa Indonesia' : 'English' })}
+    ${row({ href: '#/settings/permissions', icon: 'shield-check', label: t('set_permissions') })}
+    ${row({ tag: 'button', id: 'row-card', icon: 'power', label: cardLabel, sub: cardSub, danger: !c || c.is_active, disabled: !c })}
+    ${row({ tag: 'button', id: 'row-logout', icon: 'log-out', label: t('set_logout'), danger: true })}
+  </nav></section>`;
+  $('row-lang').onclick = openLang;
+  $('row-card').onclick = onCardRow;
+  $('row-logout').onclick = askLogout;
+}
+
+function renderGmail() {
+  const u = session.user, name = googleName(), avatar = meta().avatar_url || meta().picture || '';
+  const pv = providers();
+  const method = pv.map((p) => (p === 'google' ? 'Google' : p === 'email' ? t('gmail_prov_email') : p)).join(', ');
+  main.innerHTML = `<section class="screen stack-lg"><div class="card stack-lg">
+    <div class="id-head">
+      ${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="" referrerpolicy="no-referrer">` : '<span class="avatar avatar-ph"><i data-lucide="user" aria-hidden="true"></i></span>'}
+      <div class="id-who"><p class="id-name">${esc(name || displayName() || '—')}</p><p class="muted">${esc(u.email || '—')}</p></div>
+    </div>
+    ${kv([[t('gmail_name'), esc(name || '—')], [t('gmail_email'), esc(u.email || '—')], [t('gmail_method'), esc(method)], [t('gmail_created'), esc(fmtDate(u.created_at))], [t('gmail_last'), esc(fmtDate(u.last_sign_in_at))]])}
+  </div>${pv.includes('google') ? '' : `<p class="muted small">${T('gmail_note')}</p>`}</section>`;
+  const img = main.querySelector('img.avatar');
+  if (img) img.addEventListener('error', () => {
+    const ph = document.createElement('span');
+    ph.className = 'avatar avatar-ph'; ph.innerHTML = '<i data-lucide="user" aria-hidden="true"></i>';
+    img.replaceWith(ph); icons();
+  });
+}
+
+function renderIdCard() {
+  if (loadFailed || !card) {
+    const go = `<a class="btn btn-secondary" href="/dashboard.html">${T('idc_go')}</a>`;
+    main.innerHTML = `<section class="screen"><div class="card">${loadFailed
+      ? empty('circle-alert', t('set_card_error'), '', '<button type="button" class="btn btn-secondary" id="idc-retry">' + T('retry') + '</button>')
+      : empty('credit-card', t('idc_empty_title'), t('idc_empty_desc'), go)}</div></section>`;
+    const retry = $('idc-retry');
+    if (retry) retry.onclick = (e) => busy(e.currentTarget, async () => { await loadData(); render(); });
+    return;
+  }
+  const url = `${location.origin}/card/${card.card_id}`;
+  main.innerHTML = `<section class="screen"><div class="card stack-lg">
+    <div class="row"><div><p class="label">${T('card_id')}</p><p class="big">${esc(card.card_id)}</p></div>
+      ${badge(card.is_active ? 'badge-active' : 'badge-inactive', t(card.is_active ? 'active' : 'inactive'))}</div>
+    ${kv([[t('idc_nfc'), badge(card.nfc_written_at ? 'badge-active' : 'badge-inactive', t(card.nfc_written_at ? 'idc_nfc_yes' : 'idc_nfc_no'))], [t('idc_created'), esc(fmtDate(card.created_at))]])}
+    <div><p class="label">${T('card_url')}</p><p class="url">${esc(url)}</p></div>
+    <div class="btns"><button type="button" class="btn btn-secondary btn-sm" id="idc-copy">${T('copy_url')}</button>
+      <a class="btn btn-outline btn-sm" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">${T('view_card')}</a></div>
+  </div></section>`;
+  $('idc-copy').onclick = () => (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast(t('copied')), () => toast(t('copy_manual')));
+}
+
+function renderSecurity() {
+  const pv = providers();
+  main.innerHTML = `<section class="screen stack-lg">
+    ${pv.includes('email') ? `<form id="pw-form" class="card stack-lg" novalidate>
+      <h2>${T('sec_password')}</h2>
+      <div class="field" style="margin:0"><label for="pw1">${T('sec_new_pw')}</label><input class="input" id="pw1" type="password" autocomplete="new-password"></div>
+      <div class="field" style="margin:0"><label for="pw2">${T('sec_confirm_pw')}</label><input class="input" id="pw2" type="password" autocomplete="new-password"></div>
+      <p id="pw-msg" class="msg" role="alert" hidden></p>
+      <button class="btn btn-secondary btn-block" type="submit">${T('sec_save_pw')}</button>
+    </form>` : ''}
+    ${pv.includes('google') ? `<div class="card stack-lg"><h2>Google</h2><p class="muted">${T('sec_google_note')}</p>
+      <a class="btn btn-outline btn-sm" href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer">${T('sec_google_manage')}</a></div>` : ''}
+    <div class="card menu">${row({ tag: 'button', id: 'row-others', icon: 'smartphone', label: t('sec_others'), sub: t('sec_others_desc') })}</div>
+  </section>`;
+  $('row-others').onclick = askOthers;
+  const form = $('pw-form');
+  if (form) form.onsubmit = (e) => {
+    e.preventDefault();
+    const msg = $('pw-msg'), a = $('pw1').value, b = $('pw2').value;
+    const show = (text) => { msg.textContent = text; msg.hidden = false; };
+    msg.hidden = true;
+    if (a.length < 6) return show(t('sec_pw_short'));
+    if (a !== b) return show(t('sec_pw_mismatch'));
+    busy(form.querySelector('button[type="submit"]'), async () => {
+      const { error } = await supabase.auth.updateUser({ password: a });
+      if (error) return show(error.message);
+      form.reset(); toast(t('sec_pw_saved'));
+    });
+  };
+}
+
+/* Visibilitas data di kartu darurat.
+   CATATAN: untuk sekarang pilihan ini hanya tersimpan di perangkat (localStorage) dan
+   BELUM memengaruhi halaman kartu publik /card/:id — itu perlu kolom database + perubahan
+   get_public_card & card.js. Default semuanya aktif (sama dengan perilaku kartu saat ini). */
+const VIS_KEYS = ['medical', 'address', 'contacts'];
+const visStoreKey = () => 'exigent_visibility_' + session.user.id;
+function loadVis() {
+  const all = { medical: true, address: true, contacts: true };
+  try { const v = JSON.parse(localStorage.getItem(visStoreKey()) || 'null'); if (v) VIS_KEYS.forEach((k) => { all[k] = v[k] !== false; }); } catch (_) { /* abaikan */ }
+  return all;
+}
+const saveVis = (v) => { try { localStorage.setItem(visStoreKey(), JSON.stringify(v)); } catch (_) { /* abaikan */ } };
+const trow = (key, title, desc) => `<button type="button" class="trow" role="switch" aria-checked="true" data-vis="${key}">
+  <span class="mrow-tx"><strong>${esc(title)}</strong><small>${esc(desc)}</small></span><span class="switch" aria-hidden="true"></span></button>`;
+
+function renderPermissions() {
+  main.innerHTML = `<section class="screen stack-lg">
+    <div><p class="sec-label">${T('perm_vis_title')}</p>
+      <div class="card menu">${trow('all', t('perm_all'), t('perm_all_desc'))}</div>
+      <div class="card menu" style="margin-top:12px">
+        ${trow('medical', t('perm_medical'), t('perm_medical_desc'))}
+        ${trow('address', t('perm_address'), t('perm_address_desc'))}
+        ${trow('contacts', t('perm_contacts'), t('perm_contacts_desc'))}
+      </div></div>
+    <div><p class="sec-label">${T('perm_device_title')}</p>
+      <div class="card">
+        <div class="crow"><div><strong>${T('perm_geo')}</strong><p class="muted small">${T('perm_geo_desc')}</p></div><span id="perm-geo" class="badge">${T('perm_checking')}</span></div>
+        <div class="crow"><div><strong>${T('perm_nfc')}</strong><p class="muted small">${T('perm_nfc_desc')}</p></div><span id="perm-nfc" class="badge">${T('perm_checking')}</span></div>
+        <button class="btn btn-outline btn-sm" id="perm-geo-btn" hidden type="button" style="margin-top:12px">${T('perm_request')}</button>
+      </div>
+      <p class="muted small" style="margin-top:12px">${T('perm_hint')}</p></div>
+  </section>`;
+
+  // Master toggle "Izinkan Semua" + tiga switch. Master menyala jika ketiganya menyala.
+  const vis = loadVis();
+  const rows = [...main.querySelectorAll('.trow[data-vis]')];
+  const paint = () => rows.forEach((r) => {
+    const k = r.dataset.vis;
+    r.setAttribute('aria-checked', String(k === 'all' ? VIS_KEYS.every((x) => vis[x]) : vis[k]));
+  });
+  rows.forEach((r) => (r.onclick = () => {
+    const k = r.dataset.vis;
+    if (k === 'all') { const on = !VIS_KEYS.every((x) => vis[x]); VIS_KEYS.forEach((x) => { vis[x] = on; }); } else vis[k] = !vis[k];
+    saveVis(vis); paint();
+  }));
+  paint();
+
+  // Status izin perangkat (Lokasi & NFC)
+  const geo = $('perm-geo'), nfc = $('perm-nfc'), geoBtn = $('perm-geo-btn');
+  const MAP = { granted: ['perm_granted', 'badge-active'], denied: ['perm_denied', 'badge-emergency'], prompt: ['perm_prompt', 'badge-inactive'] };
+  const setBadge = (el, st) => { if (!el.isConnected) return; const [k, cls] = MAP[st] || ['perm_unknown', '']; el.textContent = t(k); el.className = 'badge ' + cls; };
+  watchPermission('geolocation', (st) => { setBadge(geo, st); if (geoBtn.isConnected) geoBtn.hidden = st !== 'prompt'; });
+  watchPermission('nfc', (st) => setBadge(nfc, st));
+  geoBtn.onclick = requestGeolocation;
+}
+
+/* Pusat Bantuan: seluruh isi ada di help-config.js */
+const helpHref = (id) => (id === FAQ_ROOT ? '#/help' : '#/help/' + encodeURIComponent(id));
+const helpAction = (a) => {
+  const label = esc(pick(a.label));
+  if (a.type === 'cs') return `<button type="button" class="btn btn-secondary btn-block" data-cs>${label}</button>`;
+  const href = a.type === 'go' ? '#' + a.to : a.href;
+  return href ? `<a class="btn btn-secondary btn-block" href="${esc(href)}">${label}</a>` : '';
+};
+
+function renderHelp(nodeId) {
+  const id = nodeId || FAQ_ROOT, node = FAQ_TREE[id];
+  if (!node) {
+    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-help', t('help_missing'), '', `<a class="btn btn-secondary" href="#/help">${T('help_back')}</a>`)}</div></section>`;
+    return;
+  }
+  const paras = pick(node.answer) || [], steps = pick(node.steps) || [];
+  const body = node.options
+    ? `<nav class="card menu" aria-label="${esc(pick(node.title))}">${node.options.map((o) => `<a class="mrow plain" href="${helpHref(o.next)}">
+        <span class="mrow-tx"><strong>${esc(pick(o.label))}</strong></span><i data-lucide="chevron-right" class="mrow-go" aria-hidden="true"></i></a>`).join('')}</nav>`
+    : `<div class="card stack-lg">${paras.map((p) => `<p>${esc(p)}</p>`).join('')}
+        ${steps.length ? `<ol class="steps">${steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>` : ''}
+        ${(node.actions || []).map(helpAction).join('')}</div>`;
+  main.innerHTML = `<section class="screen stack-lg">
+    <h2 class="sec-title">${esc(pick(node.title))}</h2>
+    ${body}
+    ${id === FAQ_ROOT ? '' : `<a class="btn btn-outline btn-block" href="#/help">${T('help_back')}</a>`}
+    <div class="card menu">${row({ tag: 'button', id: 'help-cs', icon: 'headset', label: t('help_contact_q'), sub: t('menu_cs') })}</div>
+  </section>`;
+  main.querySelectorAll('[data-cs], #help-cs').forEach((b) => (b.onclick = openCs));
+}
+
+function renderLegal() {
+  main.innerHTML = `<section class="screen stack-lg"><p class="muted">${T('legal_desc')}</p>
+    <nav class="card menu" aria-label="${T('menu_legal')}">
+      ${row({ href: '/privacy-policy.html', icon: 'file-text', label: t('legal_privacy') })}
+      ${row({ href: '/terms.html', icon: 'scale', label: t('legal_terms') })}
+    </nav></section>`;
+}
+
+function renderAbout() {
+  main.innerHTML = `<section class="screen stack-lg"><div class="card about">
+    <span class="about-logo"><i data-lucide="heart-pulse" aria-hidden="true"></i></span>
+    <h2>Exigent-One</h2><p class="about-tag">${T('about_tagline')}</p><p class="muted">${T('about_desc')}</p>
+  </div><p class="muted small center">© 2026 Proximate Labs. All rights reserved.</p></section>`;
+}
+
+/* ---------- Bottom sheet: bahasa, CS, notifikasi, konfirmasi ---------- */
+const FLAG_ID = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="20" fill="#E70011"/><rect y="20" width="40" height="20" fill="#fff"/></svg>';
+const FLAG_EN = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#012169"/><path d="M0 0L40 40M40 0L0 40" stroke="#fff" stroke-width="7"/><path d="M0 0L40 40M40 0L0 40" stroke="#C8102E" stroke-width="2.6"/><path d="M20 0V40M0 20H40" stroke="#fff" stroke-width="11"/><path d="M20 0V40M0 20H40" stroke="#C8102E" stroke-width="6.4"/></svg>';
+const langOpt = (code, name, sub, flag) => `<button type="button" class="opt" role="radio" aria-checked="${code === lang}" data-lang="${code}" tabindex="${code === lang ? 0 : -1}">
+  <span class="opt-flag">${flag}</span><span class="opt-tx"><strong>${name}</strong><small>${sub}</small></span><span class="radio" aria-hidden="true"></span></button>`;
+
+function applyLang(code) {
+  lang = code; setLang(code);
+  document.documentElement.lang = code;
+  applyNavLabels(t);
+  $('bell').setAttribute('aria-label', t('notif_title'));
+  render();
+  toast(t('lang_changed'));
+}
+
+// Modal pilihan bahasa buatan sendiri (pengganti <select> bawaan).
+function openLang() {
+  let sel = lang;
+  openSheet({
+    title: 'Pilih Bahasa / Select Language',
+    closeLabel: t('close'),
+    body: `<div class="opts" role="radiogroup" aria-label="Pilih Bahasa / Select Language">
+      ${langOpt('id', 'Bahasa Indonesia', 'Indonesian', FLAG_ID)}${langOpt('en', 'English', 'Inggris', FLAG_EN)}</div>`,
+    actions: [
+      { label: 'Batal / Cancel', variant: 'outline', onClick: (c) => c.close() },
+      { label: 'Simpan / Save', variant: 'secondary', onClick: (c) => { c.close(); if (sel !== lang) applyLang(sel); } },
+    ],
+    onOpen: (c) => {
+      const radios = [...c.body.querySelectorAll('[role="radio"]')];
+      const choose = (r, focus) => {
+        sel = r.dataset.lang;
+        radios.forEach((x) => { const on = x === r; x.setAttribute('aria-checked', String(on)); x.tabIndex = on ? 0 : -1; });
+        if (focus) r.focus();
+      };
+      radios.forEach((r, i) => {
+        r.onclick = () => choose(r);
+        r.onkeydown = (e) => {
+          const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+          if (!step) return;
+          e.preventDefault(); choose(radios[(i + step + radios.length) % radios.length], true);
+        };
+      });
+    },
+  });
+}
+
+// Pilihan kontak CS. Nomor/username/tautan diatur di cs-config.js.
+function openCs() {
+  const wa = CS_CONTACT.whatsapp, tg = CS_CONTACT.telegram;
+  const waHref = CS_CONTACT.whatsappLink || `https://wa.me/${String(wa.number).replace(/\D/g, '')}?text=${encodeURIComponent(pick(wa.message))}`;
+  const tgUser = String(tg.username).replace(/^@/, '');
+  const tgHref = CS_CONTACT.telegramLink || `https://t.me/${tgUser}`;
+  const opt = (href, cls, icon, name, sub) => `<a class="opt" href="${esc(href)}" target="_blank" rel="noopener noreferrer">
+    <span class="chip-ic ${cls}"><i data-lucide="${icon}" aria-hidden="true"></i></span>
+    <span class="opt-tx"><strong>${name}</strong><small>${esc(sub)}</small></span><i data-lucide="external-link" class="mrow-go" aria-hidden="true"></i></a>`;
+  openSheet({
+    title: t('menu_cs'),
+    closeLabel: t('close'),
+    body: `<p class="muted sheet-text">${T('cs_desc')}</p><div class="opts">
+      ${opt(waHref, 'wa', 'message-circle', 'WhatsApp', wa.display)}${opt(tgHref, 'tg', 'send', 'Telegram', tg.display || '@' + tgUser)}</div>`,
+    actions: [{ label: t('close'), variant: 'outline', onClick: (c) => c.close() }],
+  });
+}
+
+// Panel notifikasi (belum ada sumber notifikasi → tampil kosong).
+function openNotifs() {
+  openSheet({
+    title: t('notif_title'),
+    closeLabel: t('close'),
+    body: empty('bell-off', t('notif_empty_title'), t('notif_empty_desc')),
+    actions: [{ label: t('close'), variant: 'outline', onClick: (c) => c.close() }],
+  });
+}
+
+function confirmSheet({ title, text, okLabel, danger = true, onConfirm }) {
+  openSheet({
+    title,
+    closeLabel: t('close'),
+    body: `<p class="muted sheet-text">${esc(text)}</p>`,
+    actions: [
+      { label: t('cancel'), variant: 'outline', onClick: (c) => c.close() },
+      { label: okLabel, variant: danger ? 'danger' : 'secondary', onClick: (c, btn) => onConfirm(c, btn) },
+    ],
+  });
+}
+
+const askLogout = () => confirmSheet({
+  title: t('logout_q'), text: t('logout_desc'), okLabel: t('logout'),
+  onConfirm: (c, btn) => busy(btn, async () => { try { await signOut(); } catch (e) { fail(e); } }),
+});
+
+const askOthers = () => confirmSheet({
+  title: t('sec_others_q'), text: t('sec_others_body'), okLabel: t('sec_others_ok'),
+  onConfirm: (c, btn) => busy(btn, async () => {
+    const { error } = await supabase.auth.signOut({ scope: 'others' });
+    if (error) return fail(error);
+    c.close(); toast(t('sec_others_done'));
+  }),
+});
+
+async function setCardActive(active) {
+  const { error } = await supabase.from('cards').update({ is_active: active }).eq('id', card.id);
+  if (error) return fail(error);
+  await loadData(); render(); toast(t('card_updated'));
+}
+function onCardRow(e) {
+  if (!card) return;
+  if (!card.is_active) { busy(e.currentTarget, () => setCardActive(true)); return; } // mengaktifkan: tanpa konfirmasi
+  confirmSheet({
+    title: t('deact_q'), text: t('deact_desc'), okLabel: t('set_deactivate'),
+    onConfirm: (c, btn) => busy(btn, async () => { await setCardActive(false); c.close(); }),
+  });
+}
+
+/* ---------- Router (hash) ---------- */
+// Memakai #/rute supaya tombol Back HP/browser bekerja antar layar tanpa perlu rewrite Vercel.
+const ROUTES = {
+  '/': { title: () => t('acct_title'), render: renderHome, root: true },
+  '/security': { title: () => t('menu_security'), render: renderSecurity, parent: '/' },
+  '/settings': { title: () => t('menu_settings'), render: renderSettings, parent: '/' },
+  '/settings/gmail': { title: () => t('set_gmail'), render: renderGmail, parent: '/settings' },
+  '/settings/idcard': { title: () => t('set_idcard'), render: renderIdCard, parent: '/settings' },
+  '/settings/permissions': { title: () => t('set_permissions'), render: renderPermissions, parent: '/settings' },
+  '/help': { title: () => t('menu_help'), render: renderHelp, parent: '/' }, // juga melayani /help/<id-node>
+  '/legal': { title: () => t('menu_legal'), render: renderLegal, parent: '/' },
+  '/about': { title: () => t('menu_about'), render: renderAbout, parent: '/' },
+};
+const currentPath = () => location.hash.replace(/^#/, '') || '/';
+function resolve(path) {
+  if (ROUTES[path]) return { route: ROUTES[path], path };
+  if (path.startsWith('/help/')) {
+    let node = '';
+    try { node = decodeURIComponent(path.slice(6)); } catch (_) { /* id rusak → tampil "tidak ditemukan" */ }
+    return { route: ROUTES['/help'], path, node };
+  }
+  return { route: ROUTES['/'], path: '/', unknown: true };
+}
+
+const stack = []; // riwayat layar di halaman ini, untuk tombol kembali di app bar
+let replacing = false;
+function goBack(route) {
+  if (stack.length > 1) { history.back(); return; }
+  // Dibuka langsung/di-reload di sub-halaman: naik ke halaman induknya (tanpa menambah history).
+  replacing = true;
+  location.replace('#' + (route.parent || '/'));
+}
+
+function renderAppbar(route) {
+  $('appbar-lead').innerHTML = route.root
+    ? `<h1 class="appbar-title">${esc(route.title())}</h1>`
+    : `<button type="button" class="icon-btn" id="back" aria-label="${T('back')}"><i data-lucide="chevron-left" aria-hidden="true"></i></button><h1 class="appbar-title sub">${esc(route.title())}</h1>`;
+  const back = $('back');
+  if (back) back.onclick = () => goBack(route);
+}
+
+function render() {
+  if (!session) return;
+  const { route, node } = resolve(currentPath());
+  renderAppbar(route);
+  route.render(node);
+  document.title = `${route.title()} · Emergency Card`;
+  icons();
+}
+
+function onRoute() {
+  const r = resolve(currentPath());
+  if (r.unknown) history.replaceState(null, '', '#/'); // alamat tak dikenal → beranda
+  const path = r.path;
+  if (replacing) { replacing = false; stack[Math.max(stack.length - 1, 0)] = path; }
+  else if (stack.length > 1 && stack[stack.length - 2] === path) stack.pop();
+  else if (stack[stack.length - 1] !== path) stack.push(path);
+  render();
+  window.scrollTo(0, 0);
+  main.focus({ preventScroll: true });
+}
+
+// Peringatan di console jika ada tautan "next" di help-config.js yang menunjuk node tak dikenal.
+function validateFaq() {
+  if (!FAQ_TREE[FAQ_ROOT]) console.warn(`[help-config] node awal "${FAQ_ROOT}" tidak ada`);
+  Object.entries(FAQ_TREE).forEach(([id, n]) => (n.options || []).forEach((o) => {
+    if (!FAQ_TREE[o.next]) console.warn(`[help-config] "${id}" → next "${o.next}" tidak ditemukan`);
+  }));
+}
+
+/* ---------- Mulai ---------- */
+document.documentElement.lang = lang;
+applyNavLabels(t);
+$('bell').setAttribute('aria-label', t('notif_title'));
+$('bell').onclick = openNotifs;
+renderAppbar(resolve(currentPath()).route);
+icons();
+validateFaq();
+requireSession().then(async (s) => {
+  if (!s) return;
+  session = s;
+  await loadData();
+  onRoute();
+  window.addEventListener('hashchange', onRoute);
+});

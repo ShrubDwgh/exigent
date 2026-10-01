@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <title>Akun · Emergency Card</title>
+</head>
+<body class="dash acct">
+  <!-- App Bar: judul (kiri) + hanya ikon lonceng notifikasi (kanan). Diisi account.js -->
+  <header class="appbar">
+    <div class="appbar-in">
+      <div class="appbar-lead" id="appbar-lead"></div>
+      <button class="icon-btn" id="bell" type="button" aria-label="Notifikasi" aria-haspopup="dialog"><i data-lucide="bell" aria-hidden="true"></i><span class="dot" id="bell-dot" hidden></span></button>
+    </div>
+  </header>
+
+  <!-- Navigasi bawah: Dashboard · Medis · Akun (Akun aktif) -->
+  <aside class="side">
+    <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
+    <nav aria-label="Menu utama">
+      <a class="nav-btn" href="/dashboard.html"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span data-nav-label="dashboard">Dashboard</span></a>
+      <a class="nav-btn" href="/medical-search.html"><i data-lucide="map-pin" aria-hidden="true"></i><span data-nav-label="medical">Medis</span></a>
+      <a class="nav-btn active" href="/account.html" aria-current="page"><i data-lucide="user" aria-hidden="true"></i><span data-nav-label="account">Akun</span></a>
+    </nav>
+  </aside>
+
+  <main class="main" id="acct-main" tabindex="-1">
+    <div class="skeleton-card"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div></div>
+    <div class="skeleton-card"><div class="skeleton-line w90"></div><div class="skeleton-btn"></div></div>
+  </main>
+
+  <script type="module" src="/account.js"></script>
+</body>
+</html>

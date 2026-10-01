@@ -4,29 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="/style.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
   <title>Pengaturan · Emergency Card</title>
+  <!-- Halaman ini sudah pindah ke Halaman Akun. File dibiarkan agar tautan/bookmark lama tetap jalan. -->
+  <script>location.replace('/account.html#/settings');</script>
+  <noscript><meta http-equiv="refresh" content="0;url=/account.html#/settings"></noscript>
 </head>
-<body class="card-page">
-  <div class="topbar"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
-  <main class="wrap">
-    <h1>Pengaturan</h1>
-    <div class="card">
-      <a class="crow" href="/settings/permissions" style="text-decoration:none;color:inherit">
-        <div><strong>Perizinan</strong><div class="muted small">Status izin lokasi &amp; NFC di browser ini</div></div>
-        <i data-lucide="chevron-right" aria-hidden="true"></i>
-      </a>
-    </div>
-    <a class="btn btn-outline btn-block" href="/dashboard.html" style="margin-top:16px">Kembali ke Dashboard</a>
-  </main>
-  <script type="module">
-    import { requireSession } from '/auth.js';
-    requireSession();
-    window.lucide && window.lucide.createIcons();
-  </script>
+<body>
+  <p><a href="/account.html#/settings">Buka Pengaturan</a></p>
 </body>
 </html>
