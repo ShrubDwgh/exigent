@@ -15,7 +15,6 @@
 <body>
   <header class="site-head">
     <a class="brand" href="/"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card NFC</a>
-    <a class="btn btn-outline btn-sm" href="/login.html">Masuk</a>
   </header>
   <main>
     <section class="wrap hero">
@@ -23,10 +22,14 @@
       <p class="lead">Informasi penting Anda, tersedia saat dibutuhkan.</p>
       <p class="muted">Simpan golongan darah, alergi, dan kontak darurat di satu kartu. Siapa pun yang menempelkan HP ber-NFC ke kartu bisa melihatnya dalam hitungan detik, tanpa aplikasi.</p>
       <div class="btns">
-        <a class="btn" href="/register.html">Daftar / Buat Kartu</a>
+        <a class="btn" id="hero-cta" href="/register.html">Daftar</a>
         <a class="btn btn-outline" href="#cara-kerja">Cara Kerja</a>
       </div>
     </section>
+
+    <!-- Spacer: dorong section Cara Kerja agar tidak terlihat di awal -->
+    <div style="height:50vh" aria-hidden="true"></div>
+
     <section class="wrap" id="cara-kerja">
       <h2>Cara kerja</h2>
       <ol class="flow">
@@ -38,6 +41,21 @@
       <p class="muted">Tempelkan HP ber-NFC pada kartu untuk membuka halaman emergency.</p>
     </section>
   </main>
-  <script>window.addEventListener('load', function () { window.lucide && window.lucide.createIcons(); });</script>
+
+  <script>
+    window.addEventListener('load', function () { window.lucide && window.lucide.createIcons(); });
+  </script>
+  <script type="module">
+    import { supabase } from '/supabase.js';
+    const cta = document.getElementById('hero-cta');
+    if (cta) {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          cta.textContent = 'Masuk';
+          cta.href = '/dashboard.html';
+        }
+      });
+    }
+  </script>
 </body>
 </html>
