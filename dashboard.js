@@ -22,12 +22,11 @@ function deviceInfo() {
 
 async function logLoginIfNeeded() {
   const key = 'exigent_logged_activity';
-  if (sessionStorage.getItem(key)) return; // sudah dicatat di sesi ini
+  if (sessionStorage.getItem(key)) return;
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const providers = (user.app_metadata && user.app_metadata.providers) || [];
-    // Hanya log kalau login pakai Google (login email sudah dicatat di auth-page.js)
     if (!providers.includes('google')) {
       sessionStorage.setItem(key, '1');
       return;
@@ -38,6 +37,19 @@ async function logLoginIfNeeded() {
 }
 
 logLoginIfNeeded();
+
+// ==========================================
+// REGISTER DEVICE (TAMBAHAN BARU)
+// ==========================================
+async function registerCurrentDevice() {
+  try {
+    const ua = navigator.userAgent || '';
+    await supabase.rpc('register_device', {
+      p_device_info: deviceInfo(),
+      p_user_agent: ua,
+    });
+  } catch (_) { /* diamkan */ }
+}
 // ==========================================
 
 const $ = (id) => document.getElementById(id);
@@ -94,7 +106,7 @@ async function writeNfc(url) {
   status.textContent = 'Dekatkan HP ke kartu NFC kosong…';
   try {
     await new NDEFReader().write({ records: [{ recordType: 'url', data: url }] });
-    toast('✅ Berhasil ditulis ke kartu NFC');
+    toast('Berhasil ditulis ke kartu NFC');
     status.textContent = '';
     supabase.from('cards').update({ nfc_written_at: new Date().toISOString() }).eq('id', card.id).then(() => load(), () => {});
   } catch (err) {
@@ -272,4 +284,4 @@ function closeMedisModal() {
 }
 
 $('fab-edit').onclick = openMedisModal;
-requireSession().then((s) => { if (s) { applyNavLabels(t); load(); } });
+requireSession().then((s) => { if (s) { applyNavLabels(t); load(); registerCurrentDevice(); } });
