@@ -41,6 +41,29 @@ const fmtDate = (iso) => {
   if (!iso) return '—';
   try { return new Intl.DateTimeFormat(lang === 'id' ? 'id-ID' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso)); } catch (_) { return String(iso); }
 };
+const fmtRelative = (iso) => {
+  try {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return lang === 'id' ? 'Baru saja' : 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + (lang === 'id' ? ' menit lalu' : ' min ago');
+    if (diff < 86400) return Math.floor(diff / 3600) + (lang === 'id' ? ' jam lalu' : ' h ago');
+    if (diff < 604800) return Math.floor(diff / 86400) + (lang === 'id' ? ' hari lalu' : ' d ago');
+    return fmtDate(iso);
+  } catch (_) { return ''; }
+};
+const deviceLabel = (ua) => {
+  const platform = /Android/i.test(ua) ? 'Android'
+                 : /iPhone|iPad|iPod/i.test(ua) ? 'iOS'
+                 : /Windows/i.test(ua) ? 'Windows'
+                 : /Mac/i.test(ua) ? 'Mac'
+                 : 'Unknown';
+  const browser = /Edg/i.test(ua) ? 'Edge'
+                : /Chrome/i.test(ua) ? 'Chrome'
+                : /Safari/i.test(ua) ? 'Safari'
+                : /Firefox/i.test(ua) ? 'Firefox'
+                : 'Browser';
+  return browser + ' di ' + platform;
+};
 
 /* ---------- Potongan HTML ---------- */
 const row = ({ tag = 'a', href, id, icon, label, sub, value, danger, disabled, plain }) => {
@@ -147,6 +170,7 @@ function renderSecurity() {
     </form>` : ''}
     ${pv.includes('google') ? `<div class="card stack-lg"><h2>Google</h2><p class="muted">${T('sec_google_note')}</p>
       <a class="btn btn-outline btn-sm" href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer">${T('sec_google_manage')}</a></div>` : ''}
+    <div class="card menu">${row({ href: '#/security/devices', icon: 'monitor-smartphone', label: lang === 'id' ? 'Perangkat Terhubung' : 'Connected Devices', sub: lang === 'id' ? 'Lihat semua perangkat yang login' : 'View all logged-in devices' })}</div>
     <div class="card menu">${row({ tag: 'button', id: 'row-others', icon: 'smartphone', label: t('sec_others'), sub: t('sec_others_desc') })}</div>
   </section>`;
   $('row-others').onclick = askOthers;
@@ -164,6 +188,89 @@ function renderSecurity() {
       form.reset(); toast(t('sec_pw_saved'));
     });
   };
+}
+
+/* ---------- Perangkat Terhubung ---------- */
+async function registerCurrentDevice() {
+  try {
+    const ua = navigator.userAgent || '';
+    await supabase.rpc('register_device', {
+      p_device_info: deviceLabel(ua),
+      p_user_agent: ua,
+    });
+  } catch (_) { /* diamkan */ }
+}
+
+async function renderDevices() {
+  main.innerHTML = `<section class="screen stack-lg">
+    <div class="card" style="text-align:center;padding:24px"><p class="muted">${lang === 'id' ? 'Memuat...' : 'Loading...'}</p></div>
+  </section>`;
+
+  const { data, error } = await supabase
+    .from('user_devices')
+    .select('*')
+    .order('last_active_at', { ascending: false });
+
+  if (error) {
+    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-alert', lang === 'id' ? 'Gagal memuat' : 'Failed to load', error.message)}</div></section>`;
+    return;
+  }
+
+  const devices = data || [];
+  const uaNow = navigator.userAgent || '';
+  const currentDevice = devices.find((d) => d.user_agent === uaNow);
+
+  const deviceRow = (d) => {
+    const isCurrent = currentDevice && d.id === currentDevice.id;
+    const iconName = /Android|iPhone|iPad|iPod/i.test(d.user_agent) ? 'smartphone' : 'monitor';
+    const iconBg = isCurrent ? 'background:rgba(34,197,94,.1);color:#22c55e' : 'background:rgba(107,114,128,.1);color:#6b7280';
+    return `<div class="crow" style="padding:14px 4px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;gap:12px;align-items:center">
+      <span style="flex-shrink:0;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:50%;${iconBg}">
+        <i data-lucide="${iconName}" aria-hidden="true"></i>
+      </span>
+      <div style="flex:1;min-width:0">
+        <strong style="display:block;font-size:14px;color:#111827">
+          ${esc(d.device_info || 'Unknown')}
+          ${isCurrent ? `<span class="badge badge-active" style="margin-left:6px">${lang === 'id' ? 'Perangkat ini' : 'This device'}</span>` : ''}
+        </strong>
+        <small style="display:block;margin-top:4px;font-size:12px;color:#9ca3af">
+          ${lang === 'id' ? 'Aktif terakhir: ' : 'Last active: '}${esc(fmtRelative(d.last_active_at))}
+        </small>
+      </div>
+      ${!isCurrent ? `<button type="button" class="btn btn-outline btn-sm" data-del-device="${d.id}" style="flex-shrink:0;color:#dc2626;border-color:rgba(220,38,38,.3)">${lang === 'id' ? 'Hapus' : 'Remove'}</button>` : ''}
+    </div>`;
+  };
+
+  main.innerHTML = `<section class="screen stack-lg">
+    <p class="muted">${lang === 'id'
+      ? 'Perangkat yang pernah login ke akunmu. Kalau ada yang tidak dikenal, segera hapus dan ganti password.'
+      : 'Devices that have logged into your account. If any is unfamiliar, remove it and change your password.'}</p>
+    <div class="card">
+      ${devices.length ? devices.map(deviceRow).join('') : `<p class="muted" style="padding:12px 0">${lang === 'id' ? 'Belum ada data perangkat.' : 'No device data yet.'}</p>`}
+    </div>
+  </section>`;
+
+  icons();
+
+  main.querySelectorAll('[data-del-device]').forEach((btn) => {
+    btn.onclick = () => {
+      const id = btn.getAttribute('data-del-device');
+      confirmSheet({
+        title: lang === 'id' ? 'Hapus perangkat?' : 'Remove device?',
+        text: lang === 'id'
+          ? 'Perangkat ini akan logout otomatis. Perlu login ulang untuk mengakses akun dari perangkat itu.'
+          : 'This device will be logged out automatically. Re-login required to access the account from that device.',
+        okLabel: lang === 'id' ? 'Hapus' : 'Remove',
+        onConfirm: (c, b) => busy(b, async () => {
+          const { error } = await supabase.rpc('revoke_device', { p_device_id: id });
+          if (error) return fail(error);
+          c.close();
+          toast(lang === 'id' ? 'Perangkat berhasil dihapus' : 'Device removed successfully');
+          renderDevices();
+        }),
+      });
+    };
+  });
 }
 
 /* Visibilitas data di kartu darurat. */
@@ -388,7 +495,6 @@ function openNotifs() {
         c.body.innerHTML = `<div>${items.map(notifItemHtml).join('')}</div>`;
         icons();
 
-        // Bind klik untuk notif yang punya link
         c.body.querySelectorAll('[data-notif-link]').forEach((btn) => {
           btn.onclick = () => {
             const link = btn.getAttribute('data-notif-link');
@@ -498,6 +604,7 @@ function onCardRow(e) {
 const ROUTES = {
   '/': { title: () => t('acct_title'), render: renderHome, root: true },
   '/security': { title: () => t('menu_security'), render: renderSecurity, parent: '/' },
+  '/security/devices': { title: () => (lang === 'id' ? 'Perangkat Terhubung' : 'Connected Devices'), render: renderDevices, parent: '/security' },
   '/settings': { title: () => t('menu_settings'), render: renderSettings, parent: '/' },
   '/settings/gmail': { title: () => t('set_gmail'), render: renderGmail, parent: '/settings' },
   '/settings/idcard': { title: () => t('set_idcard'), render: renderIdCard, parent: '/settings' },
@@ -576,5 +683,6 @@ requireSession().then(async (s) => {
   await loadData();
   onRoute();
   loadNotifCount();
+  registerCurrentDevice();
   window.addEventListener('hashchange', onRoute);
 });
