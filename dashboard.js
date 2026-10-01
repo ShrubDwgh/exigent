@@ -3,7 +3,7 @@ import { requireSession, busy, toast } from './auth.js';
 import { STRINGS, getLang, applyNavLabels } from './i18n.js';
 
 // ==========================================
-// LOG LOGIN GOOGLE (TAMBAHAN BARU)
+// LOG LOGIN GOOGLE
 // ==========================================
 function deviceInfo() {
   const ua = navigator.userAgent || '';
@@ -39,7 +39,7 @@ async function logLoginIfNeeded() {
 logLoginIfNeeded();
 
 // ==========================================
-// REGISTER DEVICE (TAMBAHAN BARU)
+// REGISTER DEVICE
 // ==========================================
 async function registerCurrentDevice() {
   try {
@@ -50,7 +50,6 @@ async function registerCurrentDevice() {
     });
   } catch (_) { /* diamkan */ }
 }
-// ==========================================
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -107,8 +106,27 @@ async function writeNfc(url) {
   try {
     await new NDEFReader().write({ records: [{ recordType: 'url', data: url }] });
     toast('Berhasil ditulis ke kartu NFC');
-    status.textContent = '';
-    supabase.from('cards').update({ nfc_written_at: new Date().toISOString() }).eq('id', card.id).then(() => load(), () => {});
+    status.textContent = 'Menyimpan status…';
+
+    // === DEBUG: cek dulu card.id ===
+    console.log('[writeNfc] card.id =', card && card.id);
+
+    const { data: updData, error: dbErr } = await supabase
+      .from('cards')
+      .update({ nfc_written_at: new Date().toISOString() })
+      .eq('id', card.id)
+      .select();
+
+    console.log('[writeNfc] update result =', updData, 'error =', dbErr);
+
+    if (dbErr) {
+      status.innerHTML = `<span class="err-line">Kartu berhasil ditulis, tapi gagal update status: ${esc(dbErr.message)}</span>`;
+    } else if (!updData || updData.length === 0) {
+      status.innerHTML = `<span class="err-line">Update tidak mengubah baris. Kemungkinan RLS policy UPDATE belum ada, atau card.id tidak cocok.</span>`;
+    } else {
+      status.textContent = '';
+      await load();
+    }
   } catch (err) {
     status.innerHTML = `<span class="err-line">${esc(err.message || err.name || 'Gagal menulis')}</span>Pastikan kartu menempel stabil di belakang HP, lalu coba lagi.`;
   } finally {
