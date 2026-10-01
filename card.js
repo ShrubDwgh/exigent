@@ -147,14 +147,14 @@ function render(d) {
   const updated = el('p', 'muted small', 'Diperbarui ' + new Date(d.updated_at).toLocaleString('id-ID'));
   updated.style.marginTop = '16px';
 
-  // URUTAN BARU: card identitas → tombol aksi → daftar kontak & catatan
+  // URUTAN: card identitas → tombol aksi → daftar kontak & catatan
   app.replaceChildren(ec, actions, ...rest, updated);
   refreshIcons();
 }
 
 (async () => {
   showWelcome();
-  if (!/^EC-[A-Z0-9]{8}$/.test(cardId)) return message('Kartu tidak valid', 'ID kartu tidak dikenali.');
+  if (!/^EC-[A-Z0-9]{8,16}$/.test(cardId)) return message('Kartu tidak valid', 'ID kartu tidak dikenali.');
   const { data, error } = await supabase.rpc('get_public_card', { p_card_id: cardId });
   if (error) return message('Gagal memuat kartu', 'Periksa koneksi internet, lalu muat ulang halaman.');
   if (!data) return message('Kartu tidak ditemukan', 'Kartu ini tidak ada atau sudah dinonaktifkan pemiliknya.');
