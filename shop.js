@@ -35,8 +35,10 @@ function renderHeader() {
 function productCard(p) {
   const hasDiscount = p.discount_percent && p.discount_percent > 0 && p.original_price;
   const img = p.image_url
-    ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy" style="width:100%;height:180px;object-fit:cover;border-radius:12px;background:#f3f4f6;display:block">`
-    : `<div style="width:100%;height:180px;background:linear-gradient(135deg,#dbeafe,#eff6ff);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#2563eb">
+    ? `<div style="width:100%;height:200px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden">
+         <img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy" style="max-width:100%;max-height:100%;object-fit:contain;display:block">
+       </div>`
+    : `<div style="width:100%;height:200px;background:linear-gradient(135deg,#dbeafe,#eff6ff);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#2563eb">
          <i data-lucide="package" style="width:44px;height:44px" aria-hidden="true"></i>
        </div>`;
 
