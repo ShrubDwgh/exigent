@@ -64,8 +64,20 @@ const lang = getLang();
 const t = (k) => (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || k;
 
 async function load() {
-  const { data, error } = await supabase.from('cards').select('*').order('created_at').limit(1).maybeSingle();
+  // Ambil user yang sedang login
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return fail({ message: 'Sesi habis, silakan login ulang.' });
+
+  // Filter by owner_id — double layer, biar RLS + client-side filter dua-duanya aktif
+  const { data, error } = await supabase
+    .from('cards')
+    .select('*')
+    .eq('owner_id', user.id)
+    .order('created_at')
+    .limit(1)
+    .maybeSingle();
   if (error) return fail(error);
+
   card = data; profile = null; contacts = [];
   if (card) {
     const [p, k] = await Promise.all([
