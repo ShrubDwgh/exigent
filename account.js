@@ -271,21 +271,33 @@ function renderIdCard() {
 function renderSecurity() {
   const pv = providers();
   main.innerHTML = `<section class="screen stack-lg">
-    ${pv.includes('email') ? `<form id="pw-form" class="card stack-lg" novalidate>
-      <h2>${T('sec_password')}</h2>
-      <div class="field" style="margin:0"><label for="pw1">${T('sec_new_pw')}</label><input class="input" id="pw1" type="password" autocomplete="new-password"></div>
-      <div class="field" style="margin:0"><label for="pw2">${T('sec_confirm_pw')}</label><input class="input" id="pw2" type="password" autocomplete="new-password"></div>
-      <p id="pw-msg" class="msg" role="alert" hidden></p>
-      <button class="btn btn-secondary btn-block" type="submit">${T('sec_save_pw')}</button>
-    </form>` : ''}
+    ${pv.includes('email') ? `<div class="card menu">${row({ href: '#/security/password', icon: 'key-round', label: lang === 'id' ? 'Ubah Password' : 'Change Password', sub: lang === 'id' ? 'Ganti password akunmu' : 'Update your account password' })}</div>` : ''}
     ${pv.includes('google') ? `<div class="card stack-lg"><h2>Google</h2><p class="muted">${T('sec_google_note')}</p>
       <a class="btn btn-outline btn-sm" href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer">${T('sec_google_manage')}</a></div>` : ''}
     <div class="card menu">${row({ href: '#/security/devices', icon: 'monitor-smartphone', label: lang === 'id' ? 'Perangkat Terhubung' : 'Connected Devices', sub: lang === 'id' ? 'Lihat semua perangkat yang login' : 'View all logged-in devices' })}</div>
     <div class="card menu">${row({ tag: 'button', id: 'row-others', icon: 'smartphone', label: t('sec_others'), sub: t('sec_others_desc') })}</div>
   </section>`;
   $('row-others').onclick = askOthers;
+}
+
+function renderChangePassword() {
+  const pv = providers();
+  if (!pv.includes('email')) {
+    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-alert', lang === 'id' ? 'Tidak tersedia' : 'Not available', lang === 'id' ? 'Akun Google tidak punya password lokal.' : 'Google accounts have no local password.')}</div></section>`;
+    return;
+  }
+  main.innerHTML = `<section class="screen stack-lg">
+    <form id="pw-form" class="card stack-lg" novalidate>
+      <h2>${T('sec_password')}</h2>
+      <div class="field" style="margin:0"><label for="pw1">${T('sec_new_pw')}</label><input class="input" id="pw1" type="password" autocomplete="new-password"></div>
+      <div class="field" style="margin:0"><label for="pw2">${T('sec_confirm_pw')}</label><input class="input" id="pw2" type="password" autocomplete="new-password"></div>
+      <p id="pw-msg" class="msg" role="alert" hidden></p>
+      <button class="btn btn-secondary btn-block" type="submit">${T('sec_save_pw')}</button>
+    </form>
+  </section>`;
+
   const form = $('pw-form');
-  if (form) form.onsubmit = (e) => {
+  form.onsubmit = (e) => {
     e.preventDefault();
     const msg = $('pw-msg'), a = $('pw1').value, b = $('pw2').value;
     const show = (text) => { msg.textContent = text; msg.hidden = false; };
@@ -733,6 +745,7 @@ function onCardRow(e) {
 const ROUTES = {
   '/': { title: () => t('acct_title'), render: renderHome, root: true },
   '/security': { title: () => t('menu_security'), render: renderSecurity, parent: '/' },
+  '/security/password': { title: () => (lang === 'id' ? 'Ubah Password' : 'Change Password'), render: renderChangePassword, parent: '/security' },
   '/security/devices': { title: () => (lang === 'id' ? 'Perangkat Terhubung' : 'Connected Devices'), render: renderDevices, parent: '/security' },
   '/settings': { title: () => t('menu_settings'), render: renderSettings, parent: '/' },
   '/settings/gmail': { title: () => t('set_gmail'), render: renderGmail, parent: '/settings' },
@@ -803,6 +816,7 @@ document.documentElement.lang = lang;
 applyNavLabels(t);
 $('bell').setAttribute('aria-label', t('notif_title'));
 $('bell').onclick = openNotifs;
+renderAppbar(resolve(currentPath()).route);
 renderAppbar(resolve(currentPath()).route);
 icons();
 validateFaq();
