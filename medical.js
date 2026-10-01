@@ -29,22 +29,22 @@ class MapError extends Error {}
 
 async function overpass(query) {
   if (!navigator.onLine) throw new MapError('Tidak ada koneksi internet. Sambungkan internet lalu coba lagi.');
-  let reason = 'Server peta tidak merespons.';
+  let reason = 'Layanan pencarian tidak merespons.';
   for (const url of API) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 15000);
     try {
       const r = await fetch(url, { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'ExigentOne-Web/1.0' }, body: 'data=' + encodeURIComponent(query) });
-      if (r.status === 429) { reason = 'Server peta sedang ramai. Bukan masalah jaringan kamu. Tunggu sekitar 1 menit lalu coba lagi.'; continue; }
-      if (r.status >= 500) { reason = 'Server peta sedang sibuk (kode ' + r.status + '). Bukan masalah jaringan kamu. Coba lagi sebentar lagi.'; continue; }
-      if (!r.ok) { reason = 'Server peta menolak permintaan (kode ' + r.status + '). Coba lagi sebentar lagi.'; continue; }
+      if (r.status === 429) { reason = 'Layanan pencarian sedang sibuk. Coba lagi sebentar lagi.'; continue; }
+      if (r.status >= 500) { reason = 'Layanan pencarian sedang sibuk. Coba lagi sebentar lagi.'; continue; }
+      if (!r.ok) { reason = 'Layanan pencarian tidak tersedia. Coba lagi sebentar lagi.'; continue; }
       const j = await r.json();
-      if (j.remark && /timed out|out of memory/i.test(j.remark) && !(j.elements || []).length) { reason = 'Pencarian terlalu berat bagi server peta. Coba lagi sebentar lagi.'; continue; }
+      if (j.remark && /timed out|out of memory/i.test(j.remark) && !(j.elements || []).length) { reason = 'Pencarian memakan waktu terlalu lama. Coba lagi sebentar lagi.'; continue; }
       return j.elements || [];
     } catch (e) {
-      reason = e.name === 'AbortError' ? 'Server peta terlalu lama merespons. Bukan masalah jaringan kamu. Coba lagi sebentar lagi.'
-        : e instanceof SyntaxError ? 'Server peta mengirim data yang tidak valid. Coba lagi sebentar lagi.'
-        : navigator.onLine ? 'Server peta sedang ramai. Bukan masalah jaringan kamu. Coba lagi 1-2 menit lagi.'
+      reason = e.name === 'AbortError' ? 'Pencarian terlalu lama. Coba lagi sebentar lagi.'
+        : e instanceof SyntaxError ? 'Layanan pencarian tidak tersedia. Coba lagi sebentar lagi.'
+        : navigator.onLine ? 'Layanan pencarian sedang sibuk. Coba lagi 1-2 menit lagi.'
         : 'Koneksi internet terputus. Sambungkan internet lalu coba lagi.';
     } finally { clearTimeout(timer); }
   }
@@ -73,21 +73,25 @@ function skeleton() {
 }
 
 function renderFallbackMap() {
-  // Tampilkan tombol "Buka di Google Maps" saat Overpass gagal
   const q = encodeURIComponent(CATS[cat].label + ' terdekat');
   const wrap = el('div', 'card');
-  const title = el('h3', null, 'Cari lewat Google Maps');
-  const desc = el('p', 'muted', 'Server peta gratis sedang sibuk. Kamu tetap bisa cari ' + CATS[cat].label.toLowerCase() + ' terdekat lewat Google Maps.');
+  wrap.append(
+    el('h3', null, 'Cari lewat Google Maps'),
+    el('p', 'muted', 'Untuk hasil terbaik, cari ' + CATS[cat].label.toLowerCase() + ' terdekat langsung di Google Maps.')
+  );
   const link = el('a', 'btn btn-secondary btn-block', 'Buka Google Maps');
   link.href = `https://www.google.com/maps/search/${q}/@${pos.lat},${pos.lon},14z`;
   link.target = '_blank';
   link.rel = 'noopener';
   link.style.marginTop = '12px';
-  const retry = el('button', 'btn btn-outline btn-block', 'Coba lagi di sini');
+  wrap.append(link);
+
+  const retry = el('button', null, 'Coba lagi');
   retry.type = 'button';
-  retry.style.marginTop = '8px';
+  retry.style.cssText = 'display:block;margin:12px auto 0;background:none;border:none;color:#2563eb;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;text-decoration:underline;padding:4px 8px';
   retry.onclick = () => search();
-  wrap.append(title, desc, link, retry);
+  wrap.append(retry);
+
   results.append(wrap);
 }
 
@@ -122,7 +126,7 @@ async function search() {
   } catch (e) {
     if (id === seq) {
       results.replaceChildren();
-      status.textContent = e instanceof MapError ? e.message : 'Terjadi kesalahan tak terduga saat mencari: ' + e.message;
+      status.textContent = '';
       renderFallbackMap();
     }
   }
