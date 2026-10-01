@@ -211,4 +211,19 @@ export default {
   terms_h10: '10. 規約の変更',
   terms_h11: '11. 準拠法',
   terms_h12: '12. お問い合わせ',
-}
+
+  // Shop
+  shop_free: '無料',
+  shop_title: 'ショップ',
+  shop_desc: 'お気に入りのNFCカードやテンプレート商品をお選びください。購入はShopeeを通じて安全・簡単に行えます。',
+  shop_search_ph: '商品名やテンプレートコードで検索...',
+  shop_filter_all: 'すべて',
+  shop_no_match: '該当する商品がありません。',
+  shop_load_failed: '商品を読み込めませんでした。',
+  shop_discount: '割引',
+  shop_sale: 'セール',
+  shop_buy: '購入',
+  shop_get: '取得',
+  shop_soon: '近日公開',
+  shop_back: '戻る',
+};
