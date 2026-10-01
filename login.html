@@ -16,12 +16,24 @@
     <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card NFC</div>
     <div class="card">
       <h1>Masuk ke Emergency Card</h1>
+      
       <form id="form" data-mode="login" novalidate style="margin-top:20px">
         <div class="field"><label for="email">Email</label><input class="input" id="email" type="email" autocomplete="email" required></div>
         <div class="field"><label for="password">Password</label><input class="input" id="password" type="password" autocomplete="current-password" required></div>
         <p id="msg" class="msg" role="alert" hidden></p>
         <button class="btn btn-block" type="submit">Masuk</button>
       </form>
+
+      <!-- === TOMBOL LOGIN GOOGLE DITAMBAHKAN DI SINI === -->
+      <div style="text-align: center; margin-top: 20px;">
+        <p style="color: #888; font-size: 14px; margin-bottom: 10px;">Atau</p>
+        <button type="button" onclick="loginWithGoogle()" style="background: white; color: #333; border: 1px solid #ccc; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold;">
+          <img src="https://www.google.com/favicon.ico" width="18" alt="Google">
+          Masuk dengan Google
+        </button>
+      </div>
+      <!-- ============================================== -->
+
       <p class="muted center">Belum punya akun? <a href="/register.html">Daftar</a></p>
     </div>
   </main>
