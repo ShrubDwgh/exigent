@@ -2,6 +2,44 @@ import { supabase } from './supabase.js';
 import { requireSession, busy, toast } from './auth.js';
 import { STRINGS, getLang, applyNavLabels } from './i18n.js';
 
+// ==========================================
+// LOG LOGIN GOOGLE (TAMBAHAN BARU)
+// ==========================================
+function deviceInfo() {
+  const ua = navigator.userAgent || '';
+  const platform = /Android/i.test(ua) ? 'Android'
+                 : /iPhone|iPad|iPod/i.test(ua) ? 'iOS'
+                 : /Windows/i.test(ua) ? 'Windows'
+                 : /Mac/i.test(ua) ? 'Mac'
+                 : 'Unknown';
+  const browser = /Edg/i.test(ua) ? 'Edge'
+                : /Chrome/i.test(ua) ? 'Chrome'
+                : /Safari/i.test(ua) ? 'Safari'
+                : /Firefox/i.test(ua) ? 'Firefox'
+                : 'Browser';
+  return browser + ' di ' + platform;
+}
+
+async function logLoginIfNeeded() {
+  const key = 'exigent_logged_activity';
+  if (sessionStorage.getItem(key)) return; // sudah dicatat di sesi ini
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const providers = (user.app_metadata && user.app_metadata.providers) || [];
+    // Hanya log kalau login pakai Google (login email sudah dicatat di auth-page.js)
+    if (!providers.includes('google')) {
+      sessionStorage.setItem(key, '1');
+      return;
+    }
+    await supabase.rpc('log_login_activity', { device_info: deviceInfo() });
+    sessionStorage.setItem(key, '1');
+  } catch (_) { /* diamkan */ }
+}
+
+logLoginIfNeeded();
+// ==========================================
+
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const list = (v) => v.split(',').map((x) => x.trim()).filter(Boolean);
@@ -48,8 +86,6 @@ function drawQR(url) {
   };
 }
 
-// Web NFC: Chrome Android + HTTPS saja. "nfc_written_at" ditandai di DB setelah
-// tulis sukses, supaya lain kali dashboard bisa menampilkan info "sudah terdaftar".
 async function writeNfc(url) {
   const status = $('nfc-status'), btn = $('nfc-write');
   if (!('NDEFReader' in window)) { status.textContent = 'Browser ini tidak mendukung tulis NFC langsung (perlu Chrome di Android). Salin URL di atas, lalu tulis lewat aplikasi seperti NFC Tools.'; return; }
