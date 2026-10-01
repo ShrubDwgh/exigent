@@ -15,9 +15,10 @@
 <body class="card-page">
   <div class="topbar"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
   <main id="app" class="wrap" aria-live="polite">
-    <div class="spinner" role="status" aria-label="Memuat kartu"></div>
-    <p class="muted" style="text-align:center">Memuat kartu…</p>
+    <div class="spinner" role="status" aria-label="Memuat kartu" data-i18n-aria="card_loading"></div>
+    <p class="muted" style="text-align:center" data-i18n="card_loading">Memuat kartu…</p>
   </main>
   <script type="module" src="/card.js"></script>
+  <script type="module" src="/i18n-boot.js"></script>
 </body>
 </html>

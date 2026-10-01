@@ -527,6 +527,7 @@ function applyLang(code) {
   $('bell').setAttribute('aria-label', t('notif_title'));
   render();
   toast(t('lang_changed'));
+  window.dispatchEvent(new Event('exigent:lang-changed'));
 }
 
 function openLang() {

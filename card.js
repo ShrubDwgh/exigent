@@ -1,4 +1,9 @@
 import { supabase } from './supabase.js';
+import { getLang, createT } from './i18n.js';
+
+const lang = getLang();
+const t = createT(lang);
+const DATE_LOCALE = { id: 'id-ID', en: 'en-US', ja: 'ja-JP' }[lang] || 'en-US';
 
 const app = document.getElementById('app');
 
@@ -67,8 +72,8 @@ function contactMini(name, category, phone) {
   info.append(who, el('span', 'phone', phone));
   const actions = el('div', 'icon-actions');
   actions.append(
-    iconLink('tel:+' + intl(phone), 'phone', 'Telepon ' + name),
-    iconLink('https://wa.me/' + intl(phone), 'message-circle', 'WhatsApp ' + name, 'wa')
+    iconLink('tel:+' + intl(phone), 'phone', t('card_call_aria', { name })),
+    iconLink('https://wa.me/' + intl(phone), 'message-circle', t('card_wa_aria', { name }), 'wa')
   );
   const row = el('div', 'contact-mini');
   row.append(info, actions);
@@ -89,10 +94,10 @@ function showWelcome() {
   wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true');
   const box = el('div', 'modal-box');
   box.append(
-    el('h2', null, 'Selamat Datang, Penolong'),
-    el('p', null, 'Anda akan melihat informasi darurat medis. Aktifkan akses cepat sekarang agar pencarian fasilitas medis terdekat langsung siap dipakai nanti.')
+    el('h2', null, t('card_welcome_title')),
+    el('p', null, t('card_welcome_text'))
   );
-  const start = el('button', 'btn btn-block', 'Mulai Bantu & Aktifkan Akses Cepat');
+  const start = el('button', 'btn btn-block', t('card_welcome_btn'));
   start.type = 'button';
   box.append(start);
   wrap.append(box);
@@ -106,14 +111,14 @@ function showWelcome() {
 
 function render(d) {
   document.title = 'Emergency Card · ' + (d.full_name || d.card_id);
-  const none = () => el('p', 'muted', 'Tidak ada data');
+  const none = () => el('p', 'muted', t('card_no_data'));
 
   // 1) Satu kotak Card Identitas / KTP Digital
   const top = el('div', 'ec-top');
-  top.append(withIcon('span', 'badge badge-active', 'shield-check', 'Kartu aktif'), el('span', 'muted small', d.card_id));
+  top.append(withIcon('span', 'badge badge-active', 'shield-check', t('card_active')), el('span', 'muted small', d.card_id));
 
   const nameCol = el('div');
-  nameCol.append(el('h1', null, d.full_name || 'Tanpa nama'), withIcon('span', 'blood-badge', 'droplet', d.blood_type || '—'));
+  nameCol.append(el('h1', null, d.full_name || t('card_no_name')), withIcon('span', 'blood-badge', 'droplet', d.blood_type || '—'));
   const idRow = el('div', 'id-row');
   idRow.append(avatarEl(d.photo_data_url), nameCol);
 
@@ -124,27 +129,27 @@ function render(d) {
   const ec = el('article', 'ec');
   ec.append(
     top, idRow,
-    section('heart-pulse', 'Riwayat Medis / Alergi', historyEl),
-    section('heart', 'Status Donor Organ', d.organ_donor
-      ? withIcon('span', 'badge badge-active', 'check', 'Bersedia menjadi donor organ')
-      : el('span', 'badge badge-inactive', 'Belum terdaftar sebagai donor organ'))
+    section('heart-pulse', t('card_medical_history'), historyEl),
+    section('heart', t('card_organ_donor'), d.organ_donor
+      ? withIcon('span', 'badge badge-active', 'check', t('card_organ_yes'))
+      : el('span', 'badge badge-inactive', t('card_organ_no')))
   );
 
   // 2) Tombol aksi darurat — di bawah card identitas, di atas daftar kontak
   const actions = el('div', 'stack');
   actions.append(
-    linkBtn('Panggil Darurat (112)', 'tel:112', 'btn-block', 'phone-call'),
-    linkBtn('Cari Fasilitas Medis Terdekat', '/medical-search.html', 'btn-secondary btn-block', 'map-pin')
+    linkBtn(t('card_call_emergency'), 'tel:112', 'btn-block', 'phone-call'),
+    linkBtn(t('card_find_medical'), '/medical-search.html', 'btn-secondary btn-block', 'map-pin')
   );
 
   // 3) Daftar kontak darurat, terpisah dari card identitas
   const contactsCard = el('div', 'card');
-  contactsCard.append(...(d.contacts.length ? d.contacts.map((c) => contactMini(c.name, c.category, c.phone)) : [el('p', 'muted', 'Belum ada kontak')]));
-  const rest = [section('phone', 'Daftar Kontak Darurat', contactsCard)];
-  if (d.home_phone) rest.push(section('home', 'Telepon Rumah / Kepala Keluarga', contactMini(d.home_contact_name || 'Keluarga', null, d.home_phone)));
-  if (d.emergency_notes) rest.push(section('file-text', 'Catatan Emergency', el('p', 'notes', d.emergency_notes)));
+  contactsCard.append(...(d.contacts.length ? d.contacts.map((c) => contactMini(c.name, c.category, c.phone)) : [el('p', 'muted', t('card_no_contacts'))]));
+  const rest = [section('phone', t('card_contacts_title'), contactsCard)];
+  if (d.home_phone) rest.push(section('home', t('card_home_phone'), contactMini(d.home_contact_name || t('card_family_default'), null, d.home_phone)));
+  if (d.emergency_notes) rest.push(section('file-text', t('card_emergency_notes'), el('p', 'notes', d.emergency_notes)));
 
-  const updated = el('p', 'muted small', 'Diperbarui ' + new Date(d.updated_at).toLocaleString('id-ID'));
+  const updated = el('p', 'muted small', t('card_updated_at', { date: new Date(d.updated_at).toLocaleString(DATE_LOCALE) }));
   updated.style.marginTop = '16px';
 
   // URUTAN: card identitas → tombol aksi → daftar kontak & catatan
@@ -154,9 +159,9 @@ function render(d) {
 
 (async () => {
   showWelcome();
-  if (!/^EC-[A-Z0-9]{8,16}$/.test(cardId)) return message('Kartu tidak valid', 'ID kartu tidak dikenali.');
+  if (!/^EC-[A-Z0-9]{8,16}$/.test(cardId)) return message(t('card_invalid_title'), t('card_invalid_text'));
   const { data, error } = await supabase.rpc('get_public_card', { p_card_id: cardId });
-  if (error) return message('Gagal memuat kartu', 'Periksa koneksi internet, lalu muat ulang halaman.');
-  if (!data) return message('Kartu tidak ditemukan', 'Kartu ini tidak ada atau sudah dinonaktifkan pemiliknya.');
+  if (error) return message(t('card_load_failed_title'), t('card_load_failed_text'));
+  if (!data) return message(t('card_not_found_title'), t('card_not_found_text'));
   render(data);
 })();

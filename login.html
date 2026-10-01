@@ -15,30 +15,31 @@
   <main class="wrap auth">
     <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card NFC</div>
     <div class="card">
-      <h1>Masuk ke Emergency Card</h1>
+      <h1 data-i18n="login_title">Masuk ke Emergency Card</h1>
       
       <form id="form" data-mode="login" novalidate style="margin-top:20px">
-        <div class="field"><label for="email">Email</label><input class="input" id="email" type="email" autocomplete="email" required></div>
-        <div class="field"><label for="password">Password</label><input class="input" id="password" type="password" autocomplete="current-password" required></div>
+        <div class="field"><label for="email" data-i18n="login_email">Email</label><input class="input" id="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="password" data-i18n="login_password">Password</label><input class="input" id="password" type="password" autocomplete="current-password" required></div>
         <p style="text-align:right;margin-top:-8px;margin-bottom:12px">
-          <a href="/forgot-password.html" style="font-size:13px;color:#2563eb;text-decoration:none">Lupa password?</a>
+          <a href="/forgot-password.html" style="font-size:13px;color:#2563eb;text-decoration:none" data-i18n="login_forgot">Lupa password?</a>
         </p>
         <p id="msg" class="msg" role="alert" hidden></p>
-        <button class="btn btn-block" type="submit">Masuk</button>
+        <button class="btn btn-block" type="submit" data-i18n="login_btn">Masuk</button>
       </form>
 
       <!-- === TOMBOL LOGIN GOOGLE === -->
       <div style="text-align: center; margin-top: 20px;">
-        <p style="color: #888; font-size: 14px; margin-bottom: 10px;">Atau</p>
+        <p style="color: #888; font-size: 14px; margin-bottom: 10px;" data-i18n="login_or">Atau</p>
         <button type="button" onclick="loginWithGoogle()" style="background: white; color: #333; border: 1px solid #ccc; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold;">
           <img src="https://www.google.com/favicon.ico" width="18" alt="Google">
-          Masuk dengan Google
+          <span data-i18n="login_google">Masuk dengan Google</span>
         </button>
       </div>
 
-      <p class="muted center">Belum punya akun? <a href="/register.html">Daftar</a></p>
+      <p class="muted center"><span data-i18n="login_no_acc">Belum punya akun?</span> <a href="/register.html" data-i18n="login_register_link">Daftar</a></p>
     </div>
   </main>
   <script type="module" src="/auth-page.js"></script>
+  <script type="module" src="/i18n-boot.js"></script>
 </body>
 </html>

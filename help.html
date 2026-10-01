@@ -13,17 +13,18 @@
 <body>
   <header class="site-head">
     <a class="brand" href="/"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card NFC</a>
-    <a class="btn btn-outline btn-sm" href="/">Beranda</a>
+    <a class="btn btn-outline btn-sm" href="/" data-i18n="help_home">Beranda</a>
   </header>
   <main class="wrap" style="padding-top:24px">
-    <h1>Bantuan</h1>
+    <h1 data-i18n="help_title">Bantuan</h1>
     <div class="card stack-lg">
-      <h2>Cara kerja singkat</h2>
-      <p class="muted">Daftar akun, buat kartu, isi data medis di menu Edit Data Medis, lalu tulis URL kartumu ke tag NFC lewat tombol Tulis ke NFC di Dashboard (atau salin URL-nya untuk ditulis lewat aplikasi seperti NFC Tools).</p>
-      <h2 class="gap">Butuh bantuan lebih lanjut?</h2>
-      <p class="muted">Hubungi pemilik/pengelola akun Emergency Card NFC kamu untuk bantuan lebih lanjut.</p>
+      <h2 data-i18n="help_faq_title">Cara kerja singkat</h2>
+      <p class="muted" data-i18n="help_how_desc">Daftar akun, buat kartu, isi data medis di menu Edit Data Medis, lalu tulis URL kartumu ke tag NFC lewat tombol Tulis ke NFC di Dashboard (atau salin URL-nya untuk ditulis lewat aplikasi seperti NFC Tools).</p>
+      <h2 class="gap" data-i18n="help_cs_cta">Butuh bantuan lebih lanjut?</h2>
+      <p class="muted" data-i18n="help_cs_desc">Hubungi pemilik/pengelola akun Emergency Card NFC kamu untuk bantuan lebih lanjut.</p>
     </div>
   </main>
+  <script type="module" src="/i18n-boot.js"></script>
   <script>window.addEventListener('load', function () { window.lucide && window.lucide.createIcons(); });</script>
 </body>
 </html>

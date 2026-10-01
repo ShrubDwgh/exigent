@@ -15,16 +15,17 @@
   <main class="wrap auth">
     <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card NFC</div>
     <div class="card">
-      <h1>Buat akun Emergency Card</h1>
+      <h1 data-i18n="reg_title">Buat akun Emergency Card</h1>
       <form id="form" data-mode="register" novalidate style="margin-top:20px">
-        <div class="field"><label for="email">Email</label><input class="input" id="email" type="email" autocomplete="email" required></div>
-        <div class="field"><label for="password">Password</label><input class="input" id="password" type="password" autocomplete="new-password" required></div>
+        <div class="field"><label for="email" data-i18n="reg_email">Email</label><input class="input" id="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="password" data-i18n="reg_password">Password</label><input class="input" id="password" type="password" autocomplete="new-password" required></div>
         <p id="msg" class="msg" role="alert" hidden></p>
-        <button class="btn btn-block" type="submit">Daftar</button>
+        <button class="btn btn-block" type="submit" data-i18n="reg_btn">Daftar</button>
       </form>
-      <p class="muted center">Sudah punya akun? <a href="/login.html">Masuk</a></p>
+      <p class="muted center"><span data-i18n="reg_has_acc">Sudah punya akun?</span> <a href="/login.html" data-i18n="reg_login_link">Masuk</a></p>
     </div>
   </main>
   <script type="module" src="/auth-page.js"></script>
+  <script type="module" src="/i18n-boot.js"></script>
 </body>
 </html>
