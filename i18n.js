@@ -11,17 +11,17 @@
 
 import en from './locales/en.js';
 import id from './locales/id.js';
+import ja from './locales/ja.js';
 
 // Daftar bahasa yang tersedia. Urutan menentukan urutan di menu.
 export const LANGUAGES = {
   id: { name: 'Bahasa Indonesia', sub: 'Indonesian', flag: 'id' },
   en: { name: 'English',          sub: 'Inggris',    flag: 'en' },
-  // Contoh tambah bahasa baru:
-  // ja: { name: '日本語',           sub: 'Japanese',  flag: 'jp' },
+  ja: { name: '日本語',            sub: 'Japanese',  flag: 'ja' },
 };
 
 // Peta semua terjemahan
-export const STRINGS = { en, id };
+export const STRINGS = { en, id, ja };
 
 // Kode bahasa default
 const DEFAULT_LANG = 'en';
