@@ -44,7 +44,10 @@ function productCard(p) {
 
   let topBadge = '';
   if (hasDiscount) {
-    topBadge = `<span style="position:absolute;top:10px;left:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;z-index:1">🔥 ${lang === 'id' ? 'Diskon' : 'Sale'} ${p.discount_percent}%</span>`;
+    topBadge = `<span style="position:absolute;top:10px;left:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;z-index:1;display:inline-flex;align-items:center;gap:4px">
+      <i data-lucide="tag" style="width:12px;height:12px" aria-hidden="true"></i>
+      ${lang === 'id' ? 'Diskon' : 'Sale'} ${p.discount_percent}%
+    </span>`;
   } else if (p.badge) {
     topBadge = `<span style="position:absolute;top:10px;left:10px;background:#2563eb;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;z-index:1">${esc(p.badge)}</span>`;
   }
