@@ -11,8 +11,8 @@ const main = $('acct-main');
 const icons = () => window.lucide && window.lucide.createIcons();
 let lang = getLang();
 const t = (k) => (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || k;
-const T = (k) => esc(t(k)); // teks terjemahan siap dipakai di dalam HTML
-const pick = (o) => (o && (o[lang] ?? o.en ?? o.id)) ?? ''; // teks dwibahasa {id, en} dari file config
+const T = (k) => esc(t(k));
+const pick = (o) => (o && (o[lang] ?? o.en ?? o.id)) ?? '';
 const fail = (e) => toast(t('failed') + ((e && e.message) || e));
 
 let session = null, card = null, profile = null, loadFailed = false;
@@ -242,8 +242,8 @@ function renderHelp(nodeId) {
   main.innerHTML = `<section class="screen stack-lg">
     <h2 class="sec-title">${esc(pick(node.title))}</h2>
     ${body}
-    ${id === FAQ_ROOT ? '' : `<a class="btn btn-outline btn-block" href="#/help">${T('help_back')}</a>`}
     <div class="card menu">${row({ tag: 'button', id: 'help-cs', icon: 'headset', label: t('help_contact_q'), sub: t('menu_cs') })}</div>
+    ${id === FAQ_ROOT ? '' : `<a class="btn btn-outline btn-block" href="#/help">${T('help_back')}</a>`}
   </section>`;
   main.querySelectorAll('[data-cs], #help-cs').forEach((b) => (b.onclick = openCs));
 }
@@ -351,13 +351,15 @@ const askLogout = () => confirmSheet({
   onConfirm: (c, btn) => busy(btn, async () => { try { await signOut(); } catch (e) { fail(e); } }),
 });
 
-/* ---------- Hapus Akun (BARU) ---------- */
+/* ---------- Hapus Akun ---------- */
 const askDeleteAccount = () => {
   const email = String(session.user.email || '').toLowerCase();
+  const warnIcon = '<span style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:rgba(220,38,38,.1);color:#dc2626;margin-bottom:12px"><i data-lucide="alert-triangle" aria-hidden="true"></i></span>';
   openSheet({
-    title: lang === 'id' ? '⚠️ Hapus Akun Permanen' : '⚠️ Delete Account Permanently',
+    title: lang === 'id' ? 'Hapus Akun Permanen' : 'Delete Account Permanently',
     closeLabel: t('close'),
-    body: `<p class="muted sheet-text">${lang === 'id'
+    body: `<div style="text-align:center">${warnIcon}</div>
+      <p class="muted sheet-text" style="text-align:center">${lang === 'id'
       ? 'Semua data berikut akan <strong>hilang permanen</strong> dan tidak bisa dipulihkan:'
       : 'All the following data will be <strong>permanently deleted</strong> and cannot be recovered:'}</p>
       <ul style="color:#4b5563;font-size:14px;line-height:1.8;padding-left:20px;margin:12px 0">
@@ -388,6 +390,7 @@ const askDeleteAccount = () => {
         });
       }}
     ],
+    onOpen: () => icons(),
   });
 };
 
