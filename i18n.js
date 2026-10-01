@@ -95,7 +95,7 @@ export const STRINGS = {
     menu_security: 'Keamanan', menu_settings: 'Pengaturan', menu_help: 'Pusat Bantuan',
     menu_cs: 'Hubungi CS Exigent', menu_legal: 'Legal', menu_about: 'Tentang Exigent-One', menu_logout: 'Keluar Akun',
 
-    set_gmail: 'Informasi Akun Gmail', set_idcard: 'Informasi ID Card', set_language: 'Pengaturan Bahasa',
+    set_gmail: 'Informasi Akun', set_idcard: 'Informasi ID Card', set_language: 'Pengaturan Bahasa',
     set_permissions: 'Perizinan & Pengaturan Lanjutan', set_deactivate: 'Nonaktifkan Kartu', set_activate: 'Aktifkan Kartu',
     set_logout: 'Keluar', set_no_card: 'Belum ada kartu', set_card_error: 'Data kartu gagal dimuat',
     deact_q: 'Nonaktifkan kartu?', deact_desc: 'Halaman kartu tidak akan bisa dibuka sampai Anda mengaktifkannya kembali.',
