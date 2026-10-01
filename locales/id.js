@@ -104,7 +104,7 @@ export default {
   land_how_4_desc: 'Golongan darah, alergi, dan kontak darurat langsung terlihat.',
   land_how_footer: 'Tempelkan HP ber-NFC pada kartu untuk membuka halaman emergency.',
 
-  // Kartu publik (halaman penolong). Catatan: 'card_updated' sudah dipakai account.js (toast), jadi versi publik = card_updated_at
+  // Kartu publik
   card_welcome_title: 'Selamat Datang, Penolong',
   card_welcome_text: 'Anda akan melihat informasi darurat medis. Aktifkan akses cepat sekarang agar pencarian fasilitas medis terdekat langsung siap dipakai nanti.',
   card_welcome_btn: 'Mulai Bantu & Aktifkan Akses Cepat',
@@ -128,7 +128,6 @@ export default {
   card_active: 'Kartu aktif',
   card_inactive: 'Kartu nonaktif',
 
-  // Kartu publik — key tambahan (string di card.js/card.html yang tidak ada di daftar awal)
   card_loading: 'Memuat kartu…',
   card_no_data: 'Tidak ada data',
   card_no_name: 'Tanpa nama',
@@ -159,7 +158,6 @@ export default {
   med_err_gps_unavailable: 'Lokasi tidak tersedia. Aktifkan GPS / Layanan Lokasi di HP, lalu coba lagi.',
   med_err_gps_timeout: 'Mendapatkan lokasi terlalu lama. Pindah ke tempat terbuka atau periksa GPS, lalu coba lagi.',
 
-  // Medical search — key tambahan
   med_allow_location: 'Izinkan Akses Lokasi',
   med_cat_group_aria: 'Kategori fasilitas',
   med_found: '{n} {cat} terdekat, diurutkan berdasarkan jarak.',
@@ -180,13 +178,12 @@ export default {
   help_faq_title: 'Cara kerja singkat',
   help_cs_cta: 'Butuh bantuan lebih lanjut?',
 
-  // Legal & Help — key tambahan
   legal_updated_date: '1 Oktober 2026',
   help_home: 'Beranda',
   help_how_desc: 'Daftar akun, buat kartu, isi data medis di menu Edit Data Medis, lalu tulis URL kartumu ke tag NFC lewat tombol Tulis ke NFC di Dashboard (atau salin URL-nya untuk ditulis lewat aplikasi seperti NFC Tools).',
   help_cs_desc: 'Hubungi pemilik/pengelola akun Emergency Card NFC kamu untuk bantuan lebih lanjut.',
 
-  // Kebijakan Privasi — judul section (paragraf isi masih Bahasa Indonesia)
+  // Kebijakan Privasi
   priv_h1: '1. Pendahuluan',
   priv_h2: '2. Data yang Kami Kumpulkan',
   priv_h3: '3. Bagaimana Kami Menggunakan Data Anda',
@@ -198,7 +195,7 @@ export default {
   priv_h9: '9. Perubahan Kebijakan',
   priv_h10: '10. Kontak',
 
-  // Syarat & Ketentuan — judul section (paragraf isi masih Bahasa Indonesia)
+  // Syarat & Ketentuan
   terms_h1: '1. Penerimaan Syarat',
   terms_h2: '2. Deskripsi Layanan',
   terms_h3: '3. Tanggung Jawab Pengguna',
@@ -211,4 +208,19 @@ export default {
   terms_h10: '10. Perubahan Syarat',
   terms_h11: '11. Hukum yang Berlaku',
   terms_h12: '12. Kontak',
+
+  // Shop / Toko
+  shop_free: 'Gratis',
+  shop_title: 'Toko',
+  shop_desc: 'Pilih produk kartu NFC & template favoritmu. Pembelian melalui Shopee untuk kemudahan & keamanan transaksi.',
+  shop_search_ph: 'Cari produk atau kode template...',
+  shop_filter_all: 'Semua',
+  shop_no_match: 'Tidak ada produk yang cocok.',
+  shop_load_failed: 'Gagal memuat produk.',
+  shop_discount: 'Diskon',
+  shop_sale: 'Diskon',
+  shop_buy: 'Beli',
+  shop_get: 'Ambil',
+  shop_soon: 'Segera',
+  shop_back: 'Kembali',
 };
