@@ -517,6 +517,7 @@ function renderAbout() {
 const FLAGS = {
   id: '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="20" fill="#E70011"/><rect y="20" width="40" height="20" fill="#fff"/></svg>',
   en: '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#012169"/><path d="M0 0L40 40M40 0L0 40" stroke="#fff" stroke-width="7"/><path d="M0 0L40 40M40 0L0 40" stroke="#C8102E" stroke-width="2.6"/><path d="M20 0V40M0 20H40" stroke="#fff" stroke-width="11"/><path d="M20 0V40M0 20H40" stroke="#C8102E" stroke-width="6.4"/></svg>',
+  ja: '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#fff"/><circle cx="20" cy="20" r="12" fill="#BC002D"/></svg>',
 };
 
 function applyLang(code) {
