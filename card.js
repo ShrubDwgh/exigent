@@ -89,7 +89,7 @@ function showWelcome() {
   wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true');
   const box = el('div', 'modal-box');
   box.append(
-    el('h2', null, '👋 Selamat Datang, Penolong'),
+    el('h2', null, 'Selamat Datang, Penolong'),
     el('p', null, 'Anda akan melihat informasi darurat medis. Aktifkan akses cepat sekarang agar pencarian fasilitas medis terdekat langsung siap dipakai nanti.')
   );
   const start = el('button', 'btn btn-block', 'Mulai Bantu & Aktifkan Akses Cepat');
@@ -108,12 +108,7 @@ function render(d) {
   document.title = 'Emergency Card · ' + (d.full_name || d.card_id);
   const none = () => el('p', 'muted', 'Tidak ada data');
 
-  // 1) Aksi utama, langsung di bawah topbar, tanpa perlu scroll
-  const actions = el('div', 'stack');
-  if (d.contacts[0]) actions.append(linkBtn('Panggil Kontak Darurat', 'tel:+' + intl(d.contacts[0].phone), 'btn-block', 'phone-call'));
-  actions.append(linkBtn('Cari Fasilitas Medis Terdekat', '/medical-search.html', 'btn-secondary btn-block', 'map-pin'));
-
-  // 2) Satu kotak Card Identitas / KTP Digital
+  // 1) Satu kotak Card Identitas / KTP Digital
   const top = el('div', 'ec-top');
   top.append(withIcon('span', 'badge badge-active', 'shield-check', 'Kartu aktif'), el('span', 'muted small', d.card_id));
 
@@ -135,6 +130,13 @@ function render(d) {
       : el('span', 'badge badge-inactive', 'Belum terdaftar sebagai donor organ'))
   );
 
+  // 2) Tombol aksi darurat — di bawah card identitas, di atas daftar kontak
+  const actions = el('div', 'stack');
+  actions.append(
+    linkBtn('Panggil Darurat (112)', 'tel:112', 'btn-block', 'phone-call'),
+    linkBtn('Cari Fasilitas Medis Terdekat', '/medical-search.html', 'btn-secondary btn-block', 'map-pin')
+  );
+
   // 3) Daftar kontak darurat, terpisah dari card identitas
   const contactsCard = el('div', 'card');
   contactsCard.append(...(d.contacts.length ? d.contacts.map((c) => contactMini(c.name, c.category, c.phone)) : [el('p', 'muted', 'Belum ada kontak')]));
@@ -145,7 +147,8 @@ function render(d) {
   const updated = el('p', 'muted small', 'Diperbarui ' + new Date(d.updated_at).toLocaleString('id-ID'));
   updated.style.marginTop = '16px';
 
-  app.replaceChildren(actions, ec, ...rest, updated);
+  // URUTAN BARU: card identitas → tombol aksi → daftar kontak & catatan
+  app.replaceChildren(ec, actions, ...rest, updated);
   refreshIcons();
 }
 
