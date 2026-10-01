@@ -20,11 +20,14 @@
       <form id="form" data-mode="login" novalidate style="margin-top:20px">
         <div class="field"><label for="email">Email</label><input class="input" id="email" type="email" autocomplete="email" required></div>
         <div class="field"><label for="password">Password</label><input class="input" id="password" type="password" autocomplete="current-password" required></div>
+        <p style="text-align:right;margin-top:-8px;margin-bottom:12px">
+          <a href="/forgot-password.html" style="font-size:13px;color:#2563eb;text-decoration:none">Lupa password?</a>
+        </p>
         <p id="msg" class="msg" role="alert" hidden></p>
         <button class="btn btn-block" type="submit">Masuk</button>
       </form>
 
-      <!-- === TOMBOL LOGIN GOOGLE DITAMBAHKAN DI SINI === -->
+      <!-- === TOMBOL LOGIN GOOGLE === -->
       <div style="text-align: center; margin-top: 20px;">
         <p style="color: #888; font-size: 14px; margin-bottom: 10px;">Atau</p>
         <button type="button" onclick="loginWithGoogle()" style="background: white; color: #333; border: 1px solid #ccc; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold;">
@@ -32,7 +35,6 @@
           Masuk dengan Google
         </button>
       </div>
-      <!-- ============================================== -->
 
       <p class="muted center">Belum punya akun? <a href="/register.html">Daftar</a></p>
     </div>
