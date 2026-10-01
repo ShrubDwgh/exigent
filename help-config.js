@@ -52,10 +52,10 @@ export const FAQ_TREE = {
   start: {
     title: { id: 'Memulai & membuat kartu', en: 'Getting started' },
     options: [
+      { label: { id: 'Apa itu kartu darurat NFC?', en: 'What is an NFC emergency card?' }, next: 'a_whatis' },
       { label: { id: 'Bagaimana cara membuat kartu?', en: 'How do I create a card?' }, next: 'a_create' },
       { label: { id: 'Di mana saya lihat Card ID saya?', en: 'Where can I see my Card ID?' }, next: 'a_cardid' },
       { label: { id: 'Bagaimana cara mengunduh QR Code?', en: 'How do I download the QR Code?' }, next: 'a_downloadqr' },
-      { label: { id: 'Apa itu kartu darurat NFC?', en: 'What is an NFC emergency card?' }, next: 'a_whatis' },
     ],
   },
   a_create: {
