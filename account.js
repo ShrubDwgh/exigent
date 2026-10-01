@@ -137,22 +137,8 @@ function renderGmail() {
 }
 
 /* ---------- NFC Writer ---------- */
-async function writeNfc(url) {
+async function doWriteNfc(url) {
   const status = $('nfc-status'), btn = $('nfc-write');
-
-  if (!('NDEFReader' in window)) {
-    status.textContent = 'Browser ini tidak mendukung tulis NFC langsung (perlu Chrome di Android). Salin URL di atas, lalu tulis lewat aplikasi seperti NFC Tools.';
-    return;
-  }
-  if (!window.isSecureContext) {
-    status.textContent = 'Fitur ini hanya berjalan lewat koneksi aman (HTTPS).';
-    return;
-  }
-
-  if (card.nfc_written_at) {
-    const yakin = confirm('Kartu ini sudah pernah ditulis sebelumnya. Yakin mau tulis ulang?');
-    if (!yakin) return;
-  }
 
   btn.classList.add('loading'); btn.disabled = true;
   status.textContent = 'Dekatkan HP ke kartu NFC kosong…';
@@ -183,6 +169,37 @@ async function writeNfc(url) {
   } finally {
     btn.classList.remove('loading'); btn.disabled = false;
   }
+}
+
+async function writeNfc(url) {
+  const status = $('nfc-status');
+
+  if (!('NDEFReader' in window)) {
+    status.textContent = 'Browser ini tidak mendukung tulis NFC langsung (perlu Chrome di Android). Salin URL di atas, lalu tulis lewat aplikasi seperti NFC Tools.';
+    return;
+  }
+  if (!window.isSecureContext) {
+    status.textContent = 'Fitur ini hanya berjalan lewat koneksi aman (HTTPS).';
+    return;
+  }
+
+  if (card.nfc_written_at) {
+    confirmSheet({
+      title: lang === 'id' ? 'Tulis ulang kartu?' : 'Rewrite card?',
+      text: lang === 'id'
+        ? 'Kartu ini sudah pernah ditulis sebelumnya. Yakin mau tulis ulang?'
+        : 'This card has been written before. Are you sure you want to rewrite?',
+      okLabel: lang === 'id' ? 'Tulis Ulang' : 'Rewrite',
+      danger: false,
+      onConfirm: (c) => {
+        c.close();
+        doWriteNfc(url);
+      },
+    });
+    return;
+  }
+
+  doWriteNfc(url);
 }
 
 function renderIdCard() {
