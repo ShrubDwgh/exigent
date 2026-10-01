@@ -83,7 +83,7 @@ export const STRINGS = {
     card_id: 'Card ID', card_url: 'URL kartu', copy_url: 'Salin URL', view_card: 'Lihat kartu',
     qr_title: 'QR Code', download_qr: 'Unduh QR',
     nfc_title: 'Tulis ke Kartu NFC', nfc_desc: 'Tempelkan HP ke kartu NFC kosong, lalu tekan tombol ini.',
-    write_nfc: 'Tulis ke NFC', nfc_registered: 'ℹ️ Card NFC ini sudah terdaftar.',
+    write_nfc: 'Tulis ke NFC', nfc_registered: 'Card NFC ini sudah terdaftar.',
     no_card_title: 'Kamu belum punya kartu', no_card_desc: 'Buat kartu untuk mendapat Card ID dan URL yang ditulis ke NFC.',
     create_card: 'Buat kartu',
 
@@ -104,7 +104,7 @@ export const STRINGS = {
 
     lang_changed: 'Bahasa diubah ke Bahasa Indonesia',
 
-    gmail_name: 'Nama', gmail_email: 'Email', gmail_method: 'Metode masuk', gmail_prov_email: 'Email & password',
+    gmail_name: 'Nama', gmail_email: 'Email', gmail_method: 'Metode masuk', gmail_prov_email: 'Email',
     gmail_created: 'Akun dibuat', gmail_last: 'Terakhir masuk',
     gmail_note: 'Akun ini masuk dengan email & password, jadi nama Google tidak tersedia.',
 
@@ -151,4 +151,4 @@ export function setLang(l) {
 // Isi label navigasi bawah/samping: <span data-nav-label="dashboard|medical|account">
 export function applyNavLabels(translate) {
   document.querySelectorAll('[data-nav-label]').forEach((el) => { el.textContent = translate('nav_' + el.dataset.navLabel); });
-}
+    }
