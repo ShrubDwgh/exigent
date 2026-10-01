@@ -9,6 +9,24 @@ const show = (text, ok) => { msg.textContent = text; msg.className = 'msg' + (ok
 supabase.auth.getSession().then(({ data }) => { if (data.session) location.replace('/dashboard.html'); });
 
 // ==========================================
+// DETEKSI DEVICE SEDERHANA
+// ==========================================
+function deviceInfo() {
+  const ua = navigator.userAgent || '';
+  const platform = /Android/i.test(ua) ? 'Android'
+                 : /iPhone|iPad|iPod/i.test(ua) ? 'iOS'
+                 : /Windows/i.test(ua) ? 'Windows'
+                 : /Mac/i.test(ua) ? 'Mac'
+                 : 'Unknown';
+  const browser = /Edg/i.test(ua) ? 'Edge'
+                : /Chrome/i.test(ua) ? 'Chrome'
+                : /Safari/i.test(ua) ? 'Safari'
+                : /Firefox/i.test(ua) ? 'Firefox'
+                : 'Browser';
+  return browser + ' di ' + platform;
+}
+
+// ==========================================
 // FUNGSI LOGIN DENGAN GOOGLE
 // ==========================================
 window.loginWithGoogle = async function() {
@@ -38,7 +56,11 @@ form.addEventListener('submit', (e) => {
     // --- MODE LOGIN ---
     if (form.dataset.mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      return error ? show('Email atau password salah.') : location.replace('/dashboard.html');
+      if (error) return show('Email atau password salah.');
+      // Catat login sebagai notifikasi keamanan (fire and forget)
+      try { await supabase.rpc('log_login_activity', { device_info: deviceInfo() }); } catch (_) { /* abaikan */ }
+      location.replace('/dashboard.html');
+      return;
     }
     
     // --- MODE DAFTAR (SIGN UP) ---
