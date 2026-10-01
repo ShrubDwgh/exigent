@@ -173,9 +173,10 @@ async function writeNfc(url) {
     } else if (!updData || updData.length === 0) {
       status.innerHTML = `<span class="err-line">Update tidak mengubah baris.</span>`;
     } else {
-      status.textContent = '';
       await loadData();
       render();
+      const newStatus = $('nfc-status');
+      if (newStatus) newStatus.textContent = 'Berhasil ditulis ke kartu NFC.';
     }
   } catch (err) {
     status.innerHTML = `<span class="err-line">${esc(err.message || err.name || 'Gagal menulis')}</span>Pastikan kartu menempel stabil di belakang HP, lalu coba lagi.`;
@@ -213,11 +214,16 @@ function renderIdCard() {
       <a class="btn btn-outline btn-sm" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">${T('view_card')}</a></div>
   </div>
   <div class="card stack-lg" style="margin-top:12px">
-    <h2>${t('nfc_title')}</h2>
-    <p class="muted small">${t('nfc_desc')}</p>
-    <button class="btn btn-secondary btn-block" id="nfc-write" type="button"><i data-lucide="nfc" aria-hidden="true"></i>${t('write_nfc')}</button>
-    <p id="nfc-status" class="muted small"></p>
-    ${card.nfc_written_at ? `<p class="badge badge-active" style="align-self:flex-start;margin-top:4px">${t('nfc_registered')}</p>` : ''}
+    <button class="btn btn-secondary btn-block" id="nfc-write" type="button" style="display:inline-flex;align-items:center;justify-content:center;gap:8px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/>
+        <path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/>
+        <path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/>
+        <path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>
+      </svg>
+      Tulis NFC
+    </button>
+    <p id="nfc-status" class="muted small" style="text-align:center"></p>
   </div>
   </section>`;
   $('idc-copy').onclick = () => (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast(t('copied')), () => toast(t('copy_manual')));
