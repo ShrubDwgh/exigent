@@ -53,8 +53,28 @@
   </aside>
   <main class="main">
     <section id="tab-dashboard">
-      <div class="skeleton-card"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div></div>
-      <div class="skeleton-card"><div class="skeleton-line w90"></div><div class="skeleton-btn"></div></div>
+      <!-- Skeleton: Card Status -->
+      <div class="skeleton-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="skeleton-line w35" style="margin:0"></div>
+          <div class="skeleton-line w20" style="margin:0"></div>
+        </div>
+        <div class="skeleton-line w25" style="margin-bottom:6px"></div>
+        <div class="skeleton-line" style="height:22px;width:60%;margin-bottom:16px"></div>
+        <div class="skeleton-line w25" style="margin-bottom:6px"></div>
+        <div class="skeleton-line w90" style="margin-bottom:16px"></div>
+        <div style="display:flex;gap:8px">
+          <div class="skeleton-btn" style="width:100px;margin:0"></div>
+          <div class="skeleton-btn" style="width:100px;margin:0;background:#f3f4f6"></div>
+        </div>
+      </div>
+
+      <!-- Skeleton: QR Code -->
+      <div class="skeleton-card" style="margin-top:12px">
+        <div class="skeleton-line w30" style="margin-bottom:16px"></div>
+        <div style="width:180px;height:180px;background:#e5e7eb;border-radius:12px;margin:0 auto"></div>
+        <div class="skeleton-btn" style="margin-top:16px"></div>
+      </div>
     </section>
   </main>
   <button class="fab" id="fab-edit" type="button" aria-label="Edit Data Medis"><i data-lucide="plus" aria-hidden="true"></i></button>
