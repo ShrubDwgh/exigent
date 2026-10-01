@@ -325,12 +325,71 @@ function openCs() {
   });
 }
 
+/* ---------- Notifikasi ---------- */
+async function loadNotifCount() {
+  try {
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .is('read_at', null);
+    if (error) throw error;
+    const dot = $('bell-dot');
+    if (dot) dot.hidden = !count;
+  } catch (_) { /* diamkan */ }
+}
+
+function notifItemHtml(n) {
+  const ic = n.type === 'security' ? 'shield-alert'
+           : n.type === 'policy' ? 'file-text'
+           : n.type === 'card' ? 'credit-card'
+           : 'bell';
+  const bg = n.type === 'security' ? 'background:rgba(220,38,38,.1);color:#dc2626'
+           : n.type === 'policy' ? 'background:rgba(37,99,235,.1);color:#2563eb'
+           : 'background:rgba(107,114,128,.1);color:#6b7280';
+  const when = (() => { try { return new Intl.DateTimeFormat(lang === 'id' ? 'id-ID' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(n.created_at)); } catch (_) { return ''; } })();
+  const unread = !n.read_at;
+  return `<div style="display:flex;gap:12px;padding:14px 4px;border-bottom:1px solid rgba(0,0,0,.06);${unread ? 'background:rgba(37,99,235,.03)' : ''}">
+    <span style="flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;${bg}">
+      <i data-lucide="${ic}" aria-hidden="true"></i>
+    </span>
+    <div style="flex:1;min-width:0">
+      <strong style="display:block;font-size:14px;color:#111827">${esc(n.title)}</strong>
+      ${n.body ? `<p style="margin:4px 0 0;font-size:13px;color:#4b5563;line-height:1.5">${esc(n.body)}</p>` : ''}
+      <small style="display:block;margin-top:6px;font-size:12px;color:#9ca3af">${esc(when)}</small>
+    </div>
+  </div>`;
+}
+
 function openNotifs() {
   openSheet({
     title: t('notif_title'),
     closeLabel: t('close'),
-    body: empty('bell-off', t('notif_empty_title'), t('notif_empty_desc')),
+    body: `<div style="padding:24px 0;text-align:center"><p class="muted">${lang === 'id' ? 'Memuat...' : 'Loading...'}</p></div>`,
     actions: [{ label: t('close'), variant: 'outline', onClick: (c) => c.close() }],
+    onOpen: async (c) => {
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        const items = data || [];
+        if (!items.length) {
+          c.body.innerHTML = empty('bell-off', t('notif_empty_title'), t('notif_empty_desc'));
+          icons();
+          return;
+        }
+        c.body.innerHTML = `<div>${items.map(notifItemHtml).join('')}</div>`;
+        icons();
+        await supabase.rpc('mark_all_notifications_read');
+        const dot = $('bell-dot');
+        if (dot) dot.hidden = true;
+      } catch (e) {
+        c.body.innerHTML = empty('circle-alert', lang === 'id' ? 'Gagal memuat' : 'Failed to load', e.message || '');
+        icons();
+      }
+    },
   });
 }
 
@@ -475,6 +534,7 @@ function onRoute() {
   render();
   window.scrollTo(0, 0);
   main.focus({ preventScroll: true });
+  loadNotifCount();
 }
 
 function validateFaq() {
@@ -497,5 +557,6 @@ requireSession().then(async (s) => {
   session = s;
   await loadData();
   onRoute();
+  loadNotifCount();
   window.addEventListener('hashchange', onRoute);
 });
