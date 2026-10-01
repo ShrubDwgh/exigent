@@ -12,6 +12,7 @@ const icons = () => window.lucide && window.lucide.createIcons();
 let lang = getLang();
 const t = (k) => (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || k;
 const T = (k) => esc(t(k));
+const tr = (k, vars) => { let s = t(k); if (vars) for (const [kk, vv] of Object.entries(vars)) s = s.replace('{' + kk + '}', vv); return s; };
 const pick = (o) => (o && (o[lang] ?? o.en ?? o.id)) ?? '';
 const fail = (e) => toast(t('failed') + ((e && e.message) || e));
 
@@ -22,7 +23,7 @@ async function loadData() {
   loadFailed = false; card = null; profile = null;
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Sesi habis');
+    if (!user) throw new Error(t('session_expired'));
 
     const { data, error } = await supabase
       .from('cards')
@@ -53,10 +54,10 @@ const fmtDate = (iso) => {
 const fmtRelative = (iso) => {
   try {
     const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-    if (diff < 60) return lang === 'id' ? 'Baru saja' : 'Just now';
-    if (diff < 3600) return Math.floor(diff / 60) + (lang === 'id' ? ' menit lalu' : ' min ago');
-    if (diff < 86400) return Math.floor(diff / 3600) + (lang === 'id' ? ' jam lalu' : ' h ago');
-    if (diff < 604800) return Math.floor(diff / 86400) + (lang === 'id' ? ' hari lalu' : ' d ago');
+    if (diff < 60) return t('time_just_now');
+    if (diff < 3600) return tr('time_min_ago', { n: Math.floor(diff / 60) });
+    if (diff < 86400) return tr('time_hour_ago', { n: Math.floor(diff / 3600) });
+    if (diff < 604800) return tr('time_day_ago', { n: Math.floor(diff / 86400) });
     return fmtDate(iso);
   } catch (_) { return ''; }
 };
@@ -71,7 +72,7 @@ const deviceLabel = (ua) => {
                 : /Safari/i.test(ua) ? 'Safari'
                 : /Firefox/i.test(ua) ? 'Firefox'
                 : 'Browser';
-  return browser + ' di ' + platform;
+  return browser + ' · ' + platform;
 };
 
 /* ---------- Potongan HTML ---------- */
@@ -125,7 +126,7 @@ function renderSettings() {
     ${row({ tag: 'button', id: 'row-lang', icon: 'languages', label: t('set_language'), value: currentLangName })}
     ${row({ href: '#/settings/permissions', icon: 'shield-check', label: t('set_permissions') })}
     ${row({ tag: 'button', id: 'row-card', icon: 'power', label: cardLabel, sub: cardSub, danger: !c || c.is_active, disabled: !c })}
-    ${row({ tag: 'button', id: 'row-delete', icon: 'trash-2', label: lang === 'id' ? 'Hapus Akun' : 'Delete Account', danger: true })}
+    ${row({ tag: 'button', id: 'row-delete', icon: 'trash-2', label: t('delete_account'), danger: true })}
   </nav></section>`;
   $('row-lang').onclick = openLang;
   $('row-card').onclick = onCardRow;
@@ -140,7 +141,6 @@ function renderGmail() {
   const avatar = googleAvatar || cardPhoto;
   const pv = providers();
   const method = pv.map((p) => (p === 'google' ? 'Google' : p === 'email' ? t('gmail_prov_email') : p)).join(', ');
-  const nameLabel = pv.includes('google') ? t('gmail_name') : (lang === 'id' ? 'Nama' : 'Name');
   const nameValue = googleName() || String((profile && profile.full_name) || '').trim() || '—';
 
   main.innerHTML = `<section class="screen stack-lg"><div class="card stack-lg">
@@ -149,7 +149,7 @@ function renderGmail() {
       <div class="id-who"><p class="id-name">${esc(name || '—')}</p><p class="muted">${esc(u.email || '—')}</p></div>
     </div>
     ${kv([
-      [nameLabel, esc(nameValue)],
+      [t('gmail_name'), esc(nameValue)],
       [t('gmail_email'), esc(u.email || '—')],
       [t('gmail_method'), esc(method)],
       [t('gmail_created'), esc(fmtDate(u.created_at))],
@@ -170,12 +170,12 @@ async function doWriteNfc(url) {
   const status = $('nfc-status'), btn = $('nfc-write');
 
   btn.classList.add('loading'); btn.disabled = true;
-  status.textContent = 'Dekatkan HP ke kartu NFC kosong…';
+  status.textContent = t('nfc_tap');
 
   try {
     await new NDEFReader().write({ records: [{ recordType: 'url', data: url }] });
-    toast('Berhasil ditulis ke kartu NFC');
-    status.textContent = 'Menyimpan status…';
+    toast(t('nfc_written'));
+    status.textContent = t('nfc_saving');
 
     const { data: { user } } = await supabase.auth.getUser();
     const { data: updData, error: dbErr } = await supabase
@@ -186,17 +186,17 @@ async function doWriteNfc(url) {
       .select();
 
     if (dbErr) {
-      status.innerHTML = `<span class="err-line">Kartu berhasil ditulis, tapi gagal update status: ${esc(dbErr.message)}</span>`;
+      status.innerHTML = `<span class="err-line">${esc(tr('nfc_written_db_fail', { msg: dbErr.message }))}</span>`;
     } else if (!updData || updData.length === 0) {
-      status.innerHTML = `<span class="err-line">Update tidak mengubah baris.</span>`;
+      status.innerHTML = `<span class="err-line">${T('nfc_no_rows')}</span>`;
     } else {
       await loadData();
       render();
       const newStatus = $('nfc-status');
-      if (newStatus) newStatus.textContent = 'Berhasil ditulis ke kartu NFC.';
+      if (newStatus) newStatus.textContent = t('nfc_written_ok');
     }
   } catch (err) {
-    status.innerHTML = `<span class="err-line">${esc(err.message || err.name || 'Gagal menulis')}</span>Pastikan kartu menempel stabil di belakang HP, lalu coba lagi.`;
+    status.innerHTML = `<span class="err-line">${esc(err.message || err.name || t('nfc_write_failed'))}</span>${T('nfc_write_hint')}`;
   } finally {
     btn.classList.remove('loading'); btn.disabled = false;
   }
@@ -206,21 +206,19 @@ async function writeNfc(url) {
   const status = $('nfc-status');
 
   if (!('NDEFReader' in window)) {
-    status.textContent = 'Browser ini tidak mendukung tulis NFC langsung (perlu Chrome di Android). Salin URL di atas, lalu tulis lewat aplikasi seperti NFC Tools.';
+    status.textContent = t('nfc_unsupported');
     return;
   }
   if (!window.isSecureContext) {
-    status.textContent = 'Fitur ini hanya berjalan lewat koneksi aman (HTTPS).';
+    status.textContent = t('nfc_https');
     return;
   }
 
   if (card.nfc_written_at) {
     confirmSheet({
-      title: lang === 'id' ? 'Tulis ulang kartu?' : 'Rewrite card?',
-      text: lang === 'id'
-        ? 'Kartu ini sudah pernah ditulis sebelumnya. Yakin mau tulis ulang?'
-        : 'This card has been written before. Are you sure you want to rewrite?',
-      okLabel: lang === 'id' ? 'Tulis Ulang' : 'Rewrite',
+      title: t('nfc_rewrite_q'),
+      text: t('nfc_rewrite_desc'),
+      okLabel: t('nfc_rewrite'),
       danger: false,
       onConfirm: (c) => {
         c.close();
@@ -274,7 +272,7 @@ function renderIdCard() {
         <path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/>
         <path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>
       </svg>
-      Tulis NFC
+      ${T('write_nfc')}
     </button>
     <p id="nfc-status" class="muted small" style="text-align:center"></p>
   </div>
@@ -286,10 +284,10 @@ function renderIdCard() {
 function renderSecurity() {
   const pv = providers();
   main.innerHTML = `<section class="screen stack-lg">
-    ${pv.includes('email') ? `<div class="card menu">${row({ href: '#/security/password', icon: 'key-round', label: lang === 'id' ? 'Ubah Password' : 'Change Password', sub: lang === 'id' ? 'Ganti password akunmu' : 'Update your account password' })}</div>` : ''}
+    ${pv.includes('email') ? `<div class="card menu">${row({ href: '#/security/password', icon: 'key-round', label: t('sec_change_pw'), sub: t('sec_change_pw_sub') })}</div>` : ''}
     ${pv.includes('google') ? `<div class="card stack-lg"><h2>Google</h2><p class="muted">${T('sec_google_note')}</p>
       <a class="btn btn-outline btn-sm" href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer">${T('sec_google_manage')}</a></div>` : ''}
-    <div class="card menu">${row({ href: '#/security/devices', icon: 'monitor-smartphone', label: lang === 'id' ? 'Perangkat Terhubung' : 'Connected Devices', sub: lang === 'id' ? 'Lihat semua perangkat yang login' : 'View all logged-in devices' })}</div>
+    <div class="card menu">${row({ href: '#/security/devices', icon: 'monitor-smartphone', label: t('sec_devices'), sub: t('sec_devices_sub') })}</div>
     <div class="card menu">${row({ tag: 'button', id: 'row-others', icon: 'smartphone', label: t('sec_others'), sub: t('sec_others_desc') })}</div>
   </section>`;
   $('row-others').onclick = askOthers;
@@ -298,7 +296,7 @@ function renderSecurity() {
 function renderChangePassword() {
   const pv = providers();
   if (!pv.includes('email')) {
-    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-alert', lang === 'id' ? 'Tidak tersedia' : 'Not available', lang === 'id' ? 'Akun Google tidak punya password lokal.' : 'Google accounts have no local password.')}</div></section>`;
+    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-alert', t('sec_na'), t('sec_google_no_pw'))}</div></section>`;
     return;
   }
   main.innerHTML = `<section class="screen stack-lg">
@@ -331,21 +329,18 @@ function renderChangePassword() {
 async function registerCurrentDevice() {
   try {
     const ua = navigator.userAgent || '';
-    await supabase.rpc('register_device', {
-      p_device_info: deviceLabel(ua),
-      p_user_agent: ua,
-    });
+    await supabase.rpc('register_device', { p_device_info: deviceLabel(ua), p_user_agent: ua });
   } catch (_) { /* diamkan */ }
 }
 
 async function renderDevices() {
   main.innerHTML = `<section class="screen stack-lg">
-    <div class="card" style="text-align:center;padding:24px"><p class="muted">${lang === 'id' ? 'Memuat...' : 'Loading...'}</p></div>
+    <div class="card" style="text-align:center;padding:24px"><p class="muted">${T('loading')}</p></div>
   </section>`;
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-alert', 'Sesi habis', '')}</div></section>`;
+    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-alert', t('session_expired'), '')}</div></section>`;
     return;
   }
 
@@ -356,7 +351,7 @@ async function renderDevices() {
     .order('last_active_at', { ascending: false });
 
   if (error) {
-    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-alert', lang === 'id' ? 'Gagal memuat' : 'Failed to load', error.message)}</div></section>`;
+    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-alert', t('load_failed'), error.message)}</div></section>`;
     return;
   }
 
@@ -375,22 +370,20 @@ async function renderDevices() {
       <div style="flex:1;min-width:0">
         <strong style="display:block;font-size:14px;color:#111827">
           ${esc(d.device_info || 'Unknown')}
-          ${isCurrent ? `<span class="badge badge-active" style="margin-left:6px;border-radius:8px">${lang === 'id' ? 'Perangkat ini' : 'This device'}</span>` : ''}
+          ${isCurrent ? `<span class="badge badge-active" style="margin-left:6px;border-radius:8px">${T('device_this')}</span>` : ''}
         </strong>
         <small style="display:block;margin-top:4px;font-size:12px;color:#9ca3af">
-          ${lang === 'id' ? 'Aktif terakhir: ' : 'Last active: '}${esc(fmtRelative(d.last_active_at))}
+          ${T('device_last_active')} ${esc(fmtRelative(d.last_active_at))}
         </small>
       </div>
-      ${!isCurrent ? `<button type="button" class="btn btn-outline btn-sm" data-del-device="${d.id}" style="flex-shrink:0;color:#dc2626;border-color:rgba(220,38,38,.3)">${lang === 'id' ? 'Hapus' : 'Remove'}</button>` : ''}
+      ${!isCurrent ? `<button type="button" class="btn btn-outline btn-sm" data-del-device="${d.id}" style="flex-shrink:0;color:#dc2626;border-color:rgba(220,38,38,.3)">${T('remove')}</button>` : ''}
     </div>`;
   };
 
   main.innerHTML = `<section class="screen stack-lg">
-    <p class="muted">${lang === 'id'
-      ? 'Perangkat yang pernah login ke akunmu. Kalau ada yang tidak dikenal, segera hapus dan ganti password.'
-      : 'Devices that have logged into your account. If any is unfamiliar, remove it and change your password.'}</p>
+    <p class="muted">${T('devices_intro')}</p>
     <div class="card">
-      ${devices.length ? devices.map(deviceRow).join('') : `<p class="muted" style="padding:12px 0">${lang === 'id' ? 'Belum ada data perangkat.' : 'No device data yet.'}</p>`}
+      ${devices.length ? devices.map(deviceRow).join('') : `<p class="muted" style="padding:12px 0">${T('devices_empty')}</p>`}
     </div>
   </section>`;
 
@@ -400,16 +393,14 @@ async function renderDevices() {
     btn.onclick = () => {
       const id = btn.getAttribute('data-del-device');
       confirmSheet({
-        title: lang === 'id' ? 'Hapus perangkat?' : 'Remove device?',
-        text: lang === 'id'
-          ? 'Perangkat ini akan logout otomatis. Perlu login ulang untuk mengakses akun dari perangkat itu.'
-          : 'This device will be logged out automatically. Re-login required to access the account from that device.',
-        okLabel: lang === 'id' ? 'Hapus' : 'Remove',
+        title: t('device_remove_q'),
+        text: t('device_remove_desc'),
+        okLabel: t('remove'),
         onConfirm: (c, b) => busy(b, async () => {
           const { error } = await supabase.rpc('revoke_device', { p_device_id: id });
           if (error) return fail(error);
           c.close();
-          toast(lang === 'id' ? 'Perangkat berhasil dihapus' : 'Device removed successfully');
+          toast(t('device_removed'));
           renderDevices();
         }),
       });
@@ -540,12 +531,12 @@ function openLang() {
   const optsHtml = Object.entries(LANGUAGES).map(([code, meta]) => langOpt(code, meta)).join('');
 
   openSheet({
-    title: 'Pilih Bahasa / Select Language',
+    title: t('lang_pick_title'),
     closeLabel: t('close'),
-    body: `<div class="opts" role="radiogroup" aria-label="Pilih Bahasa / Select Language">${optsHtml}</div>`,
+    body: `<div class="opts" role="radiogroup" aria-label="${T('lang_pick_title')}">${optsHtml}</div>`,
     actions: [
-      { label: 'Batal / Cancel', variant: 'outline', onClick: (c) => c.close() },
-      { label: 'Simpan / Save', variant: 'secondary', onClick: (c) => { c.close(); if (sel !== lang) applyLang(sel); } },
+      { label: t('cancel'), variant: 'outline', onClick: (c) => c.close() },
+      { label: t('save'), variant: 'secondary', onClick: (c) => { c.close(); if (sel !== lang) applyLang(sel); } },
     ],
     onOpen: (c) => {
       const radios = [...c.body.querySelectorAll('[role="radio"]')];
@@ -630,12 +621,12 @@ function openNotifs() {
   openSheet({
     title: t('notif_title'),
     closeLabel: t('close'),
-    body: `<div style="padding:24px 0;text-align:center"><p class="muted">${lang === 'id' ? 'Memuat...' : 'Loading...'}</p></div>`,
+    body: `<div style="padding:24px 0;text-align:center"><p class="muted">${T('loading')}</p></div>`,
     actions: [{ label: t('close'), variant: 'outline', onClick: (c) => c.close() }],
     onOpen: async (c) => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { c.body.innerHTML = empty('circle-alert', 'Sesi habis', ''); icons(); return; }
+        if (!user) { c.body.innerHTML = empty('circle-alert', t('session_expired'), ''); icons(); return; }
 
         const { data, error } = await supabase
           .from('notifications')
@@ -668,7 +659,7 @@ function openNotifs() {
         const dot = $('bell-dot');
         if (dot) dot.hidden = true;
       } catch (e) {
-        c.body.innerHTML = empty('circle-alert', lang === 'id' ? 'Gagal memuat' : 'Failed to load', e.message || '');
+        c.body.innerHTML = empty('circle-alert', t('load_failed'), e.message || '');
         icons();
       }
     },
@@ -696,37 +687,33 @@ const askLogout = () => confirmSheet({
 const askDeleteAccount = () => {
   const email = String(session.user.email || '').toLowerCase();
   const warnIcon = '<span style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:rgba(220,38,38,.1);color:#dc2626;margin-bottom:12px"><i data-lucide="alert-triangle" aria-hidden="true"></i></span>';
+  const items = [t('delete_item_medical'), t('delete_item_cards'), t('delete_item_events'), t('delete_item_account')];
   openSheet({
-    title: lang === 'id' ? 'Hapus Akun Permanen' : 'Delete Account Permanently',
+    title: t('delete_account_title'),
     closeLabel: t('close'),
     body: `<div style="text-align:center">${warnIcon}</div>
-      <p class="muted sheet-text" style="text-align:center">${lang === 'id'
-      ? 'Semua data berikut akan <strong>hilang permanen</strong> dan tidak bisa dipulihkan:'
-      : 'All the following data will be <strong>permanently deleted</strong> and cannot be recovered:'}</p>
+      <p class="muted sheet-text" style="text-align:center">${T('delete_account_desc')}</p>
       <ul style="color:#4b5563;font-size:14px;line-height:1.8;padding-left:20px;margin:12px 0">
-        <li>${lang === 'id' ? 'Profil medis & kontak darurat' : 'Medical profile & emergency contacts'}</li>
-        <li>${lang === 'id' ? 'Semua kartu NFC (kartu fisik jadi tidak aktif)' : 'All NFC cards (physical cards become inactive)'}</li>
-        <li>${lang === 'id' ? 'Riwayat emergency events' : 'Emergency events history'}</li>
-        <li>${lang === 'id' ? 'Akun login (Google/Email)' : 'Login account (Google/Email)'}</li>
+        ${items.map((s) => `<li>${esc(s)}</li>`).join('')}
       </ul>
-      <p class="muted sheet-text">${lang === 'id' ? 'Ketik email kamu untuk konfirmasi:' : 'Type your email to confirm:'}</p>
+      <p class="muted sheet-text">${T('delete_confirm_hint')}</p>
       <input type="email" class="input" id="del-email" placeholder="${esc(email)}" autocomplete="off" style="width:100%;margin-top:8px">
       <p id="del-msg" class="msg" role="alert" hidden style="margin-top:8px"></p>`,
     actions: [
       { label: t('cancel'), variant: 'outline', onClick: (c) => c.close() },
-      { label: lang === 'id' ? 'Hapus Akun' : 'Delete Account', variant: 'danger', onClick: (c, btn) => {
+      { label: t('delete_account'), variant: 'danger', onClick: (c, btn) => {
         const input = c.body.querySelector('#del-email');
         const msg = c.body.querySelector('#del-msg');
         const typed = String(input.value || '').trim().toLowerCase();
         msg.hidden = true;
-        if (!typed) { msg.textContent = lang === 'id' ? 'Masukkan email kamu dulu.' : 'Enter your email first.'; msg.hidden = false; return; }
-        if (typed !== email) { msg.textContent = lang === 'id' ? 'Email tidak cocok dengan akun kamu.' : 'Email does not match your account.'; msg.hidden = false; return; }
+        if (!typed) { msg.textContent = t('delete_enter_email'); msg.hidden = false; return; }
+        if (typed !== email) { msg.textContent = t('delete_email_mismatch'); msg.hidden = false; return; }
         busy(btn, async () => {
           const { error } = await supabase.rpc('delete_user_account');
-          if (error) { msg.textContent = 'Gagal: ' + error.message; msg.hidden = false; return; }
+          if (error) { msg.textContent = t('failed') + error.message; msg.hidden = false; return; }
           c.close();
           try { await signOut(); } catch (_) { /* abaikan */ }
-          toast(lang === 'id' ? 'Akun kamu berhasil dihapus. Terima kasih.' : 'Your account has been deleted. Thank you.');
+          toast(t('delete_success'));
           setTimeout(() => location.replace('/'), 900);
         });
       }}
@@ -746,7 +733,7 @@ const askOthers = () => confirmSheet({
 
 async function setCardActive(active) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return fail({ message: 'Sesi habis' });
+  if (!user) return fail({ message: t('session_expired') });
   const { error } = await supabase
     .from('cards')
     .update({ is_active: active })
@@ -768,8 +755,8 @@ function onCardRow(e) {
 const ROUTES = {
   '/': { title: () => t('acct_title'), render: renderHome, root: true },
   '/security': { title: () => t('menu_security'), render: renderSecurity, parent: '/' },
-  '/security/password': { title: () => (lang === 'id' ? 'Ubah Password' : 'Change Password'), render: renderChangePassword, parent: '/security' },
-  '/security/devices': { title: () => (lang === 'id' ? 'Perangkat Terhubung' : 'Connected Devices'), render: renderDevices, parent: '/security' },
+  '/security/password': { title: () => t('sec_change_pw'), render: renderChangePassword, parent: '/security' },
+  '/security/devices': { title: () => t('sec_devices'), render: renderDevices, parent: '/security' },
   '/settings': { title: () => t('menu_settings'), render: renderSettings, parent: '/' },
   '/settings/gmail': { title: () => t('set_gmail'), render: renderGmail, parent: '/settings' },
   '/settings/idcard': { title: () => t('set_idcard'), render: renderIdCard, parent: '/settings' },
