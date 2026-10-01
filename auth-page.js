@@ -8,6 +8,25 @@ const show = (text, ok) => { msg.textContent = text; msg.className = 'msg' + (ok
 
 supabase.auth.getSession().then(({ data }) => { if (data.session) location.replace('/dashboard.html'); });
 
+// ==========================================
+// FUNGSI LOGIN DENGAN GOOGLE
+// ==========================================
+window.loginWithGoogle = async function() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: 'https://exigent-one.vercel.app/dashboard.html'
+    }
+  });
+  
+  if (error) {
+    alert('Gagal login dengan Google: ' + error.message);
+  }
+};
+
+// ==========================================
+// FORM LOGIN / DAFTAR EMAIL
+// ==========================================
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   msg.hidden = true;
@@ -26,11 +45,7 @@ form.addEventListener('submit', (e) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return show(error.message);
     
-    // BARIS INI YANG SAYA HAPUS:
-    // if (data.session) return location.replace('/dashboard.html');
-    
     // Karena "Confirm email" sudah aktif, kita cuma kasih pesan sukses.
-    // Jangan redirect ke dashboard, karena session belum ada.
     show('Akun dibuat. Cek email untuk konfirmasi, lalu masuk.', true);
   });
 });
