@@ -2,7 +2,12 @@ window.lucide && window.lucide.createIcons();
 
 const $ = (id) => document.getElementById(id);
 const status = $('status'), results = $('results'), btn = $('locate');
-const API = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const API = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter',
+];
 const CATS = {
   rumah_sakit: { label: 'Rumah Sakit', q: (a) => `nwr["amenity"="hospital"]${a};` },
   puskesmas: { label: 'Puskesmas', q: (a) => `nwr["amenity"~"^(clinic|hospital|doctors)$"]["name"~"puskesmas",i]${a};nwr["healthcare"]["name"~"puskesmas",i]${a};` },
@@ -29,20 +34,18 @@ async function overpass(query) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 15000);
     try {
-      // Catatan: browser tidak mengizinkan skrip mengganti header User-Agent (dilindungi/forbidden header),
-      // jadi UA asli browser tetap terkirim. X-Requested-With dipakai sebagai identitas aplikasi sebagai gantinya.
       const r = await fetch(url, { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'ExigentOne-Web/1.0' }, body: 'data=' + encodeURIComponent(query) });
-      if (r.status === 429) { reason = 'Server peta membatasi permintaan karena terlalu ramai. Tunggu sekitar satu menit lalu coba lagi.'; continue; }
-      if (r.status >= 500) { reason = 'Server peta sedang sibuk atau bermasalah (kode ' + r.status + '). Coba lagi sebentar lagi.'; continue; }
-      if (!r.ok) { reason = 'Server peta menolak permintaan (kode ' + r.status + ').'; continue; }
+      if (r.status === 429) { reason = 'Server peta sedang ramai. Bukan masalah jaringan kamu. Tunggu sekitar 1 menit lalu coba lagi.'; continue; }
+      if (r.status >= 500) { reason = 'Server peta sedang sibuk (kode ' + r.status + '). Bukan masalah jaringan kamu. Coba lagi sebentar lagi.'; continue; }
+      if (!r.ok) { reason = 'Server peta menolak permintaan (kode ' + r.status + '). Coba lagi sebentar lagi.'; continue; }
       const j = await r.json();
-      if (j.remark && /timed out|out of memory/i.test(j.remark) && !(j.elements || []).length) { reason = 'Pencarian terlalu berat bagi server peta dan tidak selesai tepat waktu. Coba lagi.'; continue; }
+      if (j.remark && /timed out|out of memory/i.test(j.remark) && !(j.elements || []).length) { reason = 'Pencarian terlalu berat bagi server peta. Coba lagi sebentar lagi.'; continue; }
       return j.elements || [];
     } catch (e) {
-      reason = e.name === 'AbortError' ? 'Server peta terlalu lama merespons (timeout). Koneksi internet mungkin lambat, coba lagi.'
+      reason = e.name === 'AbortError' ? 'Server peta terlalu lama merespons. Bukan masalah jaringan kamu. Coba lagi sebentar lagi.'
         : e instanceof SyntaxError ? 'Server peta mengirim data yang tidak valid. Coba lagi sebentar lagi.'
-        : navigator.onLine ? 'Tidak dapat terhubung ke server peta. Sinyal tidak stabil atau jaringan memblokir layanan peta.'
-        : 'Koneksi internet terputus.';
+        : navigator.onLine ? 'Server peta sedang ramai. Bukan masalah jaringan kamu. Coba lagi 1-2 menit lagi.'
+        : 'Koneksi internet terputus. Sambungkan internet lalu coba lagi.';
     } finally { clearTimeout(timer); }
   }
   throw new MapError(reason);
@@ -69,6 +72,25 @@ function skeleton() {
   ).join('');
 }
 
+function renderFallbackMap() {
+  // Tampilkan tombol "Buka di Google Maps" saat Overpass gagal
+  const q = encodeURIComponent(CATS[cat].label + ' terdekat');
+  const wrap = el('div', 'card');
+  const title = el('h3', null, 'Cari lewat Google Maps');
+  const desc = el('p', 'muted', 'Server peta gratis sedang sibuk. Kamu tetap bisa cari ' + CATS[cat].label.toLowerCase() + ' terdekat lewat Google Maps.');
+  const link = el('a', 'btn btn-secondary btn-block', 'Buka Google Maps');
+  link.href = `https://www.google.com/maps/search/${q}/@${pos.lat},${pos.lon},14z`;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.style.marginTop = '12px';
+  const retry = el('button', 'btn btn-outline btn-block', 'Coba lagi di sini');
+  retry.type = 'button';
+  retry.style.marginTop = '8px';
+  retry.onclick = () => search();
+  wrap.append(title, desc, link, retry);
+  results.append(wrap);
+}
+
 async function search() {
   if (!pos) return;
   const id = ++seq;
@@ -90,6 +112,8 @@ async function search() {
         const more = el('button', 'btn btn-outline btn-block', 'Perluas ke 15 km');
         more.onclick = () => { radius = 15000; search(); };
         results.append(more);
+      } else {
+        renderFallbackMap();
       }
       return;
     }
@@ -99,6 +123,7 @@ async function search() {
     if (id === seq) {
       results.replaceChildren();
       status.textContent = e instanceof MapError ? e.message : 'Terjadi kesalahan tak terduga saat mencari: ' + e.message;
+      renderFallbackMap();
     }
   }
 }
@@ -127,5 +152,4 @@ document.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', ()
   document.querySelectorAll('.chip').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
   search();
 }));
-// Hanya jalan otomatis jika izin sudah pernah diberikan; tidak pernah memaksa.
 navigator.permissions && navigator.permissions.query({ name: 'geolocation' }).then((s) => { if (s.state === 'granted') locate(); }).catch(() => {});
