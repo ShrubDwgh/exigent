@@ -43,7 +43,6 @@ const errStyle = (el, on) => {
   }
 };
 
-// Clear error saat user mengetik
 [emailEl, passEl].forEach((el) => {
   if (!el) return;
   el.addEventListener('input', () => {
@@ -51,6 +50,31 @@ const errStyle = (el, on) => {
     msg.hidden = true;
   });
 });
+
+// ==========================================
+// VALIDASI PASSWORD KUAT
+// ==========================================
+const PASSWORD_MIN = 8;
+
+function validatePassword(password) {
+  const errors = [];
+  if (password.length < PASSWORD_MIN) {
+    errors.push(`Minimal ${PASSWORD_MIN} karakter`);
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push('harus ada huruf besar');
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push('harus ada huruf kecil');
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push('harus ada angka');
+  }
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    errors.push('harus ada simbol');
+  }
+  return errors;
+}
 
 // ==========================================
 // FUNGSI LOGIN DENGAN GOOGLE
@@ -74,17 +98,29 @@ form.addEventListener('submit', (e) => {
 
   const email = emailEl.value.trim();
   const password = passEl.value;
+  const mode = form.dataset.mode;
 
-  // Validasi: kosong / password pendek → tandai merah di fieldnya
+  // --- Validasi email kosong ---
   if (!email) { errStyle(emailEl, true); return; }
-  if (password.length < 6) { errStyle(passEl, true); return; }
+
+  // --- LOGIN: cek password minimal ada isi ---
+  if (mode === 'login') {
+    if (password.length < 1) { errStyle(passEl, true); return; }
+  } else {
+    // --- DAFTAR: password policy ketat ---
+    const pwErrors = validatePassword(password);
+    if (pwErrors.length) {
+      errStyle(passEl, true);
+      show('Password lemah: ' + pwErrors.join(', ') + '.', false);
+      return;
+    }
+  }
 
   busy(form.querySelector('button'), async () => {
     // --- MODE LOGIN ---
-    if (form.dataset.mode === 'login') {
+    if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        // Kredensial salah → tandai kedua field merah
         errStyle(emailEl, true);
         errStyle(passEl, true);
         return;
@@ -97,7 +133,6 @@ form.addEventListener('submit', (e) => {
     // --- MODE DAFTAR (SIGN UP) ---
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
-      // Kalau email sudah terdaftar → tandai merah field email
       if (/already registered|already exists|user already/i.test(error.message)) {
         errStyle(emailEl, true);
       } else {
