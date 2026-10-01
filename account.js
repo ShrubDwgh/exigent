@@ -227,8 +227,13 @@ function renderIdCard() {
       <p class="label">${T('idc_created')}</p>
       <p>${esc(fmtDate(card.created_at))}</p>
     </div>
-    <div class="btns"><button type="button" class="btn btn-secondary btn-sm" id="idc-copy">${T('copy_url')}</button>
-      <a class="btn btn-outline btn-sm" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">${T('view_card')}</a></div>
+    <div>
+      <p class="label">${T('card_url')}</p>
+      <div class="btns" style="margin-top:8px">
+        <button type="button" class="btn btn-secondary btn-sm" id="idc-copy">${T('copy_url')}</button>
+        <a class="btn btn-outline btn-sm" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">${T('view_card')}</a>
+      </div>
+    </div>
   </div>
   <div class="card stack-lg" style="margin-top:12px">
     <button class="btn btn-secondary btn-block" id="nfc-write" type="button" style="display:inline-flex;align-items:center;justify-content:center;gap:8px">
