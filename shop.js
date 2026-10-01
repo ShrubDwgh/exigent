@@ -87,7 +87,7 @@ function renderFilters() {
     { key: 'nfc', label: 'NFC' },
     { key: 'template', label: 'Template' },
   ];
-  return `<div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">
+  return `<div id="filter-tabs" style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">
     ${cats.map((c) => {
       const active = activeCategory === c.key;
       return `<button type="button" data-cat="${c.key}" style="
@@ -107,6 +107,26 @@ function renderFilters() {
   </div>`;
 }
 
+function bindFilterButtons() {
+  main.querySelectorAll('[data-cat]').forEach((btn) => {
+    btn.onclick = () => {
+      activeCategory = btn.dataset.cat;
+      refreshFilterTabs();
+      renderProductList();
+    };
+  });
+}
+
+function refreshFilterTabs() {
+  const old = $('filter-tabs');
+  if (!old) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = renderFilters();
+  const fresh = tmp.firstElementChild;
+  old.replaceWith(fresh);
+  bindFilterButtons();
+}
+
 function renderSearchBar() {
   return `<div style="margin-bottom:16px;position:relative">
     <i data-lucide="search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:#9ca3af;pointer-events:none" aria-hidden="true"></i>
@@ -120,24 +140,17 @@ function renderSearchBar() {
   </div>`;
 }
 
-function bindFilters() {
-  main.querySelectorAll('[data-cat]').forEach((btn) => {
-    btn.onclick = () => {
-      activeCategory = btn.dataset.cat;
-      renderProductList();
-    };
-  });
+function bindSearch() {
   const input = $('search-input');
-  if (input) {
-    let timer;
-    input.oninput = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        searchQuery = input.value.trim().toLowerCase();
-        renderProductList(true);
-      }, 250);
-    };
-  }
+  if (!input) return;
+  let timer;
+  input.oninput = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      searchQuery = input.value.trim().toLowerCase();
+      renderProductList(true);
+    }, 250);
+  };
 }
 
 /* ---------- Render List ---------- */
@@ -206,7 +219,8 @@ async function loadProducts() {
     <div id="product-list"></div>`;
 
   icons();
-  bindFilters();
+  bindFilterButtons();
+  bindSearch();
   renderProductList();
 }
 
