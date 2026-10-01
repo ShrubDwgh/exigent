@@ -78,7 +78,9 @@ const row = ({ tag = 'a', href, id, icon, label, sub, value, danger, disabled, p
 };
 const kv = (rows) => `<dl class="kv">${rows.map(([k, v]) => `<div class="kv-row"><dt class="kv-k">${esc(k)}</dt><dd class="kv-v">${v}</dd></div>`).join('')}</dl>`;
 const badge = (cls, text) => `<span class="badge ${cls}">${esc(text)}</span>`;
+const badgeBox = (cls, text) => `<span class="badge ${cls}" style="border-radius:8px">${esc(text)}</span>`;
 const empty = (icon, title, desc, extra = '') => `<div class="empty"><span class="empty-ic"><i data-lucide="${icon}" aria-hidden="true"></i></span><h2>${esc(title)}</h2>${desc ? `<p class="muted">${esc(desc)}</p>` : ''}${extra}</div>`;
+const labelLine = (text) => `<div style="display:inline-block;padding-bottom:6px;margin-bottom:10px;border-bottom:1px solid #e5e7eb;min-width:60%"><p class="label" style="margin:0">${esc(text)}</p></div>`;
 
 /* ---------- Layar ---------- */
 function renderHome() {
@@ -215,21 +217,21 @@ function renderIdCard() {
   const url = `${location.origin}/card/${card.card_id}`;
   main.innerHTML = `<section class="screen"><div class="card stack-lg">
     <div>
-      <p class="label">${T('card_id')}</p>
+      ${labelLine(T('card_id'))}
       <p class="big">${esc(card.card_id)}</p>
-      <div style="margin-top:8px">${badge(card.is_active ? 'badge-active' : 'badge-inactive', t(card.is_active ? 'active' : 'inactive'))}</div>
+      <div style="margin-top:8px">${badgeBox(card.is_active ? 'badge-active' : 'badge-inactive', t(card.is_active ? 'active' : 'inactive'))}</div>
     </div>
     <div>
-      <p class="label">${T('idc_nfc')}</p>
-      <div style="margin-top:6px">${badge(card.nfc_written_at ? 'badge-active' : 'badge-inactive', t(card.nfc_written_at ? 'idc_nfc_yes' : 'idc_nfc_no'))}</div>
+      ${labelLine(T('idc_nfc'))}
+      <div>${badgeBox(card.nfc_written_at ? 'badge-active' : 'badge-inactive', t(card.nfc_written_at ? 'idc_nfc_yes' : 'idc_nfc_no'))}</div>
     </div>
     <div>
-      <p class="label">${T('idc_created')}</p>
+      ${labelLine(T('idc_created'))}
       <p>${esc(fmtDate(card.created_at))}</p>
     </div>
     <div>
-      <p class="label">${T('card_url')}</p>
-      <div class="btns" style="margin-top:8px">
+      ${labelLine(T('card_url'))}
+      <div class="btns">
         <button type="button" class="btn btn-secondary btn-sm" id="idc-copy">${T('copy_url')}</button>
         <a class="btn btn-outline btn-sm" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">${T('view_card')}</a>
       </div>
@@ -325,7 +327,7 @@ async function renderDevices() {
       <div style="flex:1;min-width:0">
         <strong style="display:block;font-size:14px;color:#111827">
           ${esc(d.device_info || 'Unknown')}
-          ${isCurrent ? `<span class="badge badge-active" style="margin-left:6px">${lang === 'id' ? 'Perangkat ini' : 'This device'}</span>` : ''}
+          ${isCurrent ? `<span class="badge badge-active" style="margin-left:6px;border-radius:8px">${lang === 'id' ? 'Perangkat ini' : 'This device'}</span>` : ''}
         </strong>
         <small style="display:block;margin-top:4px;font-size:12px;color:#9ca3af">
           ${lang === 'id' ? 'Aktif terakhir: ' : 'Last active: '}${esc(fmtRelative(d.last_active_at))}
