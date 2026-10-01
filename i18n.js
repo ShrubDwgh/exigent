@@ -37,7 +37,7 @@ export const STRINGS = {
     lang_changed: 'Language changed to English',
 
     // Informasi Akun Gmail
-    gmail_name: 'Name', gmail_email: 'Email', gmail_method: 'Sign-in method', gmail_prov_email: 'Email & password',
+    gmail_name: 'Name', gmail_email: 'Email', gmail_method: 'Sign-in method', gmail_prov_email: 'Email',
     gmail_created: 'Account created', gmail_last: 'Last sign-in',
     gmail_note: 'This account signs in with email & password, so no Google name is available.',
 
