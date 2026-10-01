@@ -87,7 +87,10 @@ function renderHome() {
   const name = displayName();
   const greeting = name ? esc(t('greet')).replace('{name}', () => esc(name)) : T('greet_anon');
   main.innerHTML = `<section class="screen">
-    <div class="greet"><h2 class="greet-title">${greeting}</h2><p class="muted">${T('greet_desc')}</p></div>
+    <div class="greet" style="padding-bottom:16px;border-bottom:1px solid #e5e7eb;margin-bottom:16px">
+      <h2 class="greet-title">${greeting}</h2>
+      <p class="muted" style="margin:0">${T('greet_desc')}</p>
+    </div>
     <nav class="card menu" aria-label="${T('acct_title')}">
       ${row({ href: '#/security', icon: 'lock', label: t('menu_security') })}
       ${row({ href: '#/settings', icon: 'settings', label: t('menu_settings') })}
