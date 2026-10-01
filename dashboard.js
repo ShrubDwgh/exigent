@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
-import { requireSession, signOut, busy, toast } from './auth.js';
-import { STRINGS, getLang, setLang } from './i18n.js';
+import { requireSession, busy, toast } from './auth.js';
+import { STRINGS, getLang, applyNavLabels } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -10,15 +10,9 @@ const BLOOD = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const CATS = ['keluarga', 'pasangan', 'teman', 'dokter', 'lainnya'];
 const fail = (e) => toast('Gagal: ' + e.message);
 const sub = (e) => e.submitter || e.target.querySelector('button[type="submit"]');
-let card = null, profile = null, contacts = [], session = null, medisModal = null;
-let lang = getLang();
+let card = null, profile = null, contacts = [], medisModal = null;
+const lang = getLang();
 const t = (k) => (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || k;
-
-function applyNavLabels() {
-  document.querySelector('[data-tab="dashboard"] span').textContent = t('nav_dashboard');
-  document.querySelector('a.nav-btn span').textContent = t('nav_medical');
-  document.querySelector('[data-tab="profil"] span').textContent = t('nav_profile');
-}
 
 async function load() {
   const { data, error } = await supabase.from('cards').select('*').order('created_at').limit(1).maybeSingle();
@@ -31,8 +25,8 @@ async function load() {
     ]);
     profile = p.data; contacts = k.data || [];
   }
-  applyNavLabels();
-  renderDashboard(); renderAccount();
+  applyNavLabels(t);
+  renderDashboard();
   if (medisModal) renderMedisModal(medisModal.querySelector('.modal-box'));
   window.lucide && window.lucide.createIcons();
 }
@@ -107,42 +101,6 @@ function renderDashboard() {
   $('copy').onclick = () => navigator.clipboard.writeText(url).then(() => toast('URL disalin'), () => toast('Salin manual dari teks URL'));
   drawQR(url);
   $('nfc-write').onclick = () => writeNfc(url);
-}
-
-function renderAccount() {
-  const box = $('tab-profil');
-  box.innerHTML = `<h1>${t('profile_title')}</h1>
-    <div class="card stack-lg">
-      <div><p class="label">${t('account_label')}</p><p style="font-weight:600">${esc((session && session.user && session.user.email) || '—')}</p></div>
-      ${card ? `<div><p class="label">${t('card_id')}</p><p>${esc(card.card_id)}</p></div>` : ''}
-      ${card ? `<button class="btn btn-block ${card.is_active ? 'btn-danger' : 'btn-success'}" id="toggle">${card.is_active ? t('deactivate_card') : t('activate_card')}</button>` : ''}
-    </div>
-    <div class="card stack-lg" style="margin-top:16px">
-      <div class="field" style="margin:0">
-        <label for="lang-select">${t('language_label')}</label>
-        <select class="input" id="lang-select">
-          <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
-          <option value="id"${lang === 'id' ? ' selected' : ''}>Bahasa Indonesia</option>
-        </select>
-      </div>
-    </div>
-    <a class="btn btn-outline btn-block" href="/settings" style="margin-top:16px"><i data-lucide="shield-check" aria-hidden="true"></i>Perizinan &amp; Pengaturan Lanjutan</a>
-    <button class="btn btn-danger btn-block" id="logout-btn" style="margin-top:16px">${t('logout')}</button>`;
-  if ($('toggle')) $('toggle').onclick = (e) => {
-    if (card.is_active && !confirm('Nonaktifkan kartu? Halaman kartu tidak akan bisa dibuka.')) return;
-    busy(e.currentTarget, async () => {
-      const { error } = await supabase.from('cards').update({ is_active: !card.is_active }).eq('id', card.id);
-      if (error) return fail(error);
-      await load(); toast('Status kartu diperbarui');
-    });
-  };
-  $('lang-select').onchange = (e) => {
-    lang = e.target.value; setLang(lang);
-    applyNavLabels(); renderDashboard(); renderAccount();
-      if (medisModal) renderMedisModal(medisModal.querySelector('.modal-box'));
-    window.lucide && window.lucide.createIcons();
-  };
-  $('logout-btn').onclick = signOut;
 }
 
 /* ---------- Modal: Edit Data Medis ---------- */
@@ -277,10 +235,5 @@ function closeMedisModal() {
   medisModal = null;
 }
 
-document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => {
-  document.querySelectorAll('[data-tab]').forEach((x) => x.classList.toggle('active', x === b));
-  ['dashboard', 'profil'].forEach((tab) => ($('tab-' + tab).hidden = tab !== b.dataset.tab));
-  $('fab-edit').hidden = b.dataset.tab !== 'dashboard';
-}));
 $('fab-edit').onclick = openMedisModal;
-requireSession().then((s) => { if (s) { session = s; applyNavLabels(); load(); } });
+requireSession().then((s) => { if (s) { applyNavLabels(t); load(); } });

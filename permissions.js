@@ -1,30 +1,20 @@
-import { requireSession } from './auth.js';
+// Helper status izin browser (Lokasi & NFC). Dipakai layar
+// Akun → Pengaturan → Perizinan & Pengaturan Lanjutan (account.js).
 
-const $ = (id) => document.getElementById(id);
-const LABEL = { granted: 'Diizinkan', denied: 'Ditolak', prompt: 'Belum diminta' };
-const CLS = { granted: 'badge-active', denied: 'badge-emergency', prompt: 'badge-inactive' };
-
-function setBadge(el, state) {
-  el.textContent = LABEL[state] || 'Tidak diketahui di browser ini';
-  el.className = 'badge ' + (CLS[state] || '');
-}
-
-async function watchPermission(name, badgeEl, onState) {
-  if (!navigator.permissions || !navigator.permissions.query) { setBadge(badgeEl, null); return; }
+// Memantau izin `name` ('geolocation' | 'nfc'). `onState` dipanggil dengan
+// 'granted' | 'denied' | 'prompt', atau null bila browser tidak mendukung.
+export async function watchPermission(name, onState) {
+  if (!navigator.permissions || !navigator.permissions.query) { onState(null); return; }
   try {
     const status = await navigator.permissions.query({ name });
-    setBadge(badgeEl, status.state);
-    if (onState) onState(status.state);
-    status.onchange = () => { setBadge(badgeEl, status.state); if (onState) onState(status.state); };
+    onState(status.state);
+    status.onchange = () => onState(status.state);
   } catch (_) {
-    setBadge(badgeEl, null);
+    onState(null);
   }
 }
 
-requireSession().then((s) => {
-  if (!s) return;
-  const geoBtn = $('perm-geo-btn');
-  watchPermission('geolocation', $('perm-geo'), (state) => { geoBtn.hidden = state !== 'prompt'; });
-  geoBtn.onclick = () => navigator.geolocation && navigator.geolocation.getCurrentPosition(() => {}, () => {});
-  watchPermission('nfc', $('perm-nfc'));
-});
+// Memicu dialog izin lokasi bawaan sistem (hanya jika status masih "prompt").
+export function requestGeolocation() {
+  if (navigator.geolocation) navigator.geolocation.getCurrentPosition(() => {}, () => {});
+}
