@@ -223,5 +223,19 @@ export default {
   terms_h10: '10. Changes to the Terms',
   terms_h11: '11. Governing Law',
   terms_h12: '12. Contact',
+
+  // Shop
   shop_free: 'Free',
+  shop_title: 'Shop',
+  shop_desc: 'Pick your favorite NFC card & template products. Purchases go through Shopee for a smooth and secure checkout.',
+  shop_search_ph: 'Search products or template codes...',
+  shop_filter_all: 'All',
+  shop_no_match: 'No matching products.',
+  shop_load_failed: 'Failed to load products.',
+  shop_discount: 'Discount',
+  shop_sale: 'Sale',
+  shop_buy: 'Buy',
+  shop_get: 'Get',
+  shop_soon: 'Coming soon',
+  shop_back: 'Back',
 };
