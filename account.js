@@ -446,7 +446,6 @@ function renderHelp(nodeId) {
     <h2 class="sec-title">${esc(pick(node.title))}</h2>
     ${body}
     <div class="card menu">${row({ tag: 'button', id: 'help-cs', icon: 'headset', label: t('help_contact_q'), sub: t('menu_cs') })}</div>
-    ${id === FAQ_ROOT ? '' : `<a class="btn btn-outline btn-block" href="#/help">${T('help_back')}</a>`}
   </section>`;
   main.querySelectorAll('[data-cs], #help-cs').forEach((b) => (b.onclick = openCs));
 }
