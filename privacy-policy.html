@@ -15,12 +15,106 @@
     <a class="brand" href="/"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card NFC</a>
     <a class="btn btn-outline btn-sm" href="/">Beranda</a>
   </header>
-  <main class="wrap" style="padding-top:24px">
+  <main class="wrap" style="padding-top:24px;padding-bottom:80px">
     <h1>Kebijakan Privasi</h1>
+    <p class="muted" style="margin-bottom:24px"><strong>Terakhir diperbarui:</strong> 1 Oktober 2026</p>
+
     <div class="card stack-lg">
-      <p>Halaman ini masih dalam penyusunan.</p>
-      <p class="muted">Secara umum: data emergency yang kamu isi (nama, golongan darah, alergi, kontak darurat, dan sejenisnya) disimpan di database dan hanya ditampilkan di halaman kartu publikmu untuk membantu keadaan darurat. Data akun (email, password) dikelola lewat sistem autentikasi Supabase.</p>
-      <p class="muted">Kebijakan lengkap akan ditambahkan di sini kemudian.</p>
+      <h2>1. Pendahuluan</h2>
+      <p>Emergency Card NFC ("kami", "aplikasi") berkomitmen melindungi privasi Anda. Kebijakan ini menjelaskan bagaimana kami mengumpulkan, menggunakan, menyimpan, dan melindungi data pribadi Anda saat menggunakan layanan kartu darurat berbasis NFC kami.</p>
+      <p>Dengan menggunakan layanan ini, Anda menyetujui praktik yang dijelaskan dalam kebijakan ini.</p>
+    </div>
+
+    <div class="card stack-lg" style="margin-top:16px">
+      <h2>2. Data yang Kami Kumpulkan</h2>
+      <p>Kami mengumpulkan beberapa jenis data berikut:</p>
+      <ul>
+        <li><strong>Data Akun:</strong> Nama, alamat email, foto profil (jika login dengan Google), dan informasi autentikasi lainnya.</li>
+        <li><strong>Data Medis Darurat:</strong> Golongan darah, alergi, kondisi medis, obat rutin, dan catatan medis lain yang Anda isi secara sukarela.</li>
+        <li><strong>Data Kontak Darurat:</strong> Nama, nomor telepon, dan hubungan Anda dengan kontak darurat yang Anda daftarkan.</li>
+        <li><strong>Data Identitas:</strong> Dokumen identitas (KTP/SIM/Paspor) jika Anda mengunggahnya untuk verifikasi darurat.</li>
+        <li><strong>Data Lokasi:</strong> Lokasi terkini Anda, hanya jika Anda memberikan izin melalui browser saat kartu dipindai.</li>
+        <li><strong>Data Teknis:</strong> Alamat IP, jenis perangkat, dan log aktivitas untuk keamanan sistem.</li>
+      </ul>
+    </div>
+
+    <div class="card stack-lg" style="margin-top:16px">
+      <h2>3. Bagaimana Kami Menggunakan Data Anda</h2>
+      <ul>
+        <li><strong>Untuk Fungsi Darurat:</strong> Menampilkan data medis Anda kepada penolong (petugas medis, orang awam) saat kartu NFC Anda dipindai.</li>
+        <li><strong>Untuk Autentikasi:</strong> Memverifikasi identitas Anda saat login dan mengelola akun.</li>
+        <li><strong>Untuk Keamanan:</strong> Mendeteksi aktivitas mencurigakan dan mencegah penyalahgunaan.</li>
+        <li><strong>Untuk Peningkatan Layanan:</strong> Analisis anonim untuk mengembangkan fitur baru.</li>
+      </ul>
+    </div>
+
+    <div class="card stack-lg" style="margin-top:16px">
+      <h2>4. Siapa yang Bisa Mengakses Data Anda</h2>
+      <p>Data medis Anda dapat diakses oleh:</p>
+      <ul>
+        <li><strong>Anda sendiri</strong> melalui dashboard pribadi Anda.</li>
+        <li><strong>Penolong (siapa pun yang memindai kartu NFC Anda)</strong>, tetapi hanya data yang Anda izinkan untuk ditampilkan (Anda bisa mengatur ini di menu Pengaturan → Perizinan).</li>
+        <li><strong>Tim Emergency Card NFC</strong>, hanya untuk keperluan dukungan teknis dan hanya dengan persetujuan tertulis dari Anda.</li>
+      </ul>
+      <p><strong>Kami TIDAK PERNAH menjual data Anda</strong> kepada pihak ketiga untuk tujuan komersial.</p>
+    </div>
+
+    <div class="card stack-lg" style="margin-top:16px">
+      <h2>5. Keamanan Data</h2>
+      <p>Kami menggunakan langkah-langkah keamanan standar industri:</p>
+      <ul>
+        <li>Enkripsi data saat transit (HTTPS) dan saat tersimpan (at-rest encryption).</li>
+        <li>Row Level Security (RLS) pada database untuk memastikan setiap pengguna hanya bisa mengakses data miliknya sendiri.</li>
+        <li>Otentikasi aman melalui Supabase Auth (termasuk opsi login dengan Google).</li>
+        <li>Audit log untuk setiap akses ke data sensitif.</li>
+      </ul>
+    </div>
+
+    <div class="card stack-lg" style="margin-top:16px">
+      <h2>6. Berapa Lama Kami Menyimpan Data</h2>
+      <ul>
+        <li><strong>Data akun & medis:</strong> Selama akun Anda aktif. Jika Anda menghapus akun, semua data dihapus permanen.</li>
+        <li><strong>Log aktivitas:</strong> Maksimal 90 hari, kemudian dihapus otomatis.</li>
+        <li><strong>Data anonim untuk statistik:</strong> Dapat disimpan tanpa batas waktu karena tidak bisa dihubungkan kembali ke Anda.</li>
+      </ul>
+    </div>
+
+    <div class="card stack-lg" style="margin-top:16px">
+      <h2>7. Hak Anda (Sesuai UU PDP No. 27 Tahun 2022)</h2>
+      <p>Anda memiliki hak-hak berikut:</p>
+      <ul>
+        <li><strong>Hak Akses:</strong> Melihat semua data yang kami simpan tentang Anda.</li>
+        <li><strong>Hak Koreksi:</strong> Memperbaiki data yang tidak akurat.</li>
+        <li><strong>Hak Penghapusan:</strong> Menghapus akun dan semua data Anda (fitur "Hapus Akun" tersedia di Pengaturan).</li>
+        <li><strong>Hak Portabilitas:</strong> Meminta salinan data Anda dalam format yang dapat dibaca mesin.</li>
+        <li><strong>Hak Menarik Persetujuan:</strong> Menarik persetujuan penggunaan data kapan saja.</li>
+        <li><strong>Hak Mengajukan Keluhan:</strong> Kepada kami atau kepada otoritas pengawas PDP.</li>
+      </ul>
+    </div>
+
+    <div class="card stack-lg" style="margin-top:16px">
+      <h2>8. Cookie dan Teknologi Serupa</h2>
+      <p>Kami menggunakan cookie dan penyimpanan lokal (localStorage) untuk:</p>
+      <ul>
+        <li>Menjaga sesi login Anda tetap aktif.</li>
+        <li>Menyimpan preferensi bahasa Anda.</li>
+        <li>Menyimpan pengaturan visibilitas data kartu Anda.</li>
+      </ul>
+      <p>Anda dapat menghapus cookie kapan saja melalui pengaturan browser Anda.</p>
+    </div>
+
+    <div class="card stack-lg" style="margin-top:16px">
+      <h2>9. Perubahan Kebijakan</h2>
+      <p>Kami dapat memperbarui kebijakan ini dari waktu ke waktu. Perubahan signifikan akan kami beritahukan melalui email atau notifikasi di aplikasi. Tanggal "Terakhir diperbarui" di bagian atas akan menunjukkan kapan revisi terakhir dilakukan.</p>
+    </div>
+
+    <div class="card stack-lg" style="margin-top:16px">
+      <h2>10. Kontak</h2>
+      <p>Jika Anda memiliki pertanyaan tentang kebijakan privasi ini, silakan hubungi kami melalui:</p>
+      <ul>
+        <li><strong>Pusat Bantuan:</strong> Tersedia di menu Akun → Pusat Bantuan</li>
+        <li><strong>Hubungi CS:</strong> Tersedia di menu Akun → Hubungi CS Emergency Card NFC</li>
+      </ul>
     </div>
   </main>
   <script>window.addEventListener('load', function () { window.lucide && window.lucide.createIcons(); });</script>
