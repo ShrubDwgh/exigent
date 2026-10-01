@@ -13,11 +13,31 @@
   <title>Dashboard · Emergency Card</title>
 </head>
 <body class="dash">
-  <div class="topbar" style="display:flex;align-items:center;justify-content:space-between">
-    <span style="display:inline-flex;align-items:center;gap:8px"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</span>
-    <a href="/shop.html" aria-label="Toko" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%">
-      <i data-lucide="shopping-bag" aria-hidden="true"></i>
-    </a>
+  <div class="topbar" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <span style="display:inline-flex;align-items:center;gap:8px;min-width:0">
+      <i data-lucide="heart-pulse" aria-hidden="true"></i>
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Emergency Card</span>
+    </span>
+    <button type="button" onclick="location.href='/shop.html'" aria-label="Buka Toko" style="
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 12px;
+      border-radius:20px;
+      border:1px solid rgba(37,99,235,.3);
+      background:rgba(37,99,235,.08);
+      color:#2563eb;
+      font-size:13px;
+      font-weight:600;
+      font-family:inherit;
+      cursor:pointer;
+      flex-shrink:0;
+      white-space:nowrap;
+      transition:background .15s;
+    ">
+      <i data-lucide="shopping-bag" style="width:16px;height:16px" aria-hidden="true"></i>
+      Toko
+    </button>
   </div>
   <aside class="side">
     <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
