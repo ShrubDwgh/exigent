@@ -136,6 +136,54 @@ function renderGmail() {
   });
 }
 
+/* ---------- NFC Writer ---------- */
+async function writeNfc(url) {
+  const status = $('nfc-status'), btn = $('nfc-write');
+
+  if (!('NDEFReader' in window)) {
+    status.textContent = 'Browser ini tidak mendukung tulis NFC langsung (perlu Chrome di Android). Salin URL di atas, lalu tulis lewat aplikasi seperti NFC Tools.';
+    return;
+  }
+  if (!window.isSecureContext) {
+    status.textContent = 'Fitur ini hanya berjalan lewat koneksi aman (HTTPS).';
+    return;
+  }
+
+  if (card.nfc_written_at) {
+    const yakin = confirm('Kartu ini sudah pernah ditulis sebelumnya. Yakin mau tulis ulang?');
+    if (!yakin) return;
+  }
+
+  btn.classList.add('loading'); btn.disabled = true;
+  status.textContent = 'Dekatkan HP ke kartu NFC kosong…';
+
+  try {
+    await new NDEFReader().write({ records: [{ recordType: 'url', data: url }] });
+    toast('Berhasil ditulis ke kartu NFC');
+    status.textContent = 'Menyimpan status…';
+
+    const { data: updData, error: dbErr } = await supabase
+      .from('cards')
+      .update({ nfc_written_at: new Date().toISOString() })
+      .eq('id', card.id)
+      .select();
+
+    if (dbErr) {
+      status.innerHTML = `<span class="err-line">Kartu berhasil ditulis, tapi gagal update status: ${esc(dbErr.message)}</span>`;
+    } else if (!updData || updData.length === 0) {
+      status.innerHTML = `<span class="err-line">Update tidak mengubah baris.</span>`;
+    } else {
+      status.textContent = '';
+      await loadData();
+      render();
+    }
+  } catch (err) {
+    status.innerHTML = `<span class="err-line">${esc(err.message || err.name || 'Gagal menulis')}</span>Pastikan kartu menempel stabil di belakang HP, lalu coba lagi.`;
+  } finally {
+    btn.classList.remove('loading'); btn.disabled = false;
+  }
+}
+
 function renderIdCard() {
   if (loadFailed || !card) {
     const go = `<a class="btn btn-secondary" href="/dashboard.html">${T('idc_go')}</a>`;
@@ -148,14 +196,32 @@ function renderIdCard() {
   }
   const url = `${location.origin}/card/${card.card_id}`;
   main.innerHTML = `<section class="screen"><div class="card stack-lg">
-    <div class="row"><div><p class="label">${T('card_id')}</p><p class="big">${esc(card.card_id)}</p></div>
-      ${badge(card.is_active ? 'badge-active' : 'badge-inactive', t(card.is_active ? 'active' : 'inactive'))}</div>
-    ${kv([[t('idc_nfc'), badge(card.nfc_written_at ? 'badge-active' : 'badge-inactive', t(card.nfc_written_at ? 'idc_nfc_yes' : 'idc_nfc_no'))], [t('idc_created'), esc(fmtDate(card.created_at))]])}
-    <div><p class="label">${T('card_url')}</p><p class="url">${esc(url)}</p></div>
+    <div>
+      <p class="label">${T('card_id')}</p>
+      <p class="big">${esc(card.card_id)}</p>
+      <div style="margin-top:8px">${badge(card.is_active ? 'badge-active' : 'badge-inactive', t(card.is_active ? 'active' : 'inactive'))}</div>
+    </div>
+    <div>
+      <p class="label">${T('idc_nfc')}</p>
+      <div style="margin-top:6px">${badge(card.nfc_written_at ? 'badge-active' : 'badge-inactive', t(card.nfc_written_at ? 'idc_nfc_yes' : 'idc_nfc_no'))}</div>
+    </div>
+    <div>
+      <p class="label">${T('idc_created')}</p>
+      <p>${esc(fmtDate(card.created_at))}</p>
+    </div>
     <div class="btns"><button type="button" class="btn btn-secondary btn-sm" id="idc-copy">${T('copy_url')}</button>
       <a class="btn btn-outline btn-sm" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">${T('view_card')}</a></div>
-  </div></section>`;
+  </div>
+  <div class="card stack-lg" style="margin-top:12px">
+    <h2>${t('nfc_title')}</h2>
+    <p class="muted small">${t('nfc_desc')}</p>
+    <button class="btn btn-secondary btn-block" id="nfc-write" type="button"><i data-lucide="nfc" aria-hidden="true"></i>${t('write_nfc')}</button>
+    <p id="nfc-status" class="muted small"></p>
+    ${card.nfc_written_at ? `<p class="badge badge-active" style="align-self:flex-start;margin-top:4px">${t('nfc_registered')}</p>` : ''}
+  </div>
+  </section>`;
   $('idc-copy').onclick = () => (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast(t('copied')), () => toast(t('copy_manual')));
+  $('nfc-write').onclick = () => writeNfc(url);
 }
 
 function renderSecurity() {
