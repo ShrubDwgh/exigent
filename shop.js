@@ -15,6 +15,7 @@ let searchQuery = '';
 
 /* ---------- Utils ---------- */
 const fmtPrice = (n) => {
+  if (n === 0) return t('shop_free');
   if (!n) return '-';
   try { return new Intl.NumberFormat(lang === 'id' ? 'id-ID' : 'en', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n); }
   catch (_) { return 'Rp ' + n; }
@@ -34,6 +35,8 @@ function renderHeader() {
 /* ---------- Product Card ---------- */
 function productCard(p) {
   const hasDiscount = p.discount_percent && p.discount_percent > 0 && p.original_price;
+  const isFree = p.price === 0;
+
   const img = p.image_url
     ? `<div style="width:100%;height:200px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden">
          <img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy" style="max-width:100%;max-height:100%;object-fit:contain;display:block">
@@ -43,7 +46,12 @@ function productCard(p) {
        </div>`;
 
   let topBadge = '';
-  if (hasDiscount) {
+  if (isFree) {
+    topBadge = `<span style="position:absolute;top:10px;left:10px;background:#10b981;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;z-index:1;display:inline-flex;align-items:center;gap:4px">
+      <i data-lucide="gift" style="width:12px;height:12px" aria-hidden="true"></i>
+      ${t('shop_free')}
+    </span>`;
+  } else if (hasDiscount) {
     topBadge = `<span style="position:absolute;top:10px;left:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;z-index:1;display:inline-flex;align-items:center;gap:4px">
       <i data-lucide="tag" style="width:12px;height:12px" aria-hidden="true"></i>
       ${lang === 'id' ? 'Diskon' : 'Sale'} ${p.discount_percent}%
@@ -52,23 +60,33 @@ function productCard(p) {
     topBadge = `<span style="position:absolute;top:10px;left:10px;background:#2563eb;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;z-index:1">${esc(p.badge)}</span>`;
   }
 
-  const priceHtml = hasDiscount
-    ? `<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+  let priceHtml;
+  if (isFree) {
+    priceHtml = `<strong style="font-size:17px;color:#10b981">${t('shop_free')}</strong>`;
+  } else if (hasDiscount) {
+    priceHtml = `<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
          <strong style="font-size:17px;color:#10b981">${fmtPrice(p.price)}</strong>
          <small style="text-decoration:line-through;color:#9ca3af;font-size:13px">${fmtPrice(p.original_price)}</small>
-       </div>`
-    : `<strong style="font-size:17px;color:#10b981">${fmtPrice(p.price)}</strong>`;
+       </div>`;
+  } else {
+    priceHtml = `<strong style="font-size:17px;color:#10b981">${fmtPrice(p.price)}</strong>`;
+  }
 
   const codeHtml = p.code
     ? `<div style="font-size:11px;color:#6b7280;font-family:monospace;background:#f3f4f6;padding:3px 8px;border-radius:6px;display:inline-block;margin-top:6px">${esc(p.code)}</div>`
     : '';
 
-  const buyBtn = p.shopee_url
-    ? `<a class="btn btn-secondary btn-sm" href="${esc(p.shopee_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap">
-         <i data-lucide="external-link" style="width:14px;height:14px" aria-hidden="true"></i>
-         ${lang === 'id' ? 'Beli' : 'Buy'}
-       </a>`
-    : `<span class="badge badge-inactive">${lang === 'id' ? 'Segera' : 'Soon'}</span>`;
+  let buyBtn;
+  if (p.shopee_url) {
+    buyBtn = `<a class="btn ${isFree ? 'btn-success' : 'btn-secondary'} btn-sm" href="${esc(p.shopee_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap">
+         <i data-lucide="${isFree ? 'download' : 'external-link'}" style="width:14px;height:14px" aria-hidden="true"></i>
+         ${isFree ? (lang === 'id' ? 'Ambil' : 'Get') : (lang === 'id' ? 'Beli' : 'Buy')}
+       </a>`;
+  } else if (isFree) {
+    buyBtn = `<span class="badge badge-active">${t('shop_free')}</span>`;
+  } else {
+    buyBtn = `<span class="badge badge-inactive">${lang === 'id' ? 'Segera' : 'Soon'}</span>`;
+  }
 
   return `<div class="card stack-lg" style="padding:12px;position:relative;display:flex;flex-direction:column;gap:12px">
     ${topBadge}
