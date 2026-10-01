@@ -28,14 +28,13 @@ async function loadData() {
       const p = await supabase.from('emergency_profiles').select('full_name').eq('card_uuid', card.id).maybeSingle();
       profile = p.data || null;
     }
-  } catch (e) { // jaringan putus / error server: tampilkan pesan, layar tetap bisa dipakai
+  } catch (e) {
     loadFailed = true; card = null; profile = null; fail(e);
   }
 }
 
 const meta = () => session.user.user_metadata || {};
 const googleName = () => String(meta().full_name || meta().name || '').trim();
-// Nama sapaan: nama akun Google → (cadangan) nama di profil darurat → bagian depan email.
 const displayName = () => googleName() || String((profile && profile.full_name) || '').trim() || String(session.user.email || '').split('@')[0].trim();
 const providers = () => { const a = session.user.app_metadata || {}; return a.providers || [a.provider || 'email']; };
 const fmtDate = (iso) => {
@@ -44,7 +43,6 @@ const fmtDate = (iso) => {
 };
 
 /* ---------- Potongan HTML ---------- */
-// Baris menu: ikon kiri · label tengah · chevron kanan.
 const row = ({ tag = 'a', href, id, icon, label, sub, value, danger, disabled, plain }) => {
   const attrs = tag === 'a' ? `href="${esc(href)}"` : 'type="button"';
   const off = disabled ? (tag === 'a' ? ' aria-disabled="true" tabindex="-1"' : ' disabled') : '';
@@ -89,11 +87,11 @@ function renderSettings() {
     ${row({ tag: 'button', id: 'row-lang', icon: 'languages', label: t('set_language'), value: lang === 'id' ? 'Bahasa Indonesia' : 'English' })}
     ${row({ href: '#/settings/permissions', icon: 'shield-check', label: t('set_permissions') })}
     ${row({ tag: 'button', id: 'row-card', icon: 'power', label: cardLabel, sub: cardSub, danger: !c || c.is_active, disabled: !c })}
-    ${row({ tag: 'button', id: 'row-logout', icon: 'log-out', label: t('set_logout'), danger: true })}
+    ${row({ tag: 'button', id: 'row-delete', icon: 'trash-2', label: lang === 'id' ? 'Hapus Akun' : 'Delete Account', danger: true })}
   </nav></section>`;
   $('row-lang').onclick = openLang;
   $('row-card').onclick = onCardRow;
-  $('row-logout').onclick = askLogout;
+  $('row-delete').onclick = askDeleteAccount;
 }
 
 function renderGmail() {
@@ -168,10 +166,7 @@ function renderSecurity() {
   };
 }
 
-/* Visibilitas data di kartu darurat.
-   CATATAN: untuk sekarang pilihan ini hanya tersimpan di perangkat (localStorage) dan
-   BELUM memengaruhi halaman kartu publik /card/:id — itu perlu kolom database + perubahan
-   get_public_card & card.js. Default semuanya aktif (sama dengan perilaku kartu saat ini). */
+/* Visibilitas data di kartu darurat. */
 const VIS_KEYS = ['medical', 'address', 'contacts'];
 const visStoreKey = () => 'exigent_visibility_' + session.user.id;
 function loadVis() {
@@ -201,7 +196,6 @@ function renderPermissions() {
       <p class="muted small" style="margin-top:12px">${T('perm_hint')}</p></div>
   </section>`;
 
-  // Master toggle "Izinkan Semua" + tiga switch. Master menyala jika ketiganya menyala.
   const vis = loadVis();
   const rows = [...main.querySelectorAll('.trow[data-vis]')];
   const paint = () => rows.forEach((r) => {
@@ -215,7 +209,6 @@ function renderPermissions() {
   }));
   paint();
 
-  // Status izin perangkat (Lokasi & NFC)
   const geo = $('perm-geo'), nfc = $('perm-nfc'), geoBtn = $('perm-geo-btn');
   const MAP = { granted: ['perm_granted', 'badge-active'], denied: ['perm_denied', 'badge-emergency'], prompt: ['perm_prompt', 'badge-inactive'] };
   const setBadge = (el, st) => { if (!el.isConnected) return; const [k, cls] = MAP[st] || ['perm_unknown', '']; el.textContent = t(k); el.className = 'badge ' + cls; };
@@ -224,7 +217,7 @@ function renderPermissions() {
   geoBtn.onclick = requestGeolocation;
 }
 
-/* Pusat Bantuan: seluruh isi ada di help-config.js */
+/* Pusat Bantuan */
 const helpHref = (id) => (id === FAQ_ROOT ? '#/help' : '#/help/' + encodeURIComponent(id));
 const helpAction = (a) => {
   const label = esc(pick(a.label));
@@ -270,7 +263,7 @@ function renderAbout() {
   </div><p class="muted small center">© 2026 Proximate Labs. All rights reserved.</p></section>`;
 }
 
-/* ---------- Bottom sheet: bahasa, CS, notifikasi, konfirmasi ---------- */
+/* ---------- Bottom sheet ---------- */
 const FLAG_ID = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="20" fill="#E70011"/><rect y="20" width="40" height="20" fill="#fff"/></svg>';
 const FLAG_EN = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#012169"/><path d="M0 0L40 40M40 0L0 40" stroke="#fff" stroke-width="7"/><path d="M0 0L40 40M40 0L0 40" stroke="#C8102E" stroke-width="2.6"/><path d="M20 0V40M0 20H40" stroke="#fff" stroke-width="11"/><path d="M20 0V40M0 20H40" stroke="#C8102E" stroke-width="6.4"/></svg>';
 const langOpt = (code, name, sub, flag) => `<button type="button" class="opt" role="radio" aria-checked="${code === lang}" data-lang="${code}" tabindex="${code === lang ? 0 : -1}">
@@ -285,7 +278,6 @@ function applyLang(code) {
   toast(t('lang_changed'));
 }
 
-// Modal pilihan bahasa buatan sendiri (pengganti <select> bawaan).
 function openLang() {
   let sel = lang;
   openSheet({
@@ -316,7 +308,6 @@ function openLang() {
   });
 }
 
-// Pilihan kontak CS. Nomor/username/tautan diatur di cs-config.js.
 function openCs() {
   const wa = CS_CONTACT.whatsapp, tg = CS_CONTACT.telegram;
   const waHref = CS_CONTACT.whatsappLink || `https://wa.me/${String(wa.number).replace(/\D/g, '')}?text=${encodeURIComponent(pick(wa.message))}`;
@@ -334,7 +325,6 @@ function openCs() {
   });
 }
 
-// Panel notifikasi (belum ada sumber notifikasi → tampil kosong).
 function openNotifs() {
   openSheet({
     title: t('notif_title'),
@@ -361,6 +351,46 @@ const askLogout = () => confirmSheet({
   onConfirm: (c, btn) => busy(btn, async () => { try { await signOut(); } catch (e) { fail(e); } }),
 });
 
+/* ---------- Hapus Akun (BARU) ---------- */
+const askDeleteAccount = () => {
+  const email = String(session.user.email || '').toLowerCase();
+  openSheet({
+    title: lang === 'id' ? '⚠️ Hapus Akun Permanen' : '⚠️ Delete Account Permanently',
+    closeLabel: t('close'),
+    body: `<p class="muted sheet-text">${lang === 'id'
+      ? 'Semua data berikut akan <strong>hilang permanen</strong> dan tidak bisa dipulihkan:'
+      : 'All the following data will be <strong>permanently deleted</strong> and cannot be recovered:'}</p>
+      <ul style="color:#4b5563;font-size:14px;line-height:1.8;padding-left:20px;margin:12px 0">
+        <li>${lang === 'id' ? 'Profil medis & kontak darurat' : 'Medical profile & emergency contacts'}</li>
+        <li>${lang === 'id' ? 'Semua kartu NFC (kartu fisik jadi tidak aktif)' : 'All NFC cards (physical cards become inactive)'}</li>
+        <li>${lang === 'id' ? 'Riwayat emergency events' : 'Emergency events history'}</li>
+        <li>${lang === 'id' ? 'Akun login (Google/Email)' : 'Login account (Google/Email)'}</li>
+      </ul>
+      <p class="muted sheet-text">${lang === 'id' ? 'Ketik email kamu untuk konfirmasi:' : 'Type your email to confirm:'}</p>
+      <input type="email" class="input" id="del-email" placeholder="${esc(email)}" autocomplete="off" style="width:100%;margin-top:8px">
+      <p id="del-msg" class="msg" role="alert" hidden style="margin-top:8px"></p>`,
+    actions: [
+      { label: t('cancel'), variant: 'outline', onClick: (c) => c.close() },
+      { label: lang === 'id' ? 'Hapus Akun' : 'Delete Account', variant: 'danger', onClick: (c, btn) => {
+        const input = c.body.querySelector('#del-email');
+        const msg = c.body.querySelector('#del-msg');
+        const typed = String(input.value || '').trim().toLowerCase();
+        msg.hidden = true;
+        if (!typed) { msg.textContent = lang === 'id' ? 'Masukkan email kamu dulu.' : 'Enter your email first.'; msg.hidden = false; return; }
+        if (typed !== email) { msg.textContent = lang === 'id' ? 'Email tidak cocok dengan akun kamu.' : 'Email does not match your account.'; msg.hidden = false; return; }
+        busy(btn, async () => {
+          const { error } = await supabase.rpc('delete_user_account');
+          if (error) { msg.textContent = 'Gagal: ' + error.message; msg.hidden = false; return; }
+          c.close();
+          try { await signOut(); } catch (_) { /* abaikan */ }
+          toast(lang === 'id' ? 'Akun kamu berhasil dihapus. Terima kasih.' : 'Your account has been deleted. Thank you.');
+          setTimeout(() => location.replace('/'), 900);
+        });
+      }}
+    ],
+  });
+};
+
 const askOthers = () => confirmSheet({
   title: t('sec_others_q'), text: t('sec_others_body'), okLabel: t('sec_others_ok'),
   onConfirm: (c, btn) => busy(btn, async () => {
@@ -377,7 +407,7 @@ async function setCardActive(active) {
 }
 function onCardRow(e) {
   if (!card) return;
-  if (!card.is_active) { busy(e.currentTarget, () => setCardActive(true)); return; } // mengaktifkan: tanpa konfirmasi
+  if (!card.is_active) { busy(e.currentTarget, () => setCardActive(true)); return; }
   confirmSheet({
     title: t('deact_q'), text: t('deact_desc'), okLabel: t('set_deactivate'),
     onConfirm: (c, btn) => busy(btn, async () => { await setCardActive(false); c.close(); }),
@@ -385,7 +415,6 @@ function onCardRow(e) {
 }
 
 /* ---------- Router (hash) ---------- */
-// Memakai #/rute supaya tombol Back HP/browser bekerja antar layar tanpa perlu rewrite Vercel.
 const ROUTES = {
   '/': { title: () => t('acct_title'), render: renderHome, root: true },
   '/security': { title: () => t('menu_security'), render: renderSecurity, parent: '/' },
@@ -393,7 +422,7 @@ const ROUTES = {
   '/settings/gmail': { title: () => t('set_gmail'), render: renderGmail, parent: '/settings' },
   '/settings/idcard': { title: () => t('set_idcard'), render: renderIdCard, parent: '/settings' },
   '/settings/permissions': { title: () => t('set_permissions'), render: renderPermissions, parent: '/settings' },
-  '/help': { title: () => t('menu_help'), render: renderHelp, parent: '/' }, // juga melayani /help/<id-node>
+  '/help': { title: () => t('menu_help'), render: renderHelp, parent: '/' },
   '/legal': { title: () => t('menu_legal'), render: renderLegal, parent: '/' },
   '/about': { title: () => t('menu_about'), render: renderAbout, parent: '/' },
 };
@@ -402,17 +431,16 @@ function resolve(path) {
   if (ROUTES[path]) return { route: ROUTES[path], path };
   if (path.startsWith('/help/')) {
     let node = '';
-    try { node = decodeURIComponent(path.slice(6)); } catch (_) { /* id rusak → tampil "tidak ditemukan" */ }
+    try { node = decodeURIComponent(path.slice(6)); } catch (_) { /* id rusak */ }
     return { route: ROUTES['/help'], path, node };
   }
   return { route: ROUTES['/'], path: '/', unknown: true };
 }
 
-const stack = []; // riwayat layar di halaman ini, untuk tombol kembali di app bar
+const stack = [];
 let replacing = false;
 function goBack(route) {
   if (stack.length > 1) { history.back(); return; }
-  // Dibuka langsung/di-reload di sub-halaman: naik ke halaman induknya (tanpa menambah history).
   replacing = true;
   location.replace('#' + (route.parent || '/'));
 }
@@ -436,7 +464,7 @@ function render() {
 
 function onRoute() {
   const r = resolve(currentPath());
-  if (r.unknown) history.replaceState(null, '', '#/'); // alamat tak dikenal → beranda
+  if (r.unknown) history.replaceState(null, '', '#/');
   const path = r.path;
   if (replacing) { replacing = false; stack[Math.max(stack.length - 1, 0)] = path; }
   else if (stack.length > 1 && stack[stack.length - 2] === path) stack.pop();
@@ -446,7 +474,6 @@ function onRoute() {
   main.focus({ preventScroll: true });
 }
 
-// Peringatan di console jika ada tautan "next" di help-config.js yang menunjuk node tak dikenal.
 function validateFaq() {
   if (!FAQ_TREE[FAQ_ROOT]) console.warn(`[help-config] node awal "${FAQ_ROOT}" tidak ada`);
   Object.entries(FAQ_TREE).forEach(([id, n]) => (n.options || []).forEach((o) => {
