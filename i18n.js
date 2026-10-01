@@ -11,7 +11,7 @@ export const STRINGS = {
     card_id: 'Card ID', card_url: 'Card URL', copy_url: 'Copy URL', view_card: 'View card',
     qr_title: 'QR Code', download_qr: 'Download QR',
     nfc_title: 'Write to NFC Card', nfc_desc: 'Tap your phone to a blank NFC card, then press this button.',
-    write_nfc: 'Write to NFC', nfc_registered: 'ℹ️ This card is already registered on NFC.',
+    write_nfc: 'Write to NFC', nfc_registered: 'This card is already registered on NFC.',
     no_card_title: "You don't have a card yet", no_card_desc: 'Create a card to get a Card ID and URL to write to NFC.',
     create_card: 'Create card',
 
