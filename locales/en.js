@@ -223,4 +223,5 @@ export default {
   terms_h10: '10. Changes to the Terms',
   terms_h11: '11. Governing Law',
   terms_h12: '12. Contact',
+  shop_free: 'Free',
 };
