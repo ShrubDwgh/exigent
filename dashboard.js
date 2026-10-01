@@ -97,43 +97,6 @@ function drawQR(url) {
   };
 }
 
-async function writeNfc(url) {
-  const status = $('nfc-status'), btn = $('nfc-write');
-  if (!('NDEFReader' in window)) { status.textContent = 'Browser ini tidak mendukung tulis NFC langsung (perlu Chrome di Android). Salin URL di atas, lalu tulis lewat aplikasi seperti NFC Tools.'; return; }
-  if (!window.isSecureContext) { status.textContent = 'Fitur ini hanya berjalan lewat koneksi aman (HTTPS).'; return; }
-  btn.classList.add('loading'); btn.disabled = true;
-  status.textContent = 'Dekatkan HP ke kartu NFC kosong…';
-  try {
-    await new NDEFReader().write({ records: [{ recordType: 'url', data: url }] });
-    toast('Berhasil ditulis ke kartu NFC');
-    status.textContent = 'Menyimpan status…';
-
-    // === DEBUG: cek dulu card.id ===
-    console.log('[writeNfc] card.id =', card && card.id);
-
-    const { data: updData, error: dbErr } = await supabase
-      .from('cards')
-      .update({ nfc_written_at: new Date().toISOString() })
-      .eq('id', card.id)
-      .select();
-
-    console.log('[writeNfc] update result =', updData, 'error =', dbErr);
-
-    if (dbErr) {
-      status.innerHTML = `<span class="err-line">Kartu berhasil ditulis, tapi gagal update status: ${esc(dbErr.message)}</span>`;
-    } else if (!updData || updData.length === 0) {
-      status.innerHTML = `<span class="err-line">Update tidak mengubah baris. Kemungkinan RLS policy UPDATE belum ada, atau card.id tidak cocok.</span>`;
-    } else {
-      status.textContent = '';
-      await load();
-    }
-  } catch (err) {
-    status.innerHTML = `<span class="err-line">${esc(err.message || err.name || 'Gagal menulis')}</span>Pastikan kartu menempel stabil di belakang HP, lalu coba lagi.`;
-  } finally {
-    btn.classList.remove('loading'); btn.disabled = false;
-  }
-}
-
 function renderDashboard() {
   const box = $('tab-dashboard');
   if (!card) {
@@ -156,17 +119,9 @@ function renderDashboard() {
       <div class="btns"><button class="btn btn-secondary" id="copy">${t('copy_url')}</button>
         <a class="btn btn-outline" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">${t('view_card')}</a></div>
     </div>
-    <div class="card stack-lg" style="margin-top:12px"><h2>${t('qr_title')}</h2><div id="qr" class="qr"></div><button class="btn btn-outline btn-sm" id="qrdl">${t('download_qr')}</button></div>
-    <div class="card stack-lg" style="margin-top:12px">
-      <h2>${t('nfc_title')}</h2>
-      ${card.nfc_written_at ? `<p class="badge badge-active" style="margin-bottom:2px">${t('nfc_registered')}</p>` : ''}
-      <p class="muted small">${t('nfc_desc')}</p>
-      <button class="btn btn-secondary btn-block" id="nfc-write" type="button"><i data-lucide="nfc" aria-hidden="true"></i>${t('write_nfc')}</button>
-      <p id="nfc-status" class="muted small"></p>
-    </div>`;
+    <div class="card stack-lg" style="margin-top:12px"><h2>${t('qr_title')}</h2><div id="qr" class="qr"></div><button class="btn btn-outline btn-sm" id="qrdl">${t('download_qr')}</button></div>`;
   $('copy').onclick = () => navigator.clipboard.writeText(url).then(() => toast('URL disalin'), () => toast('Salin manual dari teks URL'));
   drawQR(url);
-  $('nfc-write').onclick = () => writeNfc(url);
 }
 
 /* ---------- Modal: Edit Data Medis ---------- */
