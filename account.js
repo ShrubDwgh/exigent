@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 import { requireSession, signOut, busy, toast } from './auth.js';
-import { STRINGS, getLang, setLang, applyNavLabels } from './i18n.js';
+import { STRINGS, LANGUAGES, getLang, setLang, applyNavLabels } from './i18n.js';
 import { esc, openSheet } from './ui.js';
 import { watchPermission, requestGeolocation } from './permissions.js';
 import { FAQ_ROOT, FAQ_TREE } from './help-config.js';
@@ -118,10 +118,11 @@ function renderSettings() {
   const c = card;
   const cardLabel = c && !c.is_active ? t('set_activate') : t('set_deactivate');
   const cardSub = loadFailed ? t('set_card_error') : !c ? t('set_no_card') : '';
+  const currentLangName = (LANGUAGES[lang] && LANGUAGES[lang].name) || lang;
   main.innerHTML = `<section class="screen"><nav class="card menu" aria-label="${T('menu_settings')}">
     ${row({ href: '#/settings/gmail', icon: 'mail', label: t('set_gmail') })}
     ${row({ href: '#/settings/idcard', icon: 'credit-card', label: t('set_idcard') })}
-    ${row({ tag: 'button', id: 'row-lang', icon: 'languages', label: t('set_language'), value: lang === 'id' ? 'Bahasa Indonesia' : 'English' })}
+    ${row({ tag: 'button', id: 'row-lang', icon: 'languages', label: t('set_language'), value: currentLangName })}
     ${row({ href: '#/settings/permissions', icon: 'shield-check', label: t('set_permissions') })}
     ${row({ tag: 'button', id: 'row-card', icon: 'power', label: cardLabel, sub: cardSub, danger: !c || c.is_active, disabled: !c })}
     ${row({ tag: 'button', id: 'row-delete', icon: 'trash-2', label: lang === 'id' ? 'Hapus Akun' : 'Delete Account', danger: true })}
@@ -513,10 +514,10 @@ function renderAbout() {
 }
 
 /* ---------- Bottom sheet ---------- */
-const FLAG_ID = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="20" fill="#E70011"/><rect y="20" width="40" height="20" fill="#fff"/></svg>';
-const FLAG_EN = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#012169"/><path d="M0 0L40 40M40 0L0 40" stroke="#fff" stroke-width="7"/><path d="M0 0L40 40M40 0L0 40" stroke="#C8102E" stroke-width="2.6"/><path d="M20 0V40M0 20H40" stroke="#fff" stroke-width="11"/><path d="M20 0V40M0 20H40" stroke="#C8102E" stroke-width="6.4"/></svg>';
-const langOpt = (code, name, sub, flag) => `<button type="button" class="opt" role="radio" aria-checked="${code === lang}" data-lang="${code}" tabindex="${code === lang ? 0 : -1}">
-  <span class="opt-flag">${flag}</span><span class="opt-tx"><strong>${name}</strong><small>${sub}</small></span><span class="radio" aria-hidden="true"></span></button>`;
+const FLAGS = {
+  id: '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="20" fill="#E70011"/><rect y="20" width="40" height="20" fill="#fff"/></svg>',
+  en: '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#012169"/><path d="M0 0L40 40M40 0L0 40" stroke="#fff" stroke-width="7"/><path d="M0 0L40 40M40 0L0 40" stroke="#C8102E" stroke-width="2.6"/><path d="M20 0V40M0 20H40" stroke="#fff" stroke-width="11"/><path d="M20 0V40M0 20H40" stroke="#C8102E" stroke-width="6.4"/></svg>',
+};
 
 function applyLang(code) {
   lang = code; setLang(code);
@@ -529,11 +530,17 @@ function applyLang(code) {
 
 function openLang() {
   let sel = lang;
+  const langOpt = (code, meta) => `<button type="button" class="opt" role="radio" aria-checked="${code === lang}" data-lang="${code}" tabindex="${code === lang ? 0 : -1}">
+    <span class="opt-flag">${FLAGS[meta.flag] || ''}</span>
+    <span class="opt-tx"><strong>${meta.name}</strong><small>${meta.sub}</small></span>
+    <span class="radio" aria-hidden="true"></span>
+  </button>`;
+  const optsHtml = Object.entries(LANGUAGES).map(([code, meta]) => langOpt(code, meta)).join('');
+
   openSheet({
     title: 'Pilih Bahasa / Select Language',
     closeLabel: t('close'),
-    body: `<div class="opts" role="radiogroup" aria-label="Pilih Bahasa / Select Language">
-      ${langOpt('id', 'Bahasa Indonesia', 'Indonesian', FLAG_ID)}${langOpt('en', 'English', 'Inggris', FLAG_EN)}</div>`,
+    body: `<div class="opts" role="radiogroup" aria-label="Pilih Bahasa / Select Language">${optsHtml}</div>`,
     actions: [
       { label: 'Batal / Cancel', variant: 'outline', onClick: (c) => c.close() },
       { label: 'Simpan / Save', variant: 'secondary', onClick: (c) => { c.close(); if (sel !== lang) applyLang(sel); } },
