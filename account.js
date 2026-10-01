@@ -34,7 +34,7 @@ async function loadData() {
     if (error) throw error;
     card = data;
     if (card) {
-      const p = await supabase.from('emergency_profiles').select('full_name').eq('card_uuid', card.id).maybeSingle();
+      const p = await supabase.from('emergency_profiles').select('full_name, photo_data_url').eq('card_uuid', card.id).maybeSingle();
       profile = p.data || null;
     }
   } catch (e) {
@@ -132,16 +132,30 @@ function renderSettings() {
 }
 
 function renderGmail() {
-  const u = session.user, name = googleName(), avatar = meta().avatar_url || meta().picture || '';
+  const u = session.user;
+  const name = displayName();
+  const googleAvatar = meta().avatar_url || meta().picture || '';
+  const cardPhoto = (profile && profile.photo_data_url) || '';
+  const avatar = googleAvatar || cardPhoto;
   const pv = providers();
   const method = pv.map((p) => (p === 'google' ? 'Google' : p === 'email' ? t('gmail_prov_email') : p)).join(', ');
+  const nameLabel = pv.includes('google') ? t('gmail_name') : (lang === 'id' ? 'Nama' : 'Name');
+  const nameValue = googleName() || String((profile && profile.full_name) || '').trim() || '—';
+
   main.innerHTML = `<section class="screen stack-lg"><div class="card stack-lg">
     <div class="id-head">
       ${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="" referrerpolicy="no-referrer">` : '<span class="avatar avatar-ph"><i data-lucide="user" aria-hidden="true"></i></span>'}
-      <div class="id-who"><p class="id-name">${esc(name || displayName() || '—')}</p><p class="muted">${esc(u.email || '—')}</p></div>
+      <div class="id-who"><p class="id-name">${esc(name || '—')}</p><p class="muted">${esc(u.email || '—')}</p></div>
     </div>
-    ${kv([[t('gmail_name'), esc(name || '—')], [t('gmail_email'), esc(u.email || '—')], [t('gmail_method'), esc(method)], [t('gmail_created'), esc(fmtDate(u.created_at))], [t('gmail_last'), esc(fmtDate(u.last_sign_in_at))]])}
-  </div>${pv.includes('google') ? '' : `<p class="muted small">${T('gmail_note')}</p>`}</section>`;
+    ${kv([
+      [nameLabel, esc(nameValue)],
+      [t('gmail_email'), esc(u.email || '—')],
+      [t('gmail_method'), esc(method)],
+      [t('gmail_created'), esc(fmtDate(u.created_at))],
+      [t('gmail_last'), esc(fmtDate(u.last_sign_in_at))]
+    ])}
+  </div></section>`;
+
   const img = main.querySelector('img.avatar');
   if (img) img.addEventListener('error', () => {
     const ph = document.createElement('span');
@@ -816,7 +830,6 @@ document.documentElement.lang = lang;
 applyNavLabels(t);
 $('bell').setAttribute('aria-label', t('notif_title'));
 $('bell').onclick = openNotifs;
-renderAppbar(resolve(currentPath()).route);
 renderAppbar(resolve(currentPath()).route);
 icons();
 validateFaq();
