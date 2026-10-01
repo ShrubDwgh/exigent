@@ -21,7 +21,16 @@ let session = null, card = null, profile = null, loadFailed = false;
 async function loadData() {
   loadFailed = false; card = null; profile = null;
   try {
-    const { data, error } = await supabase.from('cards').select('*').order('created_at').limit(1).maybeSingle();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Sesi habis');
+
+    const { data, error } = await supabase
+      .from('cards')
+      .select('*')
+      .eq('owner_id', user.id)
+      .order('created_at')
+      .limit(1)
+      .maybeSingle();
     if (error) throw error;
     card = data;
     if (card) {
@@ -153,10 +162,12 @@ async function doWriteNfc(url) {
     toast('Berhasil ditulis ke kartu NFC');
     status.textContent = 'Menyimpan status…';
 
+    const { data: { user } } = await supabase.auth.getUser();
     const { data: updData, error: dbErr } = await supabase
       .from('cards')
       .update({ nfc_written_at: new Date().toISOString() })
       .eq('id', card.id)
+      .eq('owner_id', user.id)
       .select();
 
     if (dbErr) {
@@ -305,9 +316,16 @@ async function renderDevices() {
     <div class="card" style="text-align:center;padding:24px"><p class="muted">${lang === 'id' ? 'Memuat...' : 'Loading...'}</p></div>
   </section>`;
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    main.innerHTML = `<section class="screen"><div class="card">${empty('circle-alert', 'Sesi habis', '')}</div></section>`;
+    return;
+  }
+
   const { data, error } = await supabase
     .from('user_devices')
     .select('*')
+    .eq('user_id', user.id)
     .order('last_active_at', { ascending: false });
 
   if (error) {
@@ -533,9 +551,12 @@ function openCs() {
 /* ---------- Notifikasi ---------- */
 async function loadNotifCount() {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
     const { count, error } = await supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
       .is('read_at', null);
     if (error) throw error;
     const dot = $('bell-dot');
@@ -578,9 +599,13 @@ function openNotifs() {
     actions: [{ label: t('close'), variant: 'outline', onClick: (c) => c.close() }],
     onOpen: async (c) => {
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { c.body.innerHTML = empty('circle-alert', 'Sesi habis', ''); icons(); return; }
+
         const { data, error } = await supabase
           .from('notifications')
           .select('*')
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(50);
         if (error) throw error;
@@ -685,7 +710,13 @@ const askOthers = () => confirmSheet({
 });
 
 async function setCardActive(active) {
-  const { error } = await supabase.from('cards').update({ is_active: active }).eq('id', card.id);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return fail({ message: 'Sesi habis' });
+  const { error } = await supabase
+    .from('cards')
+    .update({ is_active: active })
+    .eq('id', card.id)
+    .eq('owner_id', user.id);
   if (error) return fail(error);
   await loadData(); render(); toast(t('card_updated'));
 }
