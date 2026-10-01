@@ -348,7 +348,8 @@ function notifItemHtml(n) {
            : 'background:rgba(107,114,128,.1);color:#6b7280';
   const when = (() => { try { return new Intl.DateTimeFormat(lang === 'id' ? 'id-ID' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(n.created_at)); } catch (_) { return ''; } })();
   const unread = !n.read_at;
-  return `<div style="display:flex;gap:12px;padding:14px 4px;border-bottom:1px solid rgba(0,0,0,.06);${unread ? 'background:rgba(37,99,235,.03)' : ''}">
+  const link = n.data && n.data.link;
+  const inner = `
     <span style="flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;${bg}">
       <i data-lucide="${ic}" aria-hidden="true"></i>
     </span>
@@ -357,7 +358,11 @@ function notifItemHtml(n) {
       ${n.body ? `<p style="margin:4px 0 0;font-size:13px;color:#4b5563;line-height:1.5">${esc(n.body)}</p>` : ''}
       <small style="display:block;margin-top:6px;font-size:12px;color:#9ca3af">${esc(when)}</small>
     </div>
-  </div>`;
+    ${link ? '<i data-lucide="chevron-right" aria-hidden="true" style="flex-shrink:0;align-self:center;color:#9ca3af"></i>' : ''}`;
+  const rowInner = `<div style="display:flex;gap:12px;padding:14px 4px;border-bottom:1px solid rgba(0,0,0,.06);${unread ? 'background:rgba(37,99,235,.03)' : ''}">${inner}</div>`;
+  return link
+    ? `<button type="button" data-notif-link="${esc(link)}" style="width:100%;text-align:left;border:none;background:transparent;font-family:inherit;cursor:pointer;padding:0;display:block">${rowInner}</button>`
+    : rowInner;
 }
 
 function openNotifs() {
@@ -382,6 +387,19 @@ function openNotifs() {
         }
         c.body.innerHTML = `<div>${items.map(notifItemHtml).join('')}</div>`;
         icons();
+
+        // Bind klik untuk notif yang punya link
+        c.body.querySelectorAll('[data-notif-link]').forEach((btn) => {
+          btn.onclick = () => {
+            const link = btn.getAttribute('data-notif-link');
+            c.close();
+            setTimeout(() => {
+              if (link.startsWith('#')) location.hash = link;
+              else location.href = link;
+            }, 220);
+          };
+        });
+
         await supabase.rpc('mark_all_notifications_read');
         const dot = $('bell-dot');
         if (dot) dot.hidden = true;
