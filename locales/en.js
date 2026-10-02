@@ -298,4 +298,8 @@ upgrade_help_title: 'Still unsure?',
 upgrade_help_desc: 'Ask our CS before you buy.',
 upgrade_help_btn: 'Contact CS',
 upgrade_back: 'Back',
+
+  // Notifikasi
+notif_login_title: 'New login detected',
+notif_login_body: 'Login from: {device}',
 };
