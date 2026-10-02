@@ -58,7 +58,7 @@ function packageHtml(pkg) {
     : '';
   const cardsIcon = Array(pkg.cards).fill(0).map(() => `<i data-lucide="credit-card" class="pkg-card-icon" aria-hidden="true"></i>`).join('');
 
-  return `<div class="card pkg-card pkg-${pkg.theme}" style="position:relative;width:100%">
+  return `<div class="card pkg-card pkg-${pkg.theme}">
     ${popular}
     <div class="pkg-cards">${cardsIcon}</div>
     <div class="pkg-info">
@@ -147,7 +147,7 @@ function render() {
     const updateDots = () => {
       const slide = scroll.querySelector('.pkg-slide');
       if (!slide) return;
-      const slideW = slide.offsetWidth + 12; // 12 = gap
+      const slideW = slide.offsetWidth + 12;
       const idx = Math.round(scroll.scrollLeft / slideW);
       dots.forEach((d, i) => {
         d.classList.toggle('active', i === idx);
