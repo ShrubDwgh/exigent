@@ -78,19 +78,20 @@ function packageHtml(pkg) {
 function render() {
   renderAppbar();
   main.innerHTML = `<section class="screen stack-lg">
-    <div>
-      <h2 style="font-size:1.5rem;font-weight:800;margin:0 0 8px">${esc2(t('upgrade_title'))}</h2>
-      <p class="muted" style="margin:0">${esc2(t('upgrade_lead'))}</p>
-    </div>
-
-    <div class="card stack-sm">
-      <h3 style="margin:0 0 8px;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:6px"><i data-lucide="sparkles" style="width:18px;height:18px;color:var(--red)" aria-hidden="true"></i> ${esc2(t('upgrade_benefit_title'))}</h3>
-      <ul style="margin:0;padding-left:20px;color:#4b5563;font-size:0.9375rem;line-height:1.8">
-        <li>${esc2(t('upgrade_b1'))}</li>
-        <li>${esc2(t('upgrade_b2'))}</li>
-        <li>${esc2(t('upgrade_b3'))}</li>
-        <li>${esc2(t('upgrade_b4'))}</li>
-      </ul>
+    <div class="card stack-lg">
+      <div>
+        <h2 style="font-size:1.5rem;font-weight:800;margin:0 0 8px">${esc2(t('upgrade_title'))}</h2>
+        <p class="muted" style="margin:0">${esc2(t('upgrade_lead'))}</p>
+      </div>
+      <div>
+        <h3 style="margin:0 0 8px;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:6px"><i data-lucide="sparkles" style="width:18px;height:18px;color:var(--red)" aria-hidden="true"></i> ${esc2(t('upgrade_benefit_title'))}</h3>
+        <ul style="margin:0;padding-left:20px;color:#4b5563;font-size:0.9375rem;line-height:1.8">
+          <li>${esc2(t('upgrade_b1'))}</li>
+          <li>${esc2(t('upgrade_b2'))}</li>
+          <li>${esc2(t('upgrade_b3'))}</li>
+          <li>${esc2(t('upgrade_b4'))}</li>
+        </ul>
+      </div>
     </div>
 
     ${PACKAGES.map(packageHtml).join('')}
