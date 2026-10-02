@@ -56,6 +56,14 @@
     [data-theme="dark"] .status-read        { background:#1E3A8A; color:#BFDBFE; }
     [data-theme="dark"] .status-in_progress { background:#312E81; color:#C7D2FE; }
     [data-theme="dark"] .status-resolved    { background:#14532D; color:#86EFAC; }
+
+    /* Loading state minimalis — cuma teks */
+    .fb-loading {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      font-size: .9375rem;
+    }
   </style>
 </head>
 <body class="dash acct">
@@ -78,44 +86,9 @@
   </aside>
 
   <main class="main" id="fb-main">
-    <!-- Skeleton: 3 kartu riwayat -->
-    <div class="stack-lg" id="fb-skeleton">
-      <div class="card skeleton-card" style="border-top:0">
-        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-          <div class="skeleton-line" style="width:40%;height:16px;margin:0"></div>
-          <div class="skeleton-line" style="width:20%;height:22px;border-radius:999px;margin:0"></div>
-        </div>
-        <div class="skeleton-line" style="width:35%;height:12px;margin:0 0 14px"></div>
-        <div class="skeleton-line" style="width:95%;height:14px;margin:0 0 8px"></div>
-        <div class="skeleton-line" style="width:80%;height:14px;margin:0 0 8px"></div>
-        <div class="skeleton-line" style="width:60%;height:14px;margin:0 0 14px"></div>
-        <div style="display:flex;gap:8px">
-          <div class="skeleton-btn" style="width:80px;height:80px;border-radius:10px;margin:0"></div>
-          <div class="skeleton-btn" style="width:80px;height:80px;border-radius:10px;margin:0"></div>
-        </div>
-      </div>
-      <div class="card skeleton-card" style="border-top:0">
-        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-          <div class="skeleton-line" style="width:40%;height:16px;margin:0"></div>
-          <div class="skeleton-line" style="width:20%;height:22px;border-radius:999px;margin:0"></div>
-        </div>
-        <div class="skeleton-line" style="width:35%;height:12px;margin:0 0 14px"></div>
-        <div class="skeleton-line" style="width:95%;height:14px;margin:0 0 8px"></div>
-        <div class="skeleton-line" style="width:75%;height:14px;margin:0"></div>
-      </div>
-      <div class="card skeleton-card" style="border-top:0">
-        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-          <div class="skeleton-line" style="width:40%;height:16px;margin:0"></div>
-          <div class="skeleton-line" style="width:20%;height:22px;border-radius:999px;margin:0"></div>
-        </div>
-        <div class="skeleton-line" style="width:35%;height:12px;margin:0 0 14px"></div>
-        <div class="skeleton-line" style="width:95%;height:14px;margin:0 0 8px"></div>
-        <div class="skeleton-line" style="width:50%;height:14px;margin:0"></div>
-      </div>
+    <div id="fb-list">
+      <div class="fb-loading">Memuat riwayat...</div>
     </div>
-
-    <!-- Konten asli diisi oleh JS -->
-    <div id="fb-list"></div>
   </main>
 
   <script type="module" src="/my-feedback.js"></script>
