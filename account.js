@@ -76,6 +76,15 @@ const deviceLabel = (ua) => {
   return browser + ' · ' + platform;
 };
 
+// Nama pendek: maks 2 kata
+function shortName(name) {
+  return String(name || '').trim().split(/\s+/).slice(0, 2).join(' ');
+}
+// Inisial: 2 huruf dari 2 kata pertama
+function initials(name) {
+  return String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
+}
+
 /* ---------- Potongan HTML ---------- */
 const row = ({ tag = 'a', href, id, icon, label, sub, value, danger, disabled, plain }) => {
   const attrs = tag === 'a' ? `href="${esc(href)}"` : 'type="button"';
@@ -103,25 +112,53 @@ function timeGreeting() {
 }
 
 function renderHome() {
-  const name = displayName();
-  const greeting = name
-    ? `<span class="greet-hello">${esc(timeGreeting())}</span><br><span class="greet-name">${esc(name)}</span>`
-    : T('greet_anon');
+  const fullName = displayName();
+  const name = shortName(fullName);
+  const googleAvatar = meta().avatar_url || meta().picture || '';
+  const cardPhoto = (profile && profile.photo_data_url) || '';
+  const avatarUrl = googleAvatar || cardPhoto;
+
+  const avatarHtml = avatarUrl
+    ? `<img class="greet-avatar" src="${esc(avatarUrl)}" alt="" referrerpolicy="no-referrer">`
+    : `<span class="greet-avatar">${esc(initials(fullName))}</span>`;
+
+  const greetHtml = name
+    ? `<div class="greet-card">
+        ${avatarHtml}
+        <div class="greet-text">
+          <span class="greet-hello">${esc(timeGreeting())}</span>
+          <span class="greet-name">${esc(name)}</span>
+          <span class="greet-desc">${T('greet_desc')}</span>
+        </div>
+      </div>`
+    : `<div class="greet-card">
+        <div class="greet-text">
+          <span class="greet-hello">${T('greet_anon')}</span>
+          <span class="greet-desc">${T('greet_desc')}</span>
+        </div>
+      </div>`;
+
   main.innerHTML = `<section class="screen">
-    <div class="greet" style="padding-bottom:16px;border-bottom:1px solid #e5e7eb;margin-bottom:16px">
-      <h2 class="greet-title">${greeting}</h2>
-      <p class="muted" style="margin:0">${T('greet_desc')}</p>
-    </div>
-    <nav class="card menu" aria-label="${T('acct_title')}">
-      ${row({ href: '#/security', icon: 'lock', label: t('menu_security') })}
-      ${row({ href: '#/settings', icon: 'settings', label: t('menu_settings') })}
-      ${row({ href: '#/help', icon: 'circle-help', label: t('menu_help') })}
-      ${row({ tag: 'button', id: 'row-cs', icon: 'headset', label: t('menu_cs') })}
-      ${row({ href: '#/legal', icon: 'gavel', label: t('menu_legal') })}
-      ${row({ href: '#/about', icon: 'info', label: t('menu_about') })}
-      ${row({ tag: 'button', id: 'row-logout', icon: 'log-out', label: t('menu_logout'), danger: true })}
+    ${greetHtml}
+    <nav class="menu-stack" aria-label="${T('acct_title')}">
+      <div class="card menu">${row({ href: '#/security', icon: 'lock', label: t('menu_security') })}</div>
+      <div class="card menu">${row({ href: '#/settings', icon: 'settings', label: t('menu_settings') })}</div>
+      <div class="card menu">${row({ href: '#/help', icon: 'circle-help', label: t('menu_help') })}</div>
+      <div class="card menu">${row({ tag: 'button', id: 'row-cs', icon: 'headset', label: t('menu_cs') })}</div>
+      <div class="card menu">${row({ href: '#/legal', icon: 'gavel', label: t('menu_legal') })}</div>
+      <div class="card menu">${row({ href: '#/about', icon: 'info', label: t('menu_about') })}</div>
+      <div class="card menu">${row({ tag: 'button', id: 'row-logout', icon: 'log-out', label: t('menu_logout'), danger: true })}</div>
     </nav>
   </section>`;
+
+  const img = main.querySelector('img.greet-avatar');
+  if (img) img.addEventListener('error', () => {
+    const sp = document.createElement('span');
+    sp.className = 'greet-avatar';
+    sp.textContent = initials(fullName);
+    img.replaceWith(sp);
+  });
+
   $('row-cs').onclick = openCs;
   $('row-logout').onclick = askLogout;
 }
@@ -131,13 +168,13 @@ function renderSettings() {
   const cardLabel = c && !c.is_active ? t('set_activate') : t('set_deactivate');
   const cardSub = loadFailed ? t('set_card_error') : !c ? t('set_no_card') : '';
   const currentLangName = (LANGUAGES[lang] && LANGUAGES[lang].name) || lang;
-  main.innerHTML = `<section class="screen"><nav class="card menu" aria-label="${T('menu_settings')}">
-    ${row({ href: '#/settings/gmail', icon: 'mail', label: t('set_gmail') })}
-    ${row({ href: '#/settings/idcard', icon: 'credit-card', label: t('set_idcard') })}
-    ${row({ tag: 'button', id: 'row-lang', icon: 'languages', label: t('set_language'), value: currentLangName })}
-    ${row({ href: '#/settings/permissions', icon: 'shield-check', label: t('set_permissions') })}
-    ${row({ tag: 'button', id: 'row-card', icon: 'power', label: cardLabel, sub: cardSub, danger: !c || c.is_active, disabled: !c })}
-    ${row({ tag: 'button', id: 'row-delete', icon: 'trash-2', label: t('delete_account'), danger: true })}
+  main.innerHTML = `<section class="screen"><nav class="menu-stack" aria-label="${T('menu_settings')}">
+    <div class="card menu">${row({ href: '#/settings/gmail', icon: 'mail', label: t('set_gmail') })}</div>
+    <div class="card menu">${row({ href: '#/settings/idcard', icon: 'credit-card', label: t('set_idcard') })}</div>
+    <div class="card menu">${row({ tag: 'button', id: 'row-lang', icon: 'languages', label: t('set_language'), value: currentLangName })}</div>
+    <div class="card menu">${row({ href: '#/settings/permissions', icon: 'shield-check', label: t('set_permissions') })}</div>
+    <div class="card menu">${row({ tag: 'button', id: 'row-card', icon: 'power', label: cardLabel, sub: cardSub, danger: !c || c.is_active, disabled: !c })}</div>
+    <div class="card menu">${row({ tag: 'button', id: 'row-delete', icon: 'trash-2', label: t('delete_account'), danger: true })}</div>
   </nav></section>`;
   $('row-lang').onclick = openLang;
   $('row-card').onclick = onCardRow;
@@ -521,8 +558,8 @@ function renderHelp(nodeId) {
   }
   const paras = pick(node.answer) || [], steps = pick(node.steps) || [];
   const body = node.options
-    ? `<nav class="card menu" aria-label="${esc(pick(node.title))}">${node.options.map((o) => `<a class="mrow plain" href="${helpHref(o.next)}">
-        <span class="mrow-tx"><strong>${esc(pick(o.label))}</strong></span><i data-lucide="chevron-right" class="mrow-go" aria-hidden="true"></i></a>`).join('')}</nav>`
+    ? `<nav class="menu-stack" aria-label="${esc(pick(node.title))}">${node.options.map((o) => `<div class="card menu"><a class="mrow plain" href="${helpHref(o.next)}">
+        <span class="mrow-tx"><strong>${esc(pick(o.label))}</strong></span><i data-lucide="chevron-right" class="mrow-go" aria-hidden="true"></i></a></div>`).join('')}</nav>`
     : `<div class="card stack-lg">${paras.map((p) => `<p>${esc(p)}</p>`).join('')}
         ${steps.length ? `<ol class="steps">${steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>` : ''}
         ${(node.actions || []).map(helpAction).join('')}</div>`;
@@ -536,9 +573,9 @@ function renderHelp(nodeId) {
 
 function renderLegal() {
   main.innerHTML = `<section class="screen stack-lg"><p class="muted">${T('legal_desc')}</p>
-    <nav class="card menu" aria-label="${T('menu_legal')}">
-      ${row({ href: '/privacy-policy.html', icon: 'file-text', label: t('legal_privacy') })}
-      ${row({ href: '/terms.html', icon: 'scale', label: t('legal_terms') })}
+    <nav class="menu-stack" aria-label="${T('menu_legal')}">
+      <div class="card menu">${row({ href: '/privacy-policy.html', icon: 'file-text', label: t('legal_privacy') })}</div>
+      <div class="card menu">${row({ href: '/terms.html', icon: 'scale', label: t('legal_terms') })}</div>
     </nav></section>`;
 }
 
