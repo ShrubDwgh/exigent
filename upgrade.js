@@ -97,11 +97,16 @@ function render() {
 
     <div>
       <h3 style="font-size:1.125rem;font-weight:700;margin:8px 0 12px">${esc2(t('upgrade_faq_title'))}</h3>
-      <div class="card menu">
-        ${FAQS.map((f) => `<details class="faq-item" style="border-top:1px solid var(--border);padding:12px 16px">
-          <summary style="cursor:pointer;font-weight:600;list-style:none">${esc2(t(f.q))}</summary>
-          <p class="muted small" style="margin:8px 0 0;line-height:1.6">${esc2(t(f.a))}</p>
-        </details>`).join('')}
+      <div class="menu-stack">
+        ${FAQS.map((f) => `<div class="card menu" style="padding:0">
+          <details class="faq-item" style="padding:0">
+            <summary style="cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px">
+              <span>${esc2(t(f.q))}</span>
+              <i data-lucide="chevron-down" style="width:20px;height:20px;flex:none;color:var(--muted);transition:transform .2s" aria-hidden="true"></i>
+            </summary>
+            <p class="muted small" style="margin:0;padding:0 16px 16px;line-height:1.6">${esc2(t(f.a))}</p>
+          </details>
+        </div>`).join('')}
       </div>
     </div>
 
