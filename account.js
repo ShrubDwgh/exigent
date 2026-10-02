@@ -76,11 +76,9 @@ const deviceLabel = (ua) => {
   return browser + ' · ' + platform;
 };
 
-// Nama pendek: maks 2 kata
 function shortName(name) {
   return String(name || '').trim().split(/\s+/).slice(0, 2).join(' ');
 }
-// Inisial: 2 huruf dari 2 kata pertama
 function initials(name) {
   return String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
 }
@@ -143,8 +141,7 @@ function renderHome() {
     <nav class="menu-stack" aria-label="${T('acct_title')}">
       <div class="card menu">${row({ href: '#/security', icon: 'lock', label: t('menu_security') })}</div>
       <div class="card menu">${row({ href: '#/settings', icon: 'settings', label: t('menu_settings') })}</div>
-      <div class="card menu">${row({ href: '/feedback.html', icon: 'circle-help', label: lang === 'id' ? 'Bantuan & Masukan' : 'Help & Feedback' })}</div>
-      <div class="card menu">${row({ href: '/my-feedback.html', icon: 'history', label: lang === 'id' ? 'Riwayat Masukan' : 'My Feedback' })}</div>
+      <div class="card menu">${row({ href: '#/help', icon: 'circle-help', label: t('menu_help') })}</div>
       <div class="card menu">${row({ tag: 'button', id: 'row-cs', icon: 'headset', label: t('menu_cs') })}</div>
       <div class="card menu">${row({ href: '#/legal', icon: 'gavel', label: t('menu_legal') })}</div>
       <div class="card menu">${row({ href: '#/about', icon: 'info', label: t('menu_about') })}</div>
@@ -174,6 +171,7 @@ function renderSettings() {
     <div class="card menu">${row({ href: '#/settings/idcard', icon: 'credit-card', label: t('set_idcard') })}</div>
     <div class="card menu">${row({ tag: 'button', id: 'row-lang', icon: 'languages', label: t('set_language'), value: currentLangName })}</div>
     <div class="card menu">${row({ href: '#/settings/permissions', icon: 'shield-check', label: t('set_permissions') })}</div>
+    <div class="card menu">${row({ href: '/my-feedback.html', icon: 'history', label: lang === 'id' ? 'Riwayat Masukan' : 'My Feedback', sub: lang === 'id' ? 'Lihat masukan yang pernah kamu kirim' : 'See your submitted feedback' })}</div>
     <div class="card menu">${row({ tag: 'button', id: 'row-card', icon: 'power', label: cardLabel, sub: cardSub, danger: !c || c.is_active, disabled: !c })}</div>
     <div class="card menu">${row({ tag: 'button', id: 'row-delete', icon: 'trash-2', label: t('delete_account'), danger: true })}</div>
   </nav></section>`;
@@ -280,7 +278,6 @@ async function writeNfc(url) {
   doWriteNfc(url);
 }
 
-/* Modal: NFC terkunci (belum beli kartu) */
 function openNfcLockModal() {
   if (document.querySelector('.modal[data-nfc-lock]')) return;
   const wrap = document.createElement('div');
@@ -516,6 +513,7 @@ function renderPermissions() {
       <div class="card">
         <div class="crow"><div><strong>${T('perm_geo')}</strong><p class="muted small">${T('perm_geo_desc')}</p></div><span id="perm-geo" class="badge">${T('perm_checking')}</span></div>
         <div class="crow"><div><strong>${T('perm_nfc')}</strong><p class="muted small">${T('perm_nfc_desc')}</p></div><span id="perm-nfc" class="badge">${T('perm_checking')}</span></div>
+        <div class="crow"><div><strong>${lang === 'id' ? 'Mikrofon' : 'Microphone'}</strong><p class="muted small">${lang === 'id' ? 'Untuk kirim voice note di masukan' : 'For sending voice notes in feedback'}</p></div><span id="perm-mic" class="badge">${T('perm_checking')}</span></div>
         <button class="btn btn-outline btn-sm" id="perm-geo-btn" hidden type="button" style="margin-top:12px">${T('perm_request')}</button>
       </div>
       <p class="muted small" style="margin-top:12px">${T('perm_hint')}</p></div>
@@ -534,11 +532,32 @@ function renderPermissions() {
   }));
   paint();
 
-  const geo = $('perm-geo'), nfc = $('perm-nfc'), geoBtn = $('perm-geo-btn');
+  const geo = $('perm-geo'), nfc = $('perm-nfc'), mic = $('perm-mic'), geoBtn = $('perm-geo-btn');
   const MAP = { granted: ['perm_granted', 'badge-active'], denied: ['perm_denied', 'badge-emergency'], prompt: ['perm_prompt', 'badge-inactive'] };
   const setBadge = (el, st) => { if (!el.isConnected) return; const [k, cls] = MAP[st] || ['perm_unknown', '']; el.textContent = t(k); el.className = 'badge ' + cls; };
   watchPermission('geolocation', (st) => { setBadge(geo, st); if (geoBtn.isConnected) geoBtn.hidden = st !== 'prompt'; });
   watchPermission('nfc', (st) => setBadge(nfc, st));
+
+  // Mikrofon: pakai navigator.permissions langsung (kalau didukung)
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'microphone' }).then((status) => {
+      setBadge(mic, status.state);
+      status.onchange = () => setBadge(mic, status.state);
+    }).catch(() => {
+      // Fallback: cek dukungan getUserMedia
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        mic.textContent = lang === 'id' ? 'Didukung' : 'Supported';
+        mic.className = 'badge badge-inactive';
+      } else {
+        mic.textContent = lang === 'id' ? 'Tidak didukung' : 'Not supported';
+        mic.className = 'badge badge-emergency';
+      }
+    });
+  } else {
+    mic.textContent = lang === 'id' ? 'Tidak didukung' : 'Not supported';
+    mic.className = 'badge badge-emergency';
+  }
+
   geoBtn.onclick = requestGeolocation;
 }
 
@@ -567,6 +586,7 @@ function renderHelp(nodeId) {
   main.innerHTML = `<section class="screen stack-lg">
     <h2 class="sec-title">${esc(pick(node.title))}</h2>
     ${body}
+    <div class="card menu">${row({ href: '/feedback.html', icon: 'message-square-plus', label: lang === 'id' ? 'Kirim Masukan' : 'Send Feedback', sub: lang === 'id' ? 'Ide, saran, atau laporan masalah' : 'Ideas, suggestions, or bug reports' })}</div>
     <div class="card menu">${row({ tag: 'button', id: 'help-cs', icon: 'headset', label: t('help_contact_q'), sub: t('menu_cs') })}</div>
   </section>`;
   main.querySelectorAll('[data-cs], #help-cs').forEach((b) => (b.onclick = openCs));
