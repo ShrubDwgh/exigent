@@ -18,30 +18,9 @@ let session = null;
 const SHOPEE_URL = 'https://shopee.co.id/'; // TODO: ganti dengan link toko kamu
 
 const PACKAGES = [
-  {
-    id: 'single',
-    emoji: '🎴',
-    price: 69000,
-    priceLabel: 'Rp69.000',
-    saveAmount: null,
-    popular: false,
-  },
-  {
-    id: 'family',
-    emoji: '🎴🎴🎴',
-    price: 179000,
-    priceLabel: 'Rp179.000',
-    saveAmount: 'Rp28.000',
-    popular: true,
-  },
-  {
-    id: 'community',
-    emoji: '🎴🎴🎴🎴🎴',
-    price: 269000,
-    priceLabel: 'Rp269.000',
-    saveAmount: 'Rp76.000',
-    popular: false,
-  },
+  { id: 'single',    cards: 1, price: 69000,  priceLabel: 'Rp69.000',  saveAmount: null,       popular: false },
+  { id: 'family',    cards: 3, price: 179000, priceLabel: 'Rp179.000', saveAmount: 'Rp28.000', popular: true  },
+  { id: 'community', cards: 5, price: 269000, priceLabel: 'Rp269.000', saveAmount: 'Rp76.000', popular: false },
 ];
 
 const FAQS = [
@@ -68,18 +47,20 @@ function renderAppbar() {
 }
 
 function packageHtml(pkg) {
-  const name = t(`upgrade_pkg${PACKAGES.indexOf(pkg) + 1}_name`);
-  const desc = t(`upgrade_pkg${PACKAGES.indexOf(pkg) + 1}_desc`);
+  const idx = PACKAGES.indexOf(pkg);
+  const name = t(`upgrade_pkg${idx + 1}_name`);
+  const desc = t(`upgrade_pkg${idx + 1}_desc`);
   const popular = pkg.popular
-    ? `<span class="badge badge-active" style="position:absolute;top:-10px;right:14px;border-radius:8px">⭐ ${esc2(t('upgrade_popular'))}</span>`
+    ? `<span class="badge badge-active" style="position:absolute;top:-10px;right:14px;border-radius:8px;display:inline-flex;align-items:center;gap:4px"><i data-lucide="star" style="width:14px;height:14px" aria-hidden="true"></i> ${esc2(t('upgrade_popular'))}</span>`
     : '';
   const save = pkg.saveAmount
     ? `<p class="muted small" style="margin:6px 0 0;color:#16a34a;font-weight:600">${esc2(t('upgrade_save').replace('{amount}', pkg.saveAmount))}</p>`
     : '';
+  const cardsIcon = Array(pkg.cards).fill(0).map(() => `<i data-lucide="credit-card" style="width:22px;height:22px;color:var(--red)" aria-hidden="true"></i>`).join('');
 
   return `<div class="card stack-lg" style="position:relative;${pkg.popular ? 'border-color:#DC2626;border-width:2px' : ''}">
     ${popular}
-    <div style="text-align:center;padding:8px 0 4px;font-size:28px">${pkg.emoji}</div>
+    <div style="display:flex;justify-content:center;gap:4px;padding:8px 0 4px">${cardsIcon}</div>
     <div style="text-align:center">
       <h3 style="margin:0 0 4px;font-size:1.125rem;font-weight:700">${esc2(name)}</h3>
       <p class="muted small" style="margin:0">${esc2(desc)}</p>
@@ -103,7 +84,7 @@ function render() {
     </div>
 
     <div class="card stack-sm">
-      <h3 style="margin:0 0 8px;font-size:1rem;font-weight:700">✨ ${esc2(t('upgrade_benefit_title'))}</h3>
+      <h3 style="margin:0 0 8px;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:6px"><i data-lucide="sparkles" style="width:18px;height:18px;color:var(--red)" aria-hidden="true"></i> ${esc2(t('upgrade_benefit_title'))}</h3>
       <ul style="margin:0;padding-left:20px;color:#4b5563;font-size:0.9375rem;line-height:1.8">
         <li>${esc2(t('upgrade_b1'))}</li>
         <li>${esc2(t('upgrade_b2'))}</li>
