@@ -142,7 +142,7 @@ function renderDashboard() {
       <div><p class="label">${t('card_id')}</p><p class="big">${esc(card.card_id)}</p></div>
       <div><p class="label">${t('card_url')}</p><p class="url">${esc(url)}</p></div>
       <div class="btns"><button class="btn btn-secondary" id="copy">${t('copy_url')}</button>
-        <a class="btn btn-outline" href="/card/${esc(card.card_id)}" target="_blank" rel="noopener">${t('view_card')}</a></div>
+        <a class="btn btn-outline" href="/card/${esc(card.card_id)}">${t('view_card')}</a></div>
     </div>
     <div class="card stack-lg" style="margin-top:12px"><h2>${t('qr_title')}</h2><div id="qr" class="qr"></div><button class="btn btn-outline btn-sm" id="qrdl">${t('download_qr')}</button></div>`;
   $('copy').onclick = () => navigator.clipboard.writeText(url).then(() => toast('URL disalin'), () => toast('Salin manual dari teks URL'));
