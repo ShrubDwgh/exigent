@@ -283,4 +283,8 @@ upgrade_help_title: 'Masih ragu?',
 upgrade_help_desc: 'Tanya dulu ke CS kami sebelum beli.',
 upgrade_help_btn: 'Hubungi CS',
 upgrade_back: 'Kembali',
+
+  // Notifikasi
+notif_login_title: 'Login baru terdeteksi',
+notif_login_body: 'Login dari: {device}',
 };
