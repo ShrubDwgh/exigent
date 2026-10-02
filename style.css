@@ -527,12 +527,13 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 4px 0 4px;
+  padding: 4px 32px;
+  scroll-padding: 0 32px;
 }
 .pkg-scroll::-webkit-scrollbar { display: none; }
 
 .pkg-slide {
-  flex: 0 0 100%;
+  flex: 0 0 calc(100% - 64px);
   scroll-snap-align: center;
   display: flex;
 }
@@ -565,10 +566,11 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 .pkg-card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 20px 18px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 28px 22px;
   width: 100%;
-  min-height: 100%;
+  min-height: 340px;
   transition: transform .2s ease, box-shadow .2s ease;
 }
 
