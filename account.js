@@ -143,7 +143,7 @@ function renderHome() {
     <nav class="menu-stack" aria-label="${T('acct_title')}">
       <div class="card menu">${row({ href: '#/security', icon: 'lock', label: t('menu_security') })}</div>
       <div class="card menu">${row({ href: '#/settings', icon: 'settings', label: t('menu_settings') })}</div>
-      <div class="card menu">${row({ href: '#/help', icon: 'circle-help', label: t('menu_help') })}</div>
+      <div class="card menu">${row({ href: '/feedback.html', icon: 'circle-help', label: lang === 'id' ? 'Bantuan & Masukan' : 'Help & Feedback' })}</div>
       <div class="card menu">${row({ tag: 'button', id: 'row-cs', icon: 'headset', label: t('menu_cs') })}</div>
       <div class="card menu">${row({ href: '#/legal', icon: 'gavel', label: t('menu_legal') })}</div>
       <div class="card menu">${row({ href: '#/about', icon: 'info', label: t('menu_about') })}</div>
