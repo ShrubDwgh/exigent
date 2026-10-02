@@ -3,7 +3,7 @@ export default {
   nav_dashboard: 'Dashboard', nav_medical: 'Medical', nav_account: 'Account',
   // Dashboard
   dash_title: 'Dashboard', card_status: 'Card status', active: 'Active', inactive: 'Inactive',
-  card_id: 'Card ID', card_url: 'Card URL', copy_url: 'Copy URL', view_card: 'View card',
+  card_id: 'Card ID', card_url: 'Card URL', copy_url: 'Copy URL', view_card: 'Preview',
   qr_title: 'QR Code', download_qr: 'Download QR',
   nfc_title: 'Write to NFC Card', nfc_desc: 'Tap your phone to a blank NFC card, then press this button.',
   write_nfc: 'Write to NFC', nfc_registered: 'This card is already registered on NFC.',
