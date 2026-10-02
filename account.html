@@ -34,7 +34,6 @@
   <title>Akun · Emergency Card</title>
 </head>
 <body class="dash acct">
-  <!-- App Bar: judul (kiri) + hanya ikon lonceng notifikasi (kanan). Diisi account.js -->
   <header class="appbar">
     <div class="appbar-in">
       <div class="appbar-lead" id="appbar-lead"></div>
@@ -42,7 +41,6 @@
     </div>
   </header>
 
-  <!-- Navigasi bawah: Dashboard · Medis · Akun (Akun aktif) -->
   <aside class="side">
     <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
     <nav aria-label="Menu utama">
@@ -53,21 +51,46 @@
   </aside>
 
   <main class="main" id="acct-main" tabindex="-1">
-    <!-- Skeleton: Greeting -->
-    <div style="padding-bottom:16px;border-bottom:1px solid #e5e7eb;margin-bottom:16px">
-      <div class="skeleton-line" style="height:22px;width:70%;margin-bottom:8px"></div>
-      <div class="skeleton-line w80"></div>
+    <!-- Skeleton: Greeting card (avatar bulat + 3 baris teks) -->
+    <div class="greet-card" style="margin-bottom:32px">
+      <div class="skeleton-line" style="width:68px;height:68px;border-radius:50%;margin:0;flex:none"></div>
+      <div class="greet-text">
+        <div class="skeleton-line" style="width:40%;height:12px;margin:0 0 8px"></div>
+        <div class="skeleton-line" style="width:70%;height:22px;margin:0 0 8px"></div>
+        <div class="skeleton-line" style="width:90%;height:13px;margin:0"></div>
+      </div>
     </div>
 
-    <!-- Skeleton: Menu list (7 item) -->
-    <div class="skeleton-card" style="padding:0;overflow:hidden">
-      <div style="padding:18px 20px;border-bottom:1px solid #f3f4f6"><div class="skeleton-line w50" style="margin:0"></div></div>
-      <div style="padding:18px 20px;border-bottom:1px solid #f3f4f6"><div class="skeleton-line w45" style="margin:0"></div></div>
-      <div style="padding:18px 20px;border-bottom:1px solid #f3f4f6"><div class="skeleton-line w55" style="margin:0"></div></div>
-      <div style="padding:18px 20px;border-bottom:1px solid #f3f4f6"><div class="skeleton-line w50" style="margin:0"></div></div>
-      <div style="padding:18px 20px;border-bottom:1px solid #f3f4f6"><div class="skeleton-line w40" style="margin:0"></div></div>
-      <div style="padding:18px 20px;border-bottom:1px solid #f3f4f6"><div class="skeleton-line w60" style="margin:0"></div></div>
-      <div style="padding:18px 20px"><div class="skeleton-line w50" style="margin:0"></div></div>
+    <!-- Skeleton: Menu list (7 item: ikon kotak + baris teks) -->
+    <div class="card menu">
+      <div class="mrow" style="pointer-events:none">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:12px;margin:0;flex:none"></div>
+        <div class="mrow-tx"><div class="skeleton-line" style="width:50%;height:16px;margin:0"></div></div>
+      </div>
+      <div class="mrow" style="pointer-events:none">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:12px;margin:0;flex:none"></div>
+        <div class="mrow-tx"><div class="skeleton-line" style="width:45%;height:16px;margin:0"></div></div>
+      </div>
+      <div class="mrow" style="pointer-events:none">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:12px;margin:0;flex:none"></div>
+        <div class="mrow-tx"><div class="skeleton-line" style="width:55%;height:16px;margin:0"></div></div>
+      </div>
+      <div class="mrow" style="pointer-events:none">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:12px;margin:0;flex:none"></div>
+        <div class="mrow-tx"><div class="skeleton-line" style="width:50%;height:16px;margin:0"></div></div>
+      </div>
+      <div class="mrow" style="pointer-events:none">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:12px;margin:0;flex:none"></div>
+        <div class="mrow-tx"><div class="skeleton-line" style="width:40%;height:16px;margin:0"></div></div>
+      </div>
+      <div class="mrow" style="pointer-events:none">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:12px;margin:0;flex:none"></div>
+        <div class="mrow-tx"><div class="skeleton-line" style="width:60%;height:16px;margin:0"></div></div>
+      </div>
+      <div class="mrow" style="pointer-events:none">
+        <div class="skeleton-line" style="width:40px;height:40px;border-radius:12px;margin:0;flex:none"></div>
+        <div class="mrow-tx"><div class="skeleton-line" style="width:50%;height:16px;margin:0"></div></div>
+      </div>
     </div>
   </main>
 
