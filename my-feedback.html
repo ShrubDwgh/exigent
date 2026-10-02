@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script>
+  (function(){
+    try {
+      var t = localStorage.getItem('exigent_theme');
+      if (t !== 'dark' && t !== 'light') {
+        t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch(e){}
+  })();
+  </script>
+  <meta name="theme-color" content="#DC2626">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="/icons/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Exigent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <title>Riwayat Masukan · Emergency Card</title>
+  <style>
+    .fb-item { display:flex; flex-direction:column; gap:10px; }
+    .fb-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .fb-type { display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:.9375rem; }
+    .fb-type.idea { color:#D97706; }
+    .fb-type.bug  { color:#DC2626; }
+    .fb-type .lucide { width:18px; height:18px; }
+    .fb-date { font-size:.8125rem; color:var(--muted); }
+    .fb-msg { margin:0; white-space:pre-wrap; word-break:break-word; line-height:1.6; }
+    .fb-shots { display:flex; flex-wrap:wrap; gap:8px; }
+    .fb-shots a { display:block; width:80px; height:80px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+    .fb-shots img { width:100%; height:100%; object-fit:cover; display:block; }
+    .fb-audio { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:12px; }
+    .fb-audio .lucide { flex:none; color:var(--blue); }
+    .fb-audio audio { flex:1; min-width:0; height:36px; }
+    .fb-note { padding:10px 12px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; font-size:.875rem; color:#1E40AF; }
+    [data-theme="dark"] .fb-note { background:#1E3A5F; border-color:#1E40AF; color:#BFDBFE; }
+
+    .status-new        { background:#FEF3C7; color:#92400E; }
+    .status-read       { background:#DBEAFE; color:#1E40AF; }
+    .status-in_progress{ background:#E0E7FF; color:#4338CA; }
+    .status-resolved   { background:#DCFCE7; color:#166534; }
+    [data-theme="dark"] .status-new         { background:#78350F; color:#FCD34D; }
+    [data-theme="dark"] .status-read        { background:#1E3A8A; color:#BFDBFE; }
+    [data-theme="dark"] .status-in_progress { background:#312E81; color:#C7D2FE; }
+    [data-theme="dark"] .status-resolved    { background:#14532D; color:#86EFAC; }
+  </style>
+</head>
+<body class="dash acct">
+  <header class="appbar">
+    <div class="appbar-in">
+      <div class="appbar-lead">
+        <button type="button" class="icon-btn" id="back" aria-label="Kembali"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+        <h1 class="appbar-title sub">Riwayat Masukan</h1>
+      </div>
+    </div>
+  </header>
+
+  <aside class="side">
+    <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
+    <nav aria-label="Menu utama">
+      <a class="nav-btn" href="/dashboard.html"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span data-nav-label="dashboard">Dashboard</span></a>
+      <a class="nav-btn" href="/medical-search.html"><i data-lucide="map-pin" aria-hidden="true"></i><span data-nav-label="medical">Medis</span></a>
+      <a class="nav-btn" href="/account.html"><i data-lucide="user" aria-hidden="true"></i><span data-nav-label="account">Akun</span></a>
+    </nav>
+  </aside>
+
+  <main class="main" id="fb-main">
+    <!-- Skeleton: 3 kartu riwayat -->
+    <div class="stack-lg" id="fb-skeleton">
+      <div class="card skeleton-card" style="border-top:0">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <div class="skeleton-line" style="width:40%;height:16px;margin:0"></div>
+          <div class="skeleton-line" style="width:20%;height:22px;border-radius:999px;margin:0"></div>
+        </div>
+        <div class="skeleton-line" style="width:35%;height:12px;margin:0 0 14px"></div>
+        <div class="skeleton-line" style="width:95%;height:14px;margin:0 0 8px"></div>
+        <div class="skeleton-line" style="width:80%;height:14px;margin:0 0 8px"></div>
+        <div class="skeleton-line" style="width:60%;height:14px;margin:0 0 14px"></div>
+        <div style="display:flex;gap:8px">
+          <div class="skeleton-btn" style="width:80px;height:80px;border-radius:10px;margin:0"></div>
+          <div class="skeleton-btn" style="width:80px;height:80px;border-radius:10px;margin:0"></div>
+        </div>
+      </div>
+      <div class="card skeleton-card" style="border-top:0">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <div class="skeleton-line" style="width:40%;height:16px;margin:0"></div>
+          <div class="skeleton-line" style="width:20%;height:22px;border-radius:999px;margin:0"></div>
+        </div>
+        <div class="skeleton-line" style="width:35%;height:12px;margin:0 0 14px"></div>
+        <div class="skeleton-line" style="width:95%;height:14px;margin:0 0 8px"></div>
+        <div class="skeleton-line" style="width:75%;height:14px;margin:0"></div>
+      </div>
+      <div class="card skeleton-card" style="border-top:0">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <div class="skeleton-line" style="width:40%;height:16px;margin:0"></div>
+          <div class="skeleton-line" style="width:20%;height:22px;border-radius:999px;margin:0"></div>
+        </div>
+        <div class="skeleton-line" style="width:35%;height:12px;margin:0 0 14px"></div>
+        <div class="skeleton-line" style="width:95%;height:14px;margin:0 0 8px"></div>
+        <div class="skeleton-line" style="width:50%;height:14px;margin:0"></div>
+      </div>
+    </div>
+
+    <!-- Konten asli diisi oleh JS -->
+    <div id="fb-list"></div>
+  </main>
+
+  <script type="module" src="/my-feedback.js"></script>
+</body>
+</html>
