@@ -124,38 +124,43 @@ textarea.input { resize:vertical; }
 .lead { margin:8px 0 12px; font-size:1.125rem; font-weight:600; }
 .hero .btns { margin-top:20px; }
 
-/* Hero card — putih lembut + efek timbul */
+/* Hero card — putih lembut + timbul + kilap jelas */
 .hero-card {
   position: relative;
-  background: linear-gradient(180deg, #fafbfc 0%, #f1f4f8 100%);
-  border: 1px solid rgba(203,213,225,0.7);
+  background: linear-gradient(180deg, #fafbfc 0%, #eef1f6 100%);
+  border: 1px solid rgba(203,213,225,0.8);
   border-radius: 24px;
   padding: 28px 22px;
   overflow: hidden;
   box-shadow:
-    inset 1px 1px 0 rgba(255,255,255,0.95),
-    inset -1px -1px 0 rgba(148,163,184,0.15),
-    inset 0 -8px 16px -8px rgba(148,163,184,0.12),
-    0 20px 40px -16px rgba(15,23,42,0.22),
-    0 8px 16px -8px rgba(15,23,42,0.12),
-    0 1px 0 rgba(255,255,255,0.9);
+    inset 1px 1px 0 rgba(255,255,255,1),
+    inset -1px -1px 0 rgba(148,163,184,0.18),
+    inset 0 -10px 20px -10px rgba(148,163,184,0.18),
+    0 22px 44px -16px rgba(15,23,42,0.28),
+    0 8px 18px -8px rgba(15,23,42,0.14),
+    0 1px 0 rgba(255,255,255,0.95);
 }
 
 .hero-card::before {
   content: "";
   position: absolute;
-  top: -60%;
-  left: -20%;
-  right: -20%;
-  height: 110%;
-  background: radial-gradient(
-    ellipse 60% 50% at 30% 20%,
-    rgba(255,255,255,0.9) 0%,
-    rgba(255,255,255,0.4) 25%,
-    rgba(255,255,255,0) 60%
-  );
+  inset: 0;
+  border-radius: inherit;
   pointer-events: none;
-  transform: rotate(-6deg);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,1) 0%,
+      rgba(255,255,255,0.85) 8%,
+      rgba(255,255,255,0.35) 22%,
+      rgba(255,255,255,0) 40%
+    ),
+    radial-gradient(
+      ellipse 80% 55% at 50% -10%,
+      rgba(255,255,255,0.95) 0%,
+      rgba(255,255,255,0.4) 35%,
+      rgba(255,255,255,0) 70%
+    );
 }
 
 .hero-card::after {
@@ -164,7 +169,7 @@ textarea.input { resize:vertical; }
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(145deg, rgba(255,255,255,1), rgba(255,255,255,0) 45%, rgba(148,163,184,0.4));
+  background: linear-gradient(145deg, rgba(255,255,255,1), rgba(255,255,255,0) 45%, rgba(148,163,184,0.5));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
@@ -508,4 +513,4 @@ body { -webkit-user-select:none; user-select:none; }
   color: #6b7280;
   font-size: 13px;
   margin: 0;
-        }
+       }
