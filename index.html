@@ -32,8 +32,12 @@
   <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
   <title>Emergency Card NFC</title>
   <meta name="description" content="Informasi penting Anda, tersedia saat dibutuhkan.">
+  <style>
+    /* Sembunyikan konten sampai cek sesi selesai, biar nggak "flash" landing sebentar */
+    body.pre-check { visibility: hidden; }
+  </style>
 </head>
-<body>
+<body class="pre-check">
   <header class="site-head" style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #e5e7eb">
     <a class="brand" href="/" style="display:inline-flex;align-items:center;gap:8px;font-weight:700;color:#111827;text-decoration:none">
       <i data-lucide="heart-pulse" aria-hidden="true" style="color:#dc2626"></i>Emergency Card NFC
@@ -103,19 +107,37 @@
   <script>
     window.addEventListener('load', function () { window.lucide && window.lucide.createIcons(); });
   </script>
+
+  <!-- Cek sesi + auto-redirect ke Dashboard -->
   <script type="module">
     import { supabase } from '/supabase.js';
     import { createT } from '/i18n.js';
-    const cta = document.getElementById('hero-cta');
-    if (cta) {
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) {
+
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session && !location.search.includes('stay=1')) {
+          // Sudah login → langsung ke Dashboard
+          location.replace('/dashboard.html');
+          return;
+        }
+
+        // Belum login (atau pakai ?stay=1) → tampilkan landing
+        document.body.classList.remove('pre-check');
+
+        // Ganti tombol CTA kalau sudah login tapi user pilih stay
+        const cta = document.getElementById('hero-cta');
+        if (cta && data.session) {
           cta.setAttribute('data-i18n', 'land_cta_login');
           cta.textContent = createT()('land_cta_login');
           cta.href = '/dashboard.html';
         }
-      });
-    }
+      } catch (e) {
+        // Kalau error, tetap tampilkan landing
+        document.body.classList.remove('pre-check');
+        console.warn('[landing] session check failed:', e);
+      }
+    })();
   </script>
 </body>
 </html>
