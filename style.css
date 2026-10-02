@@ -238,19 +238,26 @@ body.card-page { padding-top:calc(60px + env(safe-area-inset-top, 0px)); }
 .med-hero { background:var(--ice-blue); border-radius:16px 16px 28px 28px; padding:20px 16px 24px; min-height:300px; display:flex; flex-direction:column; }
 .med-hero .brand { color:var(--text); text-decoration:none; }
 
-/* Proteksi salin teks global; field yang memang boleh disalin dikecualikan */
-body { -webkit-user-select:none; user-select:none; }
-.big, .url, input, textarea, select, [contenteditable] { -webkit-user-select:text; user-select:text; }
-
-/* Matikan context menu / long-press menu di link, button, dan menu row */
-a, button, .mrow, .trow, .opt, .nav-btn, .icon-btn, .fab, .chip, .greet-card, .greet-avatar {
+/* ============================================================
+   PROTEKSI LONG-PRESS / CONTEXT MENU (global)
+   ============================================================ */
+html, body, body * {
   -webkit-touch-callout: none;
   -webkit-user-drag: none;
-  user-select: none;
   -webkit-user-select: none;
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-a img { pointer-events: none; -webkit-user-drag: none; }
+a, a * { -webkit-user-drag: none; }
+
+/* Kecualikan field & teks yang memang boleh disalin */
+.big, .url, input, textarea, select, [contenteditable], .selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+input, textarea, select { -webkit-tap-highlight-color: auto; }
+a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 
 .err-line { display:block; color:var(--red); font-weight:600; margin-bottom:2px; }
 
@@ -552,4 +559,4 @@ a img { pointer-events: none; -webkit-user-drag: none; }
   color: #6b7280;
   font-size: 13px;
   margin: 0;
-}
+  }
