@@ -93,9 +93,19 @@ const empty = (icon, title, desc, extra = '') => `<div class="empty"><span class
 const labelLine = (text) => `<div style="display:inline-block;padding-bottom:6px;margin-bottom:10px;border-bottom:1px solid #e5e7eb;min-width:60%"><p class="label" style="margin:0">${esc(text)}</p></div>`;
 
 /* ---------- Layar ---------- */
+function timeGreeting() {
+  const h = new Date().getHours();
+  if (h >= 4  && h < 11) return t('greet_morning');
+  if (h >= 11 && h < 15) return t('greet_afternoon');
+  if (h >= 15 && h < 18) return t('greet_evening');
+  return t('greet_night');
+}
+
 function renderHome() {
   const name = displayName();
-  const greeting = name ? esc(t('greet')).replace('{name}', () => esc(name)) : T('greet_anon');
+  const greeting = name
+    ? `<span class="greet-hello">${esc(timeGreeting())}</span><br><span class="greet-name">${esc(name)}</span>`
+    : T('greet_anon');
   main.innerHTML = `<section class="screen">
     <div class="greet" style="padding-bottom:16px;border-bottom:1px solid #e5e7eb;margin-bottom:16px">
       <h2 class="greet-title">${greeting}</h2>

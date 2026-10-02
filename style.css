@@ -268,6 +268,8 @@ body { -webkit-user-select:none; user-select:none; }
 /* Sapaan */
 .greet { padding:4px 0 20px; }
 .greet-title { font-size:1.625rem; font-weight:800; line-height:1.25; overflow-wrap:anywhere; }
+.greet-title .greet-hello { font-weight: 600; color: #374151; }
+.greet-title .greet-name  { font-weight: 800; }
 .greet .muted { margin-top:6px; }
 .sec-label { margin:0 0 8px 4px; font-size:.75rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
 .sec-title { font-size:1.25rem; font-weight:700; }
