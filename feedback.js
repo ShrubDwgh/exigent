@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import { requireSession, busy, toast } from './auth.js';
+import { requireSession, toast } from './auth.js';
 import { STRINGS, getLang, applyNavLabels } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
@@ -144,13 +144,21 @@ async function uploadTo(bucket, path, blob, contentType) {
   return path;
 }
 
-$('fb-form').onsubmit = (e) => {
+/* ---------- Submit (tanpa loading awan) ---------- */
+$('fb-form').onsubmit = async (e) => {
   e.preventDefault();
   const message = $('f-message').value.trim();
   if (!message) return toast('Pesan tidak boleh kosong');
 
   const btn = e.target.querySelector('button[type="submit"]');
-  busy(btn, async () => {
+  const originalHTML = btn.innerHTML;
+
+  // Loading state sederhana
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  btn.innerHTML = '<span>Mengirim...</span>';
+
+  try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Sesi habis, silakan login ulang');
 
@@ -158,20 +166,26 @@ $('fb-form').onsubmit = (e) => {
     const base = `${user.id}/${ts}`;
     const shotPaths = [];
 
+    // Upload screenshot
     for (let i = 0; i < screenshotFiles.length; i++) {
+      btn.innerHTML = `<span>Mengunggah gambar ${i + 1}/${screenshotFiles.length}...</span>`;
       const blob = await compressImage(screenshotFiles[i].file);
       const p = `${base}-${i}.jpg`;
       await uploadTo('feedback-files', p, blob, 'image/jpeg');
       shotPaths.push(p);
     }
 
+    // Upload audio
     let audioPath = null;
     if (audioBlob) {
+      btn.innerHTML = '<span>Mengunggah voice note...</span>';
       const ext = audioBlob.type.includes('webm') ? 'webm' : 'ogg';
       audioPath = `${base}-voice.${ext}`;
       await uploadTo('feedback-files', audioPath, audioBlob, audioBlob.type);
     }
 
+    // Insert row
+    btn.innerHTML = '<span>Menyimpan...</span>';
     const { error } = await supabase.from('feedback').insert({
       user_id: user.id,
       type: currentType,
@@ -185,7 +199,14 @@ $('fb-form').onsubmit = (e) => {
 
     toast('Terima kasih! Masukanmu sudah kami terima.');
     setTimeout(() => location.replace('/account.html'), 1200);
-  });
+  } catch (err) {
+    console.error('[feedback] gagal kirim:', err);
+    toast('Gagal: ' + (err.message || 'Coba lagi'));
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.innerHTML = originalHTML;
+    window.lucide && window.lucide.createIcons();
+  }
 };
 
 $('back').onclick = () => (history.length > 1 ? history.back() : location.replace('/account.html'));
