@@ -760,10 +760,41 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   color: #4ADE80 !important;
 }
 
-/* ===== SKELETON (dark) ===== */
+/* ===== PERBAIKAN TOMBOL (DARK MODE) ===== */
+[data-theme="dark"] .btn {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); /* Bayangan biar tombol 'terangkat' & nyatu */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Border tipis biar tegas */
+}
+[data-theme="dark"] .btn:hover {
+  filter: brightness(1.15); /* Sedikit lebih terang saat di-hover */
+}
+[data-theme="dark"] .btn-secondary {
+  background: var(--blue);
+}
+[data-theme="dark"] .btn-secondary:hover {
+  background: #2563EB; /* Biru lebih pekat */
+}
+
+/* Paksa warna tombol jika di HTML pakai hardcode #DC2626 / #2563EB */
+[data-theme="dark"] [style*="background:#DC2626"],
+[data-theme="dark"] [style*="background: #DC2626"],
+[data-theme="dark"] [style*="background:#dc2626"],
+[data-theme="dark"] [style*="background: #dc2626"] {
+  background: #EF4444 !important; /* Merah yang pas di mata gelap */
+  color: #FFFFFF !important;
+}
+[data-theme="dark"] [style*="background:#2563EB"],
+[data-theme="dark"] [style*="background: #2563EB"],
+[data-theme="dark"] [style*="background:#2563eb"],
+[data-theme="dark"] [style*="background: #2563eb"] {
+  background: #3B82F6 !important; /* Biru yang pas di mata gelap */
+  color: #FFFFFF !important;
+}
+
+/* ===== SKELETON (DARK) ===== */
 [data-theme="dark"] .skeleton-line,
 [data-theme="dark"] .skeleton-btn {
-  /* PERBAIKAN: Mengubah #4B5C7C menjadi #64748B agar lebih kontras */
+  /* Warna highlight diganti #64748B agar kontras & ga nyatu */
   background: linear-gradient(90deg, #334155 25%, #64748B 37%, #334155 63%) !important;
   background-size: 400px 100% !important;
   animation: shimmer 1.4s ease-in-out infinite !important;
@@ -778,7 +809,6 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 [data-theme="dark"] [style*="background: #e2e8f0"],
 [data-theme="dark"] [style*="background:#f3f4f6"],
 [data-theme="dark"] [style*="background: #f3f4f6"] {
-  /* PERBAIKAN: Mengubah #4B5C7C menjadi #64748B agar lebih kontras */
   background: linear-gradient(90deg, #334155 25%, #64748B 37%, #334155 63%) !important;
   background-size: 400px 100% !important;
   animation: shimmer 1.4s ease-in-out infinite !important;
