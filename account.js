@@ -3,6 +3,7 @@ import { requireSession, signOut, busy, toast } from './auth.js';
 import { STRINGS, LANGUAGES, getLang, setLang, applyNavLabels } from './i18n.js';
 import { esc, openSheet } from './ui.js';
 import { watchPermission, requestGeolocation } from './permissions.js';
+import { canUseNfc } from './trial.js';
 import { FAQ_ROOT, FAQ_TREE } from './help-config.js';
 import { CS_CONTACT } from './cs-config.js';
 
@@ -241,6 +242,32 @@ async function writeNfc(url) {
   doWriteNfc(url);
 }
 
+/* Modal: NFC terkunci (belum beli kartu) */
+function openNfcLockModal() {
+  if (document.querySelector('.modal[data-nfc-lock]')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'modal';
+  wrap.setAttribute('data-nfc-lock', '1');
+  wrap.setAttribute('role', 'dialog');
+  wrap.setAttribute('aria-modal', 'true');
+  wrap.innerHTML = `<div class="modal-box">
+    <h2>🔒 Fitur NFC Terkunci</h2>
+    <p class="muted">Untuk menulis data ke kartu NFC, kamu perlu punya kartu fisik.</p>
+    <p class="muted small">QR kamu tetap bisa dipakai tanpa kartu fisik. Beli kartu NFC untuk pengalaman tap yang lebih cepat.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" data-close>Nanti</button>
+      <a class="btn" href="https://shopee.co.id/" target="_blank" rel="noopener">Beli Kartu</a>
+    </div>
+  </div>`;
+  document.body.append(wrap);
+  const close = () => wrap.remove();
+  wrap.querySelector('[data-close]').onclick = close;
+  wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+  document.addEventListener('keydown', function onKey(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+  });
+}
+
 function renderIdCard() {
   if (loadFailed || !card) {
     const go = `<a class="btn btn-secondary" href="/dashboard.html">${T('idc_go')}</a>`;
@@ -252,6 +279,10 @@ function renderIdCard() {
     return;
   }
   const url = `${location.origin}/card/${card.card_id}`;
+  const nfcUnlocked = canUseNfc(card);
+  const nfcBtnClass = nfcUnlocked ? 'btn btn-secondary btn-block' : 'btn btn-outline btn-block';
+  const nfcBtnLabel = nfcUnlocked ? T('write_nfc') : '🔒 Beli Kartu untuk NFC';
+
   main.innerHTML = `<section class="screen"><div class="card stack-lg">
     <div>
       ${labelLine(T('card_id'))}
@@ -275,20 +306,23 @@ function renderIdCard() {
     </div>
   </div>
   <div class="card stack-lg" style="margin-top:12px">
-    <button class="btn btn-secondary btn-block" id="nfc-write" type="button" style="display:inline-flex;align-items:center;justify-content:center;gap:8px">
+    <button class="${nfcBtnClass}" id="nfc-write" type="button" style="display:inline-flex;align-items:center;justify-content:center;gap:8px">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/>
         <path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/>
         <path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/>
         <path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>
       </svg>
-      ${T('write_nfc')}
+      ${nfcBtnLabel}
     </button>
     <p id="nfc-status" class="muted small" style="text-align:center"></p>
   </div>
   </section>`;
   $('idc-copy').onclick = () => (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast(t('copied')), () => toast(t('copy_manual')));
-  $('nfc-write').onclick = () => writeNfc(url);
+  $('nfc-write').onclick = () => {
+    if (!canUseNfc(card)) { openNfcLockModal(); return; }
+    writeNfc(url);
+  };
 }
 
 function renderSecurity() {
