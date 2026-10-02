@@ -14,17 +14,14 @@ export const TRIAL_DAYS = 3;
 export function getTrialStatus(card) {
   if (!card) return { status: 'none' };
 
-  // Sudah beli kartu fisik = akses penuh
   if (card.has_purchased_card === true) {
     return { status: 'paid' };
   }
 
-  // Punya langganan premium aktif
   if (card.premium_until && new Date(card.premium_until) > new Date()) {
     return { status: 'premium' };
   }
 
-  // Belum beli — cek trial
   if (!card.trial_ends_at) {
     return { status: 'expired' };
   }
@@ -45,9 +42,6 @@ export function getTrialStatus(card) {
 
 /**
  * Bisa edit data medis atau tidak.
- * True jika: trial aktif, sudah beli, atau premium aktif.
- * @param {Object} card
- * @returns {boolean}
  */
 export function canEdit(card) {
   const s = getTrialStatus(card);
@@ -56,9 +50,6 @@ export function canEdit(card) {
 
 /**
  * Bisa pakai fitur NFC atau tidak.
- * Hanya kalau sudah beli kartu fisik.
- * @param {Object} card
- * @returns {boolean}
  */
 export function canUseNfc(card) {
   return card && card.has_purchased_card === true;
@@ -66,8 +57,6 @@ export function canUseNfc(card) {
 
 /**
  * Bisa akses fitur premium atau tidak.
- * @param {Object} card
- * @returns {boolean}
  */
 export function isPremium(card) {
   if (!card) return false;
@@ -79,8 +68,6 @@ export function isPremium(card) {
 /**
  * Format sisa waktu jadi string ramah baca.
  * Contoh: "3 hari", "5 jam", "Trial berakhir"
- * @param {Object} card
- * @returns {string}
  */
 export function formatTimeLeft(card) {
   const s = getTrialStatus(card);
@@ -92,4 +79,31 @@ export function formatTimeLeft(card) {
     return `${s.hoursLeft} jam tersisa`;
   }
   return '-';
+}
+
+/**
+ * Countdown ramah baca dengan format bertingkat.
+ * Contoh: "2 hari 5 jam", "5 jam 30 menit", "45 menit", "< 1 menit"
+ */
+export function getTrialCountdown(card) {
+  const s = getTrialStatus(card);
+  if (s.status === 'paid') return 'Aktif selamanya';
+  if (s.status === 'premium') return 'Premium aktif';
+  if (s.status === 'expired') return 'Trial habis';
+  if (s.status !== 'trial') return '';
+
+  const now = Date.now();
+  const ends = new Date(card.trial_ends_at).getTime();
+  const diffMs = ends - now;
+  if (diffMs <= 0) return 'Trial habis';
+
+  const totalMin = Math.floor(diffMs / 60000);
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const mins = totalMin % 60;
+
+  if (days >= 1) return `${days} hari ${hours} jam`;
+  if (hours >= 1) return `${hours} jam ${mins} menit`;
+  if (mins >= 1) return `${mins} menit`;
+  return 'Kurang dari 1 menit';
 }
