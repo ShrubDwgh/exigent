@@ -18,9 +18,9 @@ let session = null;
 const SHOPEE_URL = 'https://shopee.co.id/'; // TODO: ganti dengan link toko kamu
 
 const PACKAGES = [
-  { id: 'single',    cards: 1, price: 69000,  priceLabel: 'Rp69.000',  saveAmount: null,       popular: false },
-  { id: 'family',    cards: 3, price: 179000, priceLabel: 'Rp179.000', saveAmount: 'Rp28.000', popular: true  },
-  { id: 'community', cards: 5, price: 269000, priceLabel: 'Rp269.000', saveAmount: 'Rp76.000', popular: false },
+  { id: 'single',    cards: 1, price: 69000,  priceLabel: 'Rp69.000',  saveAmount: null,       popular: false, theme: 'light' },
+  { id: 'family',    cards: 3, price: 179000, priceLabel: 'Rp179.000', saveAmount: 'Rp28.000', popular: true,  theme: 'red'   },
+  { id: 'community', cards: 5, price: 269000, priceLabel: 'Rp269.000', saveAmount: 'Rp76.000', popular: false, theme: 'dark'  },
 ];
 
 const FAQS = [
@@ -51,25 +51,25 @@ function packageHtml(pkg) {
   const name = t(`upgrade_pkg${idx + 1}_name`);
   const desc = t(`upgrade_pkg${idx + 1}_desc`);
   const popular = pkg.popular
-    ? `<span class="badge badge-active" style="position:absolute;top:-10px;right:14px;border-radius:8px;display:inline-flex;align-items:center;gap:4px"><i data-lucide="star" style="width:14px;height:14px" aria-hidden="true"></i> ${esc2(t('upgrade_popular'))}</span>`
+    ? `<span class="pkg-popular"><i data-lucide="star" style="width:14px;height:14px" aria-hidden="true"></i> ${esc2(t('upgrade_popular'))}</span>`
     : '';
   const save = pkg.saveAmount
-    ? `<p class="muted small" style="margin:6px 0 0;color:#16a34a;font-weight:600">${esc2(t('upgrade_save').replace('{amount}', pkg.saveAmount))}</p>`
+    ? `<p class="pkg-save">${esc2(t('upgrade_save').replace('{amount}', pkg.saveAmount))}</p>`
     : '';
-  const cardsIcon = Array(pkg.cards).fill(0).map(() => `<i data-lucide="credit-card" style="width:22px;height:22px;color:var(--red)" aria-hidden="true"></i>`).join('');
+  const cardsIcon = Array(pkg.cards).fill(0).map(() => `<i data-lucide="credit-card" class="pkg-card-icon" aria-hidden="true"></i>`).join('');
 
-  return `<div class="card stack-lg" style="position:relative;${pkg.popular ? 'border-color:#DC2626;border-width:2px' : ''}">
+  return `<div class="card pkg-card pkg-${pkg.theme}" style="position:relative;width:100%">
     ${popular}
-    <div style="display:flex;justify-content:center;gap:4px;padding:8px 0 4px">${cardsIcon}</div>
-    <div style="text-align:center">
-      <h3 style="margin:0 0 4px;font-size:1.125rem;font-weight:700">${esc2(name)}</h3>
-      <p class="muted small" style="margin:0">${esc2(desc)}</p>
+    <div class="pkg-cards">${cardsIcon}</div>
+    <div class="pkg-info">
+      <h3 class="pkg-name">${esc2(name)}</h3>
+      <p class="pkg-desc">${esc2(desc)}</p>
     </div>
-    <div style="text-align:center">
-      <p style="margin:8px 0 0;font-size:1.75rem;font-weight:800;color:var(--red)">${pkg.priceLabel}</p>
+    <div class="pkg-price-wrap">
+      <p class="pkg-price">${pkg.priceLabel}</p>
       ${save}
     </div>
-    <button class="btn ${pkg.popular ? '' : 'btn-secondary'} btn-block" data-buy="${pkg.id}">
+    <button class="btn btn-block pkg-buy" data-buy="${pkg.id}">
       <i data-lucide="shopping-bag" aria-hidden="true"></i> ${esc2(t('upgrade_buy'))}
     </button>
   </div>`;
@@ -94,7 +94,14 @@ function render() {
       </div>
     </div>
 
-    ${PACKAGES.map(packageHtml).join('')}
+    <div class="pkg-carousel-wrap">
+      <div class="pkg-scroll" id="pkg-scroll" role="list">
+        ${PACKAGES.map((pkg) => `<div class="pkg-slide" role="listitem">${packageHtml(pkg)}</div>`).join('')}
+      </div>
+      <div class="pkg-dots" id="pkg-dots" role="tablist" aria-label="Pilih paket">
+        ${PACKAGES.map((_, i) => `<span class="pkg-dot${i === 0 ? ' active' : ''}" data-idx="${i}" role="tab" aria-selected="${i === 0}"></span>`).join('')}
+      </div>
+    </div>
 
     <div>
       <h3 style="font-size:1.125rem;font-weight:700;margin:8px 0 12px">${esc2(t('upgrade_faq_title'))}</h3>
@@ -122,6 +129,7 @@ function render() {
 
   icons();
 
+  // Buy buttons
   main.querySelectorAll('[data-buy]').forEach((btn) => {
     btn.onclick = () => {
       const id = btn.getAttribute('data-buy');
@@ -131,6 +139,31 @@ function render() {
       toast(`Membuka Shopee: ${pkg.priceLabel}`);
     };
   });
+
+  // Carousel + dot indicator
+  const scroll = $('pkg-scroll');
+  const dots = main.querySelectorAll('.pkg-dot');
+  if (scroll && dots.length) {
+    const updateDots = () => {
+      const slide = scroll.querySelector('.pkg-slide');
+      if (!slide) return;
+      const slideW = slide.offsetWidth + 12; // 12 = gap
+      const idx = Math.round(scroll.scrollLeft / slideW);
+      dots.forEach((d, i) => {
+        d.classList.toggle('active', i === idx);
+        d.setAttribute('aria-selected', String(i === idx));
+      });
+    };
+    scroll.addEventListener('scroll', updateDots, { passive: true });
+    dots.forEach((d) => {
+      d.onclick = () => {
+        const idx = parseInt(d.dataset.idx, 10);
+        const slide = scroll.querySelector('.pkg-slide');
+        if (!slide) return;
+        scroll.scrollTo({ left: idx * (slide.offsetWidth + 12), behavior: 'smooth' });
+      };
+    });
+  }
 
   const csBtn = $('cs-btn');
   if (csBtn) csBtn.onclick = () => { location.href = '/account.html#/help'; };
