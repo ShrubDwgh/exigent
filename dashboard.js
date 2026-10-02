@@ -65,11 +65,9 @@ const lang = getLang();
 const t = (k) => (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || k;
 
 async function load() {
-  // Ambil user yang sedang login
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return fail({ message: 'Sesi habis, silakan login ulang.' });
 
-  // Filter by owner_id — double layer, biar RLS + client-side filter dua-duanya aktif
   const { data, error } = await supabase
     .from('cards')
     .select('*')
@@ -125,10 +123,11 @@ function renderDashboard() {
   }
   const url = `${location.origin}/card/${card.card_id}`;
   const trialStatus = getTrialStatus(card);
-  const bannerHtml = (trialStatus.status === 'trial' || trialStatus.status === 'expired')
-    ? `<div class="card stack-sm" style="background:${trialStatus.status === 'expired' ? '#FEF2F2' : '#EFF6FF'};border-color:${trialStatus.status === 'expired' ? '#FECACA' : '#BFDBFE'};margin-bottom:12px">
-        <strong>${trialStatus.status === 'expired' ? '🔒 Trial habis' : '⏱️ Trial aktif'}</strong>
-        <p class="muted small" style="margin:4px 0 0">${trialStatus.status === 'expired'
+  const isExpired = trialStatus.status === 'expired';
+  const bannerHtml = (trialStatus.status === 'trial' || isExpired)
+    ? `<div class="card stack-sm" style="background:${isExpired ? '#FEF2F2' : '#EFF6FF'};border-color:${isExpired ? '#FECACA' : '#BFDBFE'};margin-bottom:12px">
+        <strong style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="${isExpired ? 'lock' : 'clock'}" style="width:16px;height:16px" aria-hidden="true"></i> ${isExpired ? 'Trial habis' : 'Trial aktif'}</strong>
+        <p class="muted small" style="margin:4px 0 0">${isExpired
           ? 'Beli kartu untuk lanjut edit data medis. Data kamu tetap aman.'
           : formatTimeLeft(card) + ' — nikmati semua fitur gratis.'}</p>
       </div>`
@@ -290,15 +289,16 @@ function openUpgradeModal() {
   wrap.setAttribute('role', 'dialog');
   wrap.setAttribute('aria-modal', 'true');
   wrap.innerHTML = `<div class="modal-box">
-    <h2>🔒 Trial Habis</h2>
+    <h2 style="display:flex;align-items:center;gap:8px"><i data-lucide="lock" style="width:20px;height:20px" aria-hidden="true"></i> Trial Habis</h2>
     <p class="muted">Trial 3 hari kamu sudah berakhir. Beli kartu NFC untuk lanjut edit data medis.</p>
     <p class="muted small">Data yang sudah kamu isi tetap tersimpan dan tetap bisa dilihat penolong lewat QR / kartu.</p>
     <div class="modal-actions">
       <button class="btn btn-outline" data-close>Tutup</button>
-      <a class="btn" href="https://shopee.co.id/" target="_blank" rel="noopener">Beli Kartu</a>
+      <a class="btn" href="/upgrade.html">Beli Kartu</a>
     </div>
   </div>`;
   document.body.append(wrap);
+  window.lucide && window.lucide.createIcons();
   const close = () => wrap.remove();
   wrap.querySelector('[data-close]').onclick = close;
   wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
