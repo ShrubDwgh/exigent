@@ -251,15 +251,16 @@ function openNfcLockModal() {
   wrap.setAttribute('role', 'dialog');
   wrap.setAttribute('aria-modal', 'true');
   wrap.innerHTML = `<div class="modal-box">
-    <h2>🔒 Fitur NFC Terkunci</h2>
+    <h2 style="display:flex;align-items:center;gap:8px"><i data-lucide="lock" style="width:20px;height:20px" aria-hidden="true"></i> Fitur NFC Terkunci</h2>
     <p class="muted">Untuk menulis data ke kartu NFC, kamu perlu punya kartu fisik.</p>
     <p class="muted small">QR kamu tetap bisa dipakai tanpa kartu fisik. Beli kartu NFC untuk pengalaman tap yang lebih cepat.</p>
     <div class="modal-actions">
       <button class="btn btn-outline" data-close>Nanti</button>
-      <a class="btn" href="https://shopee.co.id/" target="_blank" rel="noopener">Beli Kartu</a>
+      <a class="btn" href="/upgrade.html">Beli Kartu</a>
     </div>
   </div>`;
   document.body.append(wrap);
+  icons();
   const close = () => wrap.remove();
   wrap.querySelector('[data-close]').onclick = close;
   wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
@@ -281,7 +282,7 @@ function renderIdCard() {
   const url = `${location.origin}/card/${card.card_id}`;
   const nfcUnlocked = canUseNfc(card);
   const nfcBtnClass = nfcUnlocked ? 'btn btn-secondary btn-block' : 'btn btn-outline btn-block';
-  const nfcBtnLabel = nfcUnlocked ? T('write_nfc') : '🔒 Beli Kartu untuk NFC';
+  const nfcBtnLabel = nfcUnlocked ? T('write_nfc') : '<i data-lucide="lock" style="width:18px;height:18px" aria-hidden="true"></i> Beli Kartu untuk NFC';
 
   main.innerHTML = `<section class="screen"><div class="card stack-lg">
     <div>
