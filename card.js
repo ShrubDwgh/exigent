@@ -157,6 +157,20 @@ function render(d) {
   refreshIcons();
 }
 
+// Kalau user login (buka dari dashboard atau QR), atur history supaya tombol
+// back HP tidak keluar web — malah balik ke dashboard.
+(async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      history.pushState({ exigentCard: true }, '', location.href);
+      window.addEventListener('popstate', () => {
+        location.href = '/dashboard.html';
+      });
+    }
+  } catch (_) { /* diamkan */ }
+})();
+
 (async () => {
   showWelcome();
   if (!/^EC-[A-Z0-9]{8,16}$/.test(cardId)) return message(t('card_invalid_title'), t('card_invalid_text'));
