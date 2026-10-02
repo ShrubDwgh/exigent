@@ -1,7 +1,7 @@
 export default {
   nav_dashboard: 'Dashboard', nav_medical: 'Medis', nav_account: 'Akun',
   dash_title: 'Dashboard', card_status: 'Status kartu', active: 'Aktif', inactive: 'Nonaktif',
-  card_id: 'Card ID', card_url: 'URL kartu', copy_url: 'Salin URL', view_card: 'Lihat kartu',
+  card_id: 'Card ID', card_url: 'URL kartu', copy_url: 'Salin URL', view_card: 'Pratinjau',
   qr_title: 'QR Code', download_qr: 'Unduh QR',
   nfc_title: 'Tulis ke Kartu NFC', nfc_desc: 'Tempelkan HP ke kartu NFC kosong, lalu tekan tombol ini.',
   write_nfc: 'Tulis ke NFC', nfc_registered: 'Card NFC ini sudah terdaftar.',
