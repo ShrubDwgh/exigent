@@ -9,6 +9,21 @@
 //   5. Bahasa baru otomatis muncul di menu Pilih Bahasa dan ikut auto-detect.
 // ============================================================================
 
+// ============================================================================
+// Anti long-press context menu (Chrome Android tidak hiraukan -webkit-touch-callout)
+// ============================================================================
+if (typeof document !== 'undefined' && !window.__exigentCtxBlock) {
+  window.__exigentCtxBlock = true;
+  document.addEventListener('contextmenu', (e) => {
+    const el = e.target;
+    // Kecualikan input, textarea, contenteditable
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+    // Kecualikan elemen yang memang boleh disalin
+    if (el && el.closest && el.closest('.big, .url, .selectable')) return;
+    e.preventDefault();
+  }, { capture: true });
+}
+
 import en from './locales/en.js';
 import id from './locales/id.js';
 import ja from './locales/ja.js';
