@@ -315,12 +315,12 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 .icon-btn:active { transform:scale(.94); }
 .icon-btn .lucide { width:24px; height:24px; }
 .dot { position:absolute; top:9px; right:10px; width:10px; height:10px; border-radius:50%; background:var(--red); border:2px solid var(--surface); }
-.acct .main { padding-top:calc(76px + env(safe-area-inset-top, 0px)); }
+.acct .main { padding-top:calc(104px + env(safe-area-inset-top, 0px)); }
 .acct .main:focus { outline:0; }
 @media (min-width:1024px) {
   .appbar { left:240px; padding-top:0; }
   .appbar-in { padding:0 22px 0 24px; }
-  .acct .main { padding-top:84px; }
+  .acct .main { padding-top:112px; }
 }
 
 .stack-lg > p { margin:0; }
@@ -340,7 +340,7 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
     inset 1px 1px 0 rgba(255,255,255,1),
     0 16px 32px -18px rgba(15,23,42,0.18),
     0 6px 14px -6px rgba(15,23,42,0.08);
-  margin-bottom: 20px;
+  margin-bottom: 40px;
 }
 .greet-avatar {
   flex-shrink: 0;
@@ -798,7 +798,6 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 }
 
 /* ===== PERBAIKAN STATUS TRIAL (DARK MODE) ===== */
-/* Paksa semua teks di dalam kotak trial jadi terang agar sinkron */
 [data-theme="dark"] #trial-row {
   background: #1E3A5F !important;
   border-color: #3B82F6 !important;
@@ -809,24 +808,21 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 [data-theme="dark"] #trial-row p {
   color: #DBEAFE !important;
 }
-/* Angka trial dibuat putih tegas biar menonjol */
 [data-theme="dark"] #trial-count {
   color: #FFFFFF !important;
   font-weight: 700;
 }
 
 /* ===== PERBAIKAN LOADER AWAN (DARK MODE) ===== */
-/* Ubah variabel warna loader agar cocok di background gelap */
 [data-theme="dark"] .loader {
-  --cloud-color: #1E3A5F; /* Awan jadi biru gelap */
-  --arrows-color: #60A5FA; /* Panah jadi biru terang */
+  --cloud-color: #1E3A5F;
+  --arrows-color: #60A5FA;
 }
 [data-theme="dark"] .loader-wrap p {
-  color: #94A3B8 !important; /* Teks loading jadi abu terang */
+  color: #94A3B8 !important;
 }
 
 /* ===== SKELETON (DARK) ===== */
-/* Struktur sama persis dengan mode terang; hanya warna yang disesuaikan */
 [data-theme="dark"] .skeleton-line,
 [data-theme="dark"] .skeleton-btn {
   background: linear-gradient(90deg, #334155 25%, #4B5C7C 37%, #334155 63%) !important;
@@ -834,7 +830,6 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   animation: shimmer 1.4s ease-in-out infinite !important;
 }
 
-/* Warna terang inline (mode terang: blok datar tanpa shimmer) -> abu gelap datar */
 [data-theme="dark"] [style*="background:#e5e7eb"],
 [data-theme="dark"] [style*="background: #e5e7eb"],
 [data-theme="dark"] [style*="background:#eef0f2"],
