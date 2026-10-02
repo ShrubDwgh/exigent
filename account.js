@@ -141,7 +141,7 @@ function renderHome() {
     <nav class="menu-stack" aria-label="${T('acct_title')}">
       <div class="card menu">${row({ href: '#/security', icon: 'lock', label: t('menu_security') })}</div>
       <div class="card menu">${row({ href: '#/settings', icon: 'settings', label: t('menu_settings') })}</div>
-      <div class="card menu">${row({ href: '#/help', icon: 'circle-help', label: t('menu_help') })}</div>
+      <div class="card menu">${row({ href: '#/help', icon: 'circle-help', label: lang === 'id' ? 'Bantuan & Masukan' : 'Help & Feedback' })}</div>
       <div class="card menu">${row({ tag: 'button', id: 'row-cs', icon: 'headset', label: t('menu_cs') })}</div>
       <div class="card menu">${row({ href: '#/legal', icon: 'gavel', label: t('menu_legal') })}</div>
       <div class="card menu">${row({ href: '#/about', icon: 'info', label: t('menu_about') })}</div>
@@ -513,8 +513,12 @@ function renderPermissions() {
       <div class="card">
         <div class="crow"><div><strong>${T('perm_geo')}</strong><p class="muted small">${T('perm_geo_desc')}</p></div><span id="perm-geo" class="badge">${T('perm_checking')}</span></div>
         <div class="crow"><div><strong>${T('perm_nfc')}</strong><p class="muted small">${T('perm_nfc_desc')}</p></div><span id="perm-nfc" class="badge">${T('perm_checking')}</span></div>
-        <div class="crow"><div><strong>${lang === 'id' ? 'Mikrofon' : 'Microphone'}</strong><p class="muted small">${lang === 'id' ? 'Untuk kirim voice note di masukan' : 'For sending voice notes in feedback'}</p></div><span id="perm-mic" class="badge">${T('perm_checking')}</span></div>
-        <button class="btn btn-outline btn-sm" id="perm-geo-btn" hidden type="button" style="margin-top:12px">${T('perm_request')}</button>
+      </div>
+      <div class="card menu" style="margin-top:12px">
+        <button type="button" class="trow" role="switch" aria-checked="false" id="mic-switch">
+          <span class="mrow-tx"><strong>${lang === 'id' ? 'Mikrofon' : 'Microphone'}</strong><small>${lang === 'id' ? 'Untuk kirim voice note di masukan' : 'For sending voice notes in feedback'}</small></span>
+          <span class="switch" aria-hidden="true"></span>
+        </button>
       </div>
       <p class="muted small" style="margin-top:12px">${T('perm_hint')}</p></div>
   </section>`;
@@ -532,36 +536,55 @@ function renderPermissions() {
   }));
   paint();
 
-  const geo = $('perm-geo'), nfc = $('perm-nfc'), mic = $('perm-mic'), geoBtn = $('perm-geo-btn');
+  const geo = $('perm-geo'), nfc = $('perm-nfc');
   const MAP = { granted: ['perm_granted', 'badge-active'], denied: ['perm_denied', 'badge-emergency'], prompt: ['perm_prompt', 'badge-inactive'] };
   const setBadge = (el, st) => { if (!el.isConnected) return; const [k, cls] = MAP[st] || ['perm_unknown', '']; el.textContent = t(k); el.className = 'badge ' + cls; };
-  watchPermission('geolocation', (st) => { setBadge(geo, st); if (geoBtn.isConnected) geoBtn.hidden = st !== 'prompt'; });
+  watchPermission('geolocation', (st) => setBadge(geo, st));
   watchPermission('nfc', (st) => setBadge(nfc, st));
 
-  // Mikrofon: pakai navigator.permissions langsung (kalau didukung)
-  if (navigator.permissions && navigator.permissions.query) {
-    navigator.permissions.query({ name: 'microphone' }).then((status) => {
-      setBadge(mic, status.state);
-      status.onchange = () => setBadge(mic, status.state);
-    }).catch(() => {
-      // Fallback: cek dukungan getUserMedia
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        mic.textContent = lang === 'id' ? 'Didukung' : 'Supported';
-        mic.className = 'badge badge-inactive';
-      } else {
-        mic.textContent = lang === 'id' ? 'Tidak didukung' : 'Not supported';
-        mic.className = 'badge badge-emergency';
+  // Mikrofon: toggle
+  const micSwitch = $('mic-switch');
+  if (micSwitch) {
+    const updateMicSwitch = async () => {
+      if (!navigator.permissions || !navigator.permissions.query) {
+        micSwitch.setAttribute('aria-checked', 'false');
+        return;
       }
-    });
-  } else {
-    mic.textContent = lang === 'id' ? 'Tidak didukung' : 'Not supported';
-    mic.className = 'badge badge-emergency';
-  }
+      try {
+        const status = await navigator.permissions.query({ name: 'microphone' });
+        micSwitch.setAttribute('aria-checked', String(status.state === 'granted'));
+        status.onchange = () => micSwitch.setAttribute('aria-checked', String(status.state === 'granted'));
+      } catch (_) {
+        micSwitch.setAttribute('aria-checked', 'false');
+      }
+    };
+    updateMicSwitch();
 
-  geoBtn.onclick = requestGeolocation;
+    micSwitch.onclick = async () => {
+      const isOn = micSwitch.getAttribute('aria-checked') === 'true';
+      if (isOn) {
+        toast(lang === 'id' ? 'Untuk mematikan, atur lewat pengaturan browser' : 'To turn off, use browser settings');
+        return;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        return toast(lang === 'id' ? 'Browser tidak mendukung mikrofon' : 'Browser does not support microphone');
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+        toast(lang === 'id' ? 'Izin mikrofon diberikan' : 'Microphone permission granted');
+        updateMicSwitch();
+      } catch (err) {
+        toast(err.name === 'NotAllowedError'
+          ? (lang === 'id' ? 'Izin ditolak' : 'Permission denied')
+          : (lang === 'id' ? 'Gagal: ' : 'Failed: ') + (err.message || ''));
+        updateMicSwitch();
+      }
+    };
+  }
 }
 
-/* Pusat Bantuan */
+/* Bantuan & Masukan */
 const helpHref = (id) => (id === FAQ_ROOT ? '#/help' : '#/help/' + encodeURIComponent(id));
 const helpAction = (a) => {
   const label = esc(pick(a.label));
@@ -864,7 +887,7 @@ const ROUTES = {
   '/settings/gmail': { title: () => t('set_gmail'), render: renderGmail, parent: '/settings' },
   '/settings/idcard': { title: () => t('set_idcard'), render: renderIdCard, parent: '/settings' },
   '/settings/permissions': { title: () => t('set_permissions'), render: renderPermissions, parent: '/settings' },
-  '/help': { title: () => t('menu_help'), render: renderHelp, parent: '/' },
+  '/help': { title: () => (lang === 'id' ? 'Bantuan & Masukan' : 'Help & Feedback'), render: renderHelp, parent: '/' },
   '/legal': { title: () => t('menu_legal'), render: renderLegal, parent: '/' },
   '/about': { title: () => t('menu_about'), render: renderAbout, parent: '/' },
 };
@@ -932,11 +955,22 @@ $('bell').onclick = openNotifs;
 renderAppbar(resolve(currentPath()).route);
 icons();
 validateFaq();
+
 requireSession().then(async (s) => {
   if (!s) return;
   session = s;
-  await loadData();
+
+  // Render pertama pakai data session saja — greeting langsung muncul
   onRoute();
+
+  // Fetch data kartu di background, refresh home kalau sudah siap
+  loadData().then(() => {
+    if (currentPath() === '/') {
+      renderHome();
+      icons();
+    }
+  });
+
   loadNotifCount();
   registerCurrentDevice();
   window.addEventListener('hashchange', onRoute);
