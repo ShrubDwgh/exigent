@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js';
 import { requireSession, busy, toast } from './auth.js';
 import { STRINGS, getLang, applyNavLabels } from './i18n.js';
+import { getTrialStatus, canEdit, formatTimeLeft } from './trial.js';
 
 // ==========================================
 // LOG LOGIN GOOGLE
@@ -123,7 +124,18 @@ function renderDashboard() {
     return;
   }
   const url = `${location.origin}/card/${card.card_id}`;
+  const trialStatus = getTrialStatus(card);
+  const bannerHtml = (trialStatus.status === 'trial' || trialStatus.status === 'expired')
+    ? `<div class="card stack-sm" style="background:${trialStatus.status === 'expired' ? '#FEF2F2' : '#EFF6FF'};border-color:${trialStatus.status === 'expired' ? '#FECACA' : '#BFDBFE'};margin-bottom:12px">
+        <strong>${trialStatus.status === 'expired' ? '🔒 Trial habis' : '⏱️ Trial aktif'}</strong>
+        <p class="muted small" style="margin:4px 0 0">${trialStatus.status === 'expired'
+          ? 'Beli kartu untuk lanjut edit data medis. Data kamu tetap aman.'
+          : formatTimeLeft(card) + ' — nikmati semua fitur gratis.'}</p>
+      </div>`
+    : '';
+
   box.innerHTML = `<h1>${t('dash_title')}</h1>
+    ${bannerHtml}
     <div class="card stack-lg">
       <div class="row"><h2>${t('card_status')}</h2>${card.is_active ? `<span class="badge badge-active">${t('active')}</span>` : `<span class="badge badge-inactive">${t('inactive')}</span>`}</div>
       <div><p class="label">${t('card_id')}</p><p class="big">${esc(card.card_id)}</p></div>
@@ -250,6 +262,7 @@ function renderMedisModal(box) {
 
 function openMedisModal() {
   if (medisModal || !card || !profile) return;
+  if (!canEdit(card)) { openUpgradeModal(); return; }
   const wrap = document.createElement('div'); wrap.className = 'modal';
   wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true');
   const box = document.createElement('div'); box.className = 'modal-box tall';
@@ -266,6 +279,32 @@ function closeMedisModal() {
   document.removeEventListener('keydown', medisModal._onKey);
   medisModal.remove();
   medisModal = null;
+}
+
+// Modal upgrade — muncul saat trial habis
+function openUpgradeModal() {
+  if (document.querySelector('.modal[data-upgrade]')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'modal';
+  wrap.setAttribute('data-upgrade', '1');
+  wrap.setAttribute('role', 'dialog');
+  wrap.setAttribute('aria-modal', 'true');
+  wrap.innerHTML = `<div class="modal-box">
+    <h2>🔒 Trial Habis</h2>
+    <p class="muted">Trial 3 hari kamu sudah berakhir. Beli kartu NFC untuk lanjut edit data medis.</p>
+    <p class="muted small">Data yang sudah kamu isi tetap tersimpan dan tetap bisa dilihat penolong lewat QR / kartu.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" data-close>Tutup</button>
+      <a class="btn" href="https://shopee.co.id/" target="_blank" rel="noopener">Beli Kartu</a>
+    </div>
+  </div>`;
+  document.body.append(wrap);
+  const close = () => wrap.remove();
+  wrap.querySelector('[data-close]').onclick = close;
+  wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+  document.addEventListener('keydown', function onKey(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+  });
 }
 
 $('fab-edit').onclick = openMedisModal;
