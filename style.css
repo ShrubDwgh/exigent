@@ -192,14 +192,23 @@ textarea.input { resize:vertical; }
 .fs legend { padding:0; margin-bottom:8px; font-size:.875rem; font-weight:600; }
 .fs .field { margin-bottom:12px; }
 
-/* Wajib mode portrait: layar sentuh yang landscape menampilkan overlay penuh */
+/* Paksa portrait: rotate halaman 90° kalau HP di landscape */
 @media (orientation:landscape) and (pointer:coarse) {
-  html, body { overflow:hidden !important; }
-  body > * { visibility:hidden !important; }
-  html::before, html::after { position:fixed; left:0; right:0; z-index:2147483647; text-align:center; font-family:Inter, system-ui, sans-serif; color:#0F172A; }
-  html::before { content:"Gunakan Mode Vertikal"; top:0; bottom:0; display:flex; align-items:center; justify-content:center; padding:0 32px; font-size:1.5rem; font-weight:700;
-    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23DC2626' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='2' width='10' height='20' rx='2'/%3E%3Cpath d='M11 18h2'/%3E%3C/svg%3E") no-repeat center calc(50% - 56px) / 48px; }
-  html::after { content:"Silakan putar perangkat Anda ke posisi vertikal untuk menggunakan EXIGENT."; top:calc(50% + 24px); padding:0 32px; font-size:1rem; color:#64748B; }
+  html {
+    transform: rotate(-90deg);
+    transform-origin: left top;
+    position: fixed;
+    top: 100%;
+    left: 0;
+    width: 100vh;
+    height: 100vw;
+    overflow: hidden;
+  }
+  body {
+    width: 100vh;
+    height: 100vw;
+    overflow: hidden;
+  }
 }
 
 
@@ -559,4 +568,4 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   color: #6b7280;
   font-size: 13px;
   margin: 0;
-  }
+}
