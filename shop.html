@@ -2,7 +2,18 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script>
+  (function(){
+    try {
+      var t = localStorage.getItem('exigent_theme');
+      if (t !== 'dark' && t !== 'light') {
+        t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch(e){}
+  })();
+  </script>
   <meta name="theme-color" content="#DC2626">
   <meta name="robots" content="noindex, nofollow">
   <!-- PWA -->
@@ -39,7 +50,47 @@
   </aside>
 
   <main class="main" id="shop-main" tabindex="-1">
-    <div class="skeleton-card"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div></div>
+    <!-- Skeleton: meniru isi menu Toko (judul, deskripsi, pencarian, filter, kartu produk) -->
+    <div class="skeleton-line" style="height:28px;width:30%;margin:0 0 21.6px"></div>
+    <div style="margin-bottom:26px">
+      <div class="skeleton-line" style="margin:0 0 10px"></div>
+      <div class="skeleton-line" style="margin:0 0 10px"></div>
+      <div class="skeleton-line" style="width:60%;margin:0"></div>
+    </div>
+    <div class="skeleton-line" style="height:42px;border-radius:10px;margin:0 0 16px"></div>
+    <div style="display:flex;gap:8px;padding-bottom:4px;margin-bottom:12px">
+      <div class="skeleton-btn" style="width:64px;height:33px;border-radius:20px;margin:0"></div>
+      <div class="skeleton-btn" style="width:56px;height:33px;border-radius:20px;margin:0"></div>
+      <div class="skeleton-btn" style="width:84px;height:33px;border-radius:20px;margin:0"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr;gap:12px">
+      <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:12px">
+        <div class="skeleton-line" style="height:200px;border-radius:12px;margin:0"></div>
+        <div>
+          <div class="skeleton-line" style="height:15px;width:65%;margin:0 0 10.5px"></div>
+          <div class="skeleton-line" style="height:12px;margin:0 0 7.5px"></div>
+          <div class="skeleton-line" style="height:12px;width:80%;margin:0 0 13.5px"></div>
+          <div class="skeleton-line" style="height:22.5px;width:90px;margin:0"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div class="skeleton-line" style="height:22px;width:110px;margin:0"></div>
+          <div class="skeleton-btn" style="width:84px;height:44px;margin:0"></div>
+        </div>
+      </div>
+      <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:12px">
+        <div class="skeleton-line" style="height:200px;border-radius:12px;margin:0"></div>
+        <div>
+          <div class="skeleton-line" style="height:15px;width:65%;margin:0 0 10.5px"></div>
+          <div class="skeleton-line" style="height:12px;margin:0 0 7.5px"></div>
+          <div class="skeleton-line" style="height:12px;width:80%;margin:0 0 13.5px"></div>
+          <div class="skeleton-line" style="height:22.5px;width:90px;margin:0"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div class="skeleton-line" style="height:22px;width:110px;margin:0"></div>
+          <div class="skeleton-btn" style="width:84px;height:44px;margin:0"></div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script type="module" src="/shop.js"></script>
