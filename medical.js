@@ -73,9 +73,17 @@ function card(p) {
 }
 
 function skeleton() {
-  return Array.from({ length: 3 }).map(() =>
-    `<div class="skeleton-card"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div><div class="skeleton-line w90"></div><div class="skeleton-btn"></div></div>`
-  ).join('');
+  const item = `<article class="card place">
+    <div class="skeleton-line" style="width:60%;height:20px;margin:0"></div>
+    <div class="skeleton-line" style="width:40%;height:22px;border-radius:999px;margin:0"></div>
+    <div class="skeleton-line" style="width:90%;height:14px;margin:0"></div>
+    <div class="skeleton-line" style="width:30%;height:14px;margin:0"></div>
+    <div class="btns">
+      <div class="skeleton-btn" style="width:110px;margin:0"></div>
+      <div class="skeleton-btn" style="width:90px;margin:0"></div>
+    </div>
+  </article>`;
+  return Array.from({ length: 3 }).map(() => item).join('');
 }
 
 function renderFallbackMap() {
