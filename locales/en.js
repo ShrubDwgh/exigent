@@ -263,4 +263,8 @@ export default {
   nfc_write_hint: 'Make sure the card stays steady behind your phone, then try again.',
   nfc_unsupported: 'This browser does not support direct NFC writing (requires Chrome on Android). Copy the URL above and write it using an app like NFC Tools.',
   nfc_https: 'This feature only works over a secure connection (HTTPS).',
+  greet_morning: 'Hi, Good Morning',
+  greet_afternoon: 'Hi, Good Afternoon',
+  greet_evening: 'Hi, Good Evening',
+  greet_night: 'Hi, Good Night',
 };

@@ -248,4 +248,8 @@ export default {
   nfc_write_hint: 'Pastikan kartu menempel stabil di belakang HP, lalu coba lagi.',
   nfc_unsupported: 'Browser ini tidak mendukung tulis NFC langsung (perlu Chrome di Android). Salin URL di atas, lalu tulis lewat aplikasi seperti NFC Tools.',
   nfc_https: 'Fitur ini hanya berjalan lewat koneksi aman (HTTPS).',
+  greet_morning: 'Hai, Selamat Pagi',
+  greet_afternoon: 'Hai, Selamat Siang',
+  greet_evening: 'Hai, Selamat Sore',
+  greet_night: 'Hai, Selamat Malam',
 };

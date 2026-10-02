@@ -251,4 +251,8 @@ export default {
   nfc_write_hint: 'カードをスマホの背面に安定させてから、もう一度お試しください。',
   nfc_unsupported: 'このブラウザは直接NFC書き込みに対応していません（AndroidのChromeが必要）。上のURLをコピーして、NFC Toolsなどのアプリで書き込んでください。',
   nfc_https: 'この機能は安全な接続（HTTPS）でのみ動作します。',
+  greet_morning: 'おはようございます',
+  greet_afternoon: 'こんにちは',
+  greet_evening: 'こんばんは',
+  greet_night: 'こんばんは',
 };
