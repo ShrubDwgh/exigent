@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test Mic</title>
+  <style>
+    body { font: 16px system-ui; padding: 40px 20px; text-align: center; background: #0F172A; color: #F1F5F9; }
+    button { padding: 20px 40px; font-size: 20px; background: #2563EB; color: #fff; border: none; border-radius: 12px; cursor: pointer; }
+    #log { margin-top: 24px; padding: 16px; background: #1E293B; border-radius: 12px; text-align: left; white-space: pre-wrap; font-family: monospace; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Test Mikrofon</h1>
+  <button id="btn" type="button">Tap untuk Test</button>
+  <div id="log">Belum ditest...</div>
+  <script>
+    document.getElementById('btn').addEventListener('click', async () => {
+      const log = document.getElementById('log');
+      log.textContent = 'Memanggil getUserMedia...';
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+        log.textContent = 'BERHASIL!\n\nPrompt muncul dan diizinkan.\nAudio track aktif: ' + s.getAudioTracks().length;
+        s.getTracks().forEach(t => t.stop());
+      } catch (e) {
+        log.textContent = 'GAGAL\n\nname: ' + e.name + '\nmessage: ' + e.message;
+      }
+    });
+  </script>
+</body>
+</html>
