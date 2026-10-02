@@ -1,7 +1,7 @@
 export default {
   nav_dashboard: 'ダッシュボード', nav_medical: '医療', nav_account: 'アカウント',
   dash_title: 'ダッシュボード', card_status: 'カードの状態', active: '有効', inactive: '無効',
-  card_id: 'カードID', card_url: 'カードURL', copy_url: 'URLをコピー', view_card: 'カードを見る',
+  card_id: 'カードID', card_url: 'カードURL', copy_url: 'URLをコピー', view_card: 'プレビュー',
   qr_title: 'QRコード', download_qr: 'QRをダウンロード',
   nfc_title: 'NFCカードに書き込む', nfc_desc: 'スマホを空のNFCカードに触れさせて、このボタンを押してください。',
   write_nfc: 'NFCに書き込む', nfc_registered: 'このカードはNFCに登録済みです。',
