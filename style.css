@@ -118,9 +118,8 @@ textarea.input { resize:vertical; }
 .site-head { display:flex; justify-content:space-between; align-items:center; max-width:960px; margin:0 auto; padding:12px 16px; }
 .site-head .brand { margin:0; color:var(--text); text-decoration:none; }
 
-/* Hero — 2 card bertumpuk */
+/* Hero */
 .hero { padding-top:24px; position:relative; }
-
 .hero-front {
   position: relative;
   z-index: 2;
@@ -136,7 +135,6 @@ textarea.input { resize:vertical; }
 }
 .hero-front h1 { font-size:clamp(1.35rem, 5vw, 1.75rem); margin-bottom:6px; line-height:1.2; }
 .hero-front .lead { margin:0; font-size:.9375rem; font-weight:600; color:var(--text); line-height:1.4; }
-
 .hero-back {
   position: relative;
   z-index: 1;
@@ -224,15 +222,15 @@ textarea.input { resize:vertical; }
 
 /* Skeleton */
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 .skeleton-card { padding:14px 0; border-top:1px solid var(--border); }
 .skeleton-card:first-child { border-top:0; }
 .skeleton-line, .skeleton-btn {
-  background: linear-gradient(90deg, var(--border) 0%, #eef0f2 50%, var(--border) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--border) 25%, #eef0f2 37%, var(--border) 63%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
   border-radius:6px;
 }
 .skeleton-line { height:14px; margin-bottom:8px; }
@@ -240,7 +238,7 @@ textarea.input { resize:vertical; }
 .skeleton-btn { height:36px; width:110px; border-radius:10px; margin-top:8px; }
 .modal-box.tall { max-height:85vh; overflow-y:auto; }
 
-/* Top bar solid */
+/* Top bar */
 .topbar { position:fixed; top:0; left:0; right:0; z-index:var(--z-nav); display:flex; align-items:center; gap:8px;
   background:var(--surface); border-bottom:1px solid var(--border); font-weight:700;
   padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 14px; }
@@ -762,12 +760,12 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   color: #4ADE80 !important;
 }
 
-/* ===== SKELETON (dark) ===== */
+/* ===== SKELETON (dark) — sama ritme dengan light ===== */
 [data-theme="dark"] .skeleton-line,
 [data-theme="dark"] .skeleton-btn {
-  background: linear-gradient(90deg, #1E293B 0%, #2D3A52 50%, #1E293B 100%) !important;
-  background-size: 200% 100% !important;
-  animation: shimmer 1.6s ease-in-out infinite !important;
+  background: linear-gradient(90deg, #2D3A52 25%, #3B4A63 37%, #2D3A52 63%) !important;
+  background-size: 400px 100% !important;
+  animation: shimmer 1.4s ease-in-out infinite !important;
 }
 [data-theme="dark"] .skeleton-card { background: var(--surface); }
 
@@ -779,9 +777,9 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 [data-theme="dark"] [style*="background: #e2e8f0"],
 [data-theme="dark"] [style*="background:#f3f4f6"],
 [data-theme="dark"] [style*="background: #f3f4f6"] {
-  background: linear-gradient(90deg, #1E293B 0%, #2D3A52 50%, #1E293B 100%) !important;
-  background-size: 200% 100% !important;
-  animation: shimmer 1.6s ease-in-out infinite !important;
+  background: linear-gradient(90deg, #2D3A52 25%, #3B4A63 37%, #2D3A52 63%) !important;
+  background-size: 400px 100% !important;
+  animation: shimmer 1.4s ease-in-out infinite !important;
 }
 
 /* ===== DASHBOARD ===== */
