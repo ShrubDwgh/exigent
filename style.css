@@ -242,6 +242,16 @@ body.card-page { padding-top:calc(60px + env(safe-area-inset-top, 0px)); }
 body { -webkit-user-select:none; user-select:none; }
 .big, .url, input, textarea, select, [contenteditable] { -webkit-user-select:text; user-select:text; }
 
+/* Matikan context menu / long-press menu di link, button, dan menu row */
+a, button, .mrow, .trow, .opt, .nav-btn, .icon-btn, .fab, .chip, .greet-card, .greet-avatar {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+a img { pointer-events: none; -webkit-user-drag: none; }
+
 .err-line { display:block; color:var(--red); font-weight:600; margin-bottom:2px; }
 
 /* Foto profil pada kartu darurat & form edit */
