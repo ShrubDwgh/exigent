@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script>
+  (function(){
+    try {
+      var t = localStorage.getItem('exigent_theme');
+      if (t !== 'dark' && t !== 'light') {
+        t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch(e){}
+  })();
+  </script>
+  <meta name="theme-color" content="#DC2626">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="/icons/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Exigent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <title>Bantuan & Masukan · Emergency Card</title>
+  <style>
+    .fb-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+    .fb-tab {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      min-height:52px; padding:0 12px;
+      border:1.5px solid var(--border); border-radius:14px;
+      background:var(--surface); color:var(--text);
+      font:600 .9375rem var(--font); cursor:pointer;
+      transition:border-color .15s, background .15s;
+    }
+    .fb-tab[aria-pressed="true"] { border-color:var(--blue); background:#EFF6FF; color:var(--blue); }
+    [data-theme="dark"] .fb-tab[aria-pressed="true"] { background:#1E3A5F; color:#BFDBFE; }
+    .fb-tab .lucide { width:20px; height:20px; }
+
+    .shot-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .shot-thumb { position:relative; width:80px; height:80px; flex:none; }
+    .shot-thumb img { width:100%; height:100%; object-fit:cover; border-radius:10px; border:1px solid var(--border); }
+    .shot-x {
+      position:absolute; top:-6px; right:-6px;
+      width:22px; height:22px; border-radius:50%;
+      background:var(--red); color:#fff; border:2px solid var(--surface);
+      cursor:pointer; font-size:14px; line-height:1; padding:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+
+    .voice-box {
+      display:flex; align-items:center; gap:10px;
+      padding:12px 14px; background:var(--bg);
+      border:1px solid var(--border); border-radius:12px;
+    }
+    .voice-box button { flex:none; }
+    .voice-box audio { flex:1; min-width:0; height:36px; }
+    .rec-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--red); margin-left:6px; animation:pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  </style>
+</head>
+<body class="dash acct">
+  <header class="appbar">
+    <div class="appbar-in">
+      <div class="appbar-lead">
+        <button type="button" class="icon-btn" id="back" aria-label="Kembali"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+        <h1 class="appbar-title sub">Bantuan & Masukan</h1>
+      </div>
+    </div>
+  </header>
+
+  <aside class="side">
+    <div class="brand"><i data-lucide="heart-pulse" aria-hidden="true"></i>Emergency Card</div>
+    <nav aria-label="Menu utama">
+      <a class="nav-btn" href="/dashboard.html"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span data-nav-label="dashboard">Dashboard</span></a>
+      <a class="nav-btn" href="/medical-search.html"><i data-lucide="map-pin" aria-hidden="true"></i><span data-nav-label="medical">Medis</span></a>
+      <a class="nav-btn" href="/account.html"><i data-lucide="user" aria-hidden="true"></i><span data-nav-label="account">Akun</span></a>
+    </nav>
+  </aside>
+
+  <main class="main" id="fb-main">
+    <h1>Bantuan & Masukan</h1>
+    <p class="muted" style="margin-bottom:20px">Sampaikan ide atau laporkan masalah. Kami baca semuanya 🙏</p>
+
+    <div class="fb-tabs" role="group" aria-label="Jenis masukan">
+      <button type="button" class="fb-tab" id="tab-idea" data-type="idea" aria-pressed="true">
+        <i data-lucide="lightbulb" aria-hidden="true"></i>Ide & Saran
+      </button>
+      <button type="button" class="fb-tab" id="tab-bug" data-type="bug" aria-pressed="false">
+        <i data-lucide="bug" aria-hidden="true"></i>Lapor Masalah
+      </button>
+    </div>
+
+    <form id="fb-form" class="card stack-lg">
+      <div class="field">
+        <label for="f-message">Pesan <span style="color:var(--red)">*</span></label>
+        <textarea class="input" id="f-message" rows="5" required
+          placeholder="Ceritakan ide atau masalah yang kamu temui..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Screenshot (opsional, maks 5)</label>
+        <div class="shot-grid" id="shot-list"></div>
+        <input type="file" id="f-shots" accept="image/*" multiple hidden>
+        <label for="f-shots" class="btn btn-outline btn-sm" style="margin-top:8px;display:inline-flex">
+          <i data-lucide="image-plus" aria-hidden="true"></i>Tambah screenshot
+        </label>
+      </div>
+
+      <div class="field">
+        <label>Pesan suara (opsional)</label>
+        <button type="button" class="btn btn-outline btn-block" id="voice-record">
+          <i data-lucide="mic" aria-hidden="true"></i><span>Mulai merekam</span>
+        </button>
+        <div class="voice-box" id="voice-preview" hidden>
+          <audio id="voice-audio" controls preload="metadata"></audio>
+          <button type="button" class="icon-btn" id="voice-delete" aria-label="Hapus rekaman">
+            <i data-lucide="trash-2" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-block">
+        <i data-lucide="send" aria-hidden="true"></i><span>Kirim Masukan</span>
+      </button>
+    </form>
+
+    <p class="muted small" style="margin-top:16px;text-align:center">
+      Kami biasanya membalas dalam 1×24 jam. Terima kasih sudah membantu!
+    </p>
+  </main>
+
+  <script type="module" src="/feedback.js"></script>
+</body>
+  </html>
