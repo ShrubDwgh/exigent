@@ -60,7 +60,7 @@ const BLOOD = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const CATS = ['keluarga', 'pasangan', 'teman', 'dokter', 'lainnya'];
 const fail = (e) => toast('Gagal: ' + e.message);
 const sub = (e) => e.submitter || e.target.querySelector('button[type="submit"]');
-let card = null, profile = null, contacts = [], medisModal = null;
+let card = null, profile = null, contacts = [];
 const lang = getLang();
 const t = (k) => (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || k;
 
@@ -87,7 +87,8 @@ async function load() {
   }
   applyNavLabels(t);
   renderDashboard();
-  if (medisModal) renderMedisModal(medisModal.querySelector('.modal-box'));
+  // Kalau user buka #edit-medis lewat URL / refresh, langsung tampilkan form edit
+  if (location.hash === '#edit-medis' && card && profile && !medisEditOpen) showMedisEdit();
   window.lucide && window.lucide.createIcons();
 }
 
@@ -149,8 +150,9 @@ function renderDashboard() {
   drawQR(url);
 }
 
-/* ---------- Modal: Edit Data Medis ---------- */
+/* ---------- Halaman: Edit Data Medis (SPA, bukan modal) ---------- */
 let pendingPhoto;
+let medisEditOpen = false;
 
 function photoFieldHtml(p) {
   pendingPhoto = p.photo_data_url || null;
@@ -182,8 +184,7 @@ function compressPhoto(file, maxSize = 320, quality = 0.8) {
 
 function medisFormHtml() {
   const p = profile;
-  return `<h2>Edit Data Medis</h2>
-    <form id="pform">
+  return `<form id="pform">
       ${photoFieldHtml(p)}
       <div class="field"><label for="f-name">Nama lengkap</label><input class="input" id="f-name" value="${esc(p.full_name)}" required></div>
       <div class="field"><label for="f-blood">Golongan darah</label><select class="input" id="f-blood"><option value="">Belum diisi</option>${opts(BLOOD, p.blood_type)}</select></div>
@@ -194,7 +195,7 @@ function medisFormHtml() {
       <div class="field"><label for="f-conditions">Kondisi medis (pisahkan dengan koma)</label><input class="input" id="f-conditions" value="${esc(p.conditions.join(', '))}"></div>
       <div class="field"><label for="f-notes">Catatan emergency</label><textarea class="input" id="f-notes" rows="3">${esc(p.emergency_notes)}</textarea></div>
       <label class="check"><input type="checkbox" id="f-organ"${p.organ_donor ? ' checked' : ''}> Bersedia menjadi donor organ</label>
-      <div class="btns"><button type="button" class="btn btn-outline" id="medis-cancel">Tutup</button><button class="btn btn-success" type="submit">Simpan</button></div>
+      <div class="btns"><button type="button" class="btn btn-outline" id="medis-cancel"><i data-lucide="chevron-left" aria-hidden="true"></i>Kembali</button><button class="btn btn-success" type="submit">Simpan</button></div>
     </form>
     <h2 class="gap">Kontak darurat</h2>
     ${contacts.length ? `<div class="card">${contacts.map((c) => `<div class="crow"><div><strong>${esc(c.name)}</strong> <span class="badge">${esc(c.category)}</span><div class="muted">${esc(c.phone)}</div></div><button class="btn btn-danger btn-sm" data-del="${c.id}" aria-label="Hapus ${esc(c.name)}">Hapus</button></div>`).join('')}</div>` : '<p class="muted">Belum ada kontak.</p>'}
@@ -223,6 +224,7 @@ function bindMedisForm(box) {
       }).eq('card_uuid', card.id);
       if (error) return fail(error);
       await load(); toast('Perubahan disimpan');
+      closeMedisModal(true);
     });
   };
   box.querySelector('#cform').onsubmit = (e) => {
@@ -234,14 +236,16 @@ function bindMedisForm(box) {
       });
       if (error) return fail(error);
       await load(); toast('Kontak ditambahkan');
+      closeMedisModal(true);
     });
   };
   box.querySelectorAll('[data-del]').forEach((b) => (b.onclick = () => busy(b, async () => {
     const { error } = await supabase.from('emergency_contacts').delete().eq('id', b.dataset.del);
     if (error) return fail(error);
     await load(); toast('Kontak dihapus');
+    closeMedisModal(true);
   })));
-  box.querySelector('#medis-cancel').onclick = closeMedisModal;
+  box.querySelector('#medis-cancel').onclick = () => closeMedisModal(true);
   box.querySelector('#f-photo').onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     try {
@@ -255,32 +259,62 @@ function bindMedisForm(box) {
   };
 }
 
-function renderMedisModal(box) {
-  box.innerHTML = medisFormHtml();
+function renderMedisEdit() {
+  const box = $('view-medis-edit');
+  box.innerHTML = `<h1>Edit Data Medis</h1>${medisFormHtml()}`;
   bindMedisForm(box);
   window.lucide && window.lucide.createIcons();
 }
 
+function showMedisEdit() {
+  if (!card || !profile) return;
+  renderMedisEdit();
+  $('tab-dashboard').hidden = true;
+  $('fab-edit').hidden = true;
+  $('view-medis-edit').hidden = false;
+  medisEditOpen = true;
+  window.scrollTo(0, 0);
+}
+
+function hideMedisEdit() {
+  medisEditOpen = false;
+  const v = $('view-medis-edit');
+  v.hidden = true;
+  v.innerHTML = '';
+  $('tab-dashboard').hidden = false;
+  $('fab-edit').hidden = false;
+}
+
 function openMedisModal() {
-  if (medisModal || !card || !profile) return;
+  if (medisEditOpen || !card || !profile) return;
   if (!canEdit(card)) { openUpgradeModal(); return; }
-  const wrap = document.createElement('div'); wrap.className = 'modal';
-  wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true');
-  const box = document.createElement('div'); box.className = 'modal-box tall';
-  wrap.append(box); document.body.append(wrap);
-  medisModal = wrap;
-  renderMedisModal(box);
-  const onKey = (e) => { if (e.key === 'Escape') closeMedisModal(); };
-  document.addEventListener('keydown', onKey);
-  wrap._onKey = onKey;
-  wrap.addEventListener('click', (e) => { if (e.target === wrap) closeMedisModal(); });
+  showMedisEdit();
+  location.hash = 'edit-medis';   // push history entry → back HP bekerja
 }
-function closeMedisModal() {
-  if (!medisModal) return;
-  document.removeEventListener('keydown', medisModal._onKey);
-  medisModal.remove();
-  medisModal = null;
+
+function closeMedisModal(userInitiated) {
+  if (!medisEditOpen) return;
+  if (userInitiated && location.hash === '#edit-medis') {
+    // Trigger browser back → hashchange akan tutup view
+    history.back();
+    // Fallback: kalau tidak ada history entry (mis. dibuka via URL langsung)
+    setTimeout(() => {
+      if (location.hash === '#edit-medis' && medisEditOpen) {
+        history.replaceState(null, '', location.pathname + location.search);
+        hideMedisEdit();
+      }
+    }, 250);
+    return;
+  }
+  hideMedisEdit();
 }
+
+// Sync dengan tombol back / forward HP + browser
+window.addEventListener('hashchange', () => {
+  const shouldBeOpen = location.hash === '#edit-medis';
+  if (shouldBeOpen && !medisEditOpen) showMedisEdit();
+  else if (!shouldBeOpen && medisEditOpen) hideMedisEdit();
+});
 
 // Modal upgrade — muncul saat trial habis
 function openUpgradeModal() {
