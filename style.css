@@ -117,10 +117,57 @@ textarea.input { resize:vertical; }
 /* Landing & medical search */
 .site-head { display:flex; justify-content:space-between; align-items:center; max-width:960px; margin:0 auto; padding:12px 16px; }
 .site-head .brand { margin:0; color:var(--text); text-decoration:none; }
-.hero { padding-top:32px; }
-.hero h1 { font-size:clamp(2rem, 7vw, 2.75rem); }
-.lead { margin:8px 0 12px; font-size:1.25rem; font-weight:600; }
+
+/* Hero */
+.hero { padding-top:24px; }
+.hero h1 { font-size:clamp(1.75rem, 6vw, 2.25rem); }
+.lead { margin:8px 0 12px; font-size:1.125rem; font-weight:600; }
 .hero .btns { margin-top:20px; }
+
+/* Hero card mengkilap */
+.hero-card {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 55%, #eef2f7 100%);
+  border: 1px solid rgba(226,232,240,0.9);
+  border-radius: 24px;
+  padding: 28px 22px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.95) inset,
+    0 -1px 0 rgba(15,23,42,0.03) inset,
+    0 22px 44px -22px rgba(15,23,42,0.18),
+    0 8px 20px -10px rgba(15,23,42,0.08);
+}
+
+/* Kilap atas (glossy highlight) */
+.hero-card::before {
+  content: "";
+  position: absolute;
+  inset: -40% -20% auto -20%;
+  height: 70%;
+  background:
+    radial-gradient(60% 100% at 30% 0%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+  z-index: -1;
+  transform: rotate(-4deg);
+}
+
+/* Border mengkilap subtle */
+.hero-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0) 40%, rgba(226,232,240,0.6));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
 #cara-kerja { padding-top:24px; }
 .flow { list-style:none; margin:16px 0; padding:0; display:grid; gap:8px; }
 .step { display:flex; align-items:center; gap:14px; padding:16px; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); }
