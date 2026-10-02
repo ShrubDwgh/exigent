@@ -20,18 +20,18 @@ a { color:var(--blue); }
 
 /* Buttons */
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 20px;
-  border:1px solid transparent; border-radius:12px; background:var(--red); color:#fff; font:600 1rem var(--font);
+  border:1px solid transparent; border-radius:12px; background:var(--red); color:#fff !important; font:600 1rem var(--font);
   text-decoration:none; cursor:pointer; transition:background var(--t), transform var(--t); }
 .btn:hover { background:var(--red-dark); }
 .btn:active { transform:scale(.98); }
 .btn-secondary { background:var(--blue); } .btn-secondary:hover { background:#1D4ED8; }
 .btn-success { background:var(--green); } .btn-success:hover { background:#15803D; }
 .btn-danger { background:var(--red-dark); } .btn-danger:hover { background:#991B1B; }
-.btn-outline { background:transparent; color:var(--text); border-color:#CBD5E1; } .btn-outline:hover { background:#F1F5F9; }
+.btn-outline { background:transparent; color:var(--text) !important; border-color:#CBD5E1; } .btn-outline:hover { background:#F1F5F9; }
 .btn-sm { min-height:44px; padding:0 14px; font-size:.9375rem; }
 .btn-block { display:flex; width:100%; }
 .btn:disabled, .btn[aria-disabled="true"] { opacity:.5; cursor:not-allowed; pointer-events:none; }
-.btn.loading { color:transparent; pointer-events:none; position:relative; }
+.btn.loading { color:transparent !important; pointer-events:none; position:relative; }
 .btn.loading::after { content:""; position:absolute; width:22px; height:22px; border:0; border-radius:0; animation:spin-cloud .9s linear infinite; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z'/%3E%3C/svg%3E") center / contain no-repeat; }
 .btn-outline.loading::after { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F172A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z'/%3E%3C/svg%3E"); }
 @keyframes spin-cloud { to { transform:rotate(360deg); } }
@@ -760,42 +760,50 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   color: #4ADE80 !important;
 }
 
-/* ===== PERBAIKAN TOMBOL (DARK MODE) ===== */
+/* ===== PERBAIKAN TOTAL: TOMBOL & SKELETON (DARK MODE) ===== */
+
+/* 1. PAKSA SEMUA TEKS TOMBOL JADI PUTIH */
+[data-theme="dark"] .btn,
+[data-theme="dark"] .btn * {
+  color: #FFFFFF !important;
+}
+
+/* 2. TOMBOL BACKGROUND (Merah & Biru) */
 [data-theme="dark"] .btn {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); /* Bayangan biar tombol 'terangkat' & nyatu */
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); /* Bayangan biar terangkat */
   border: 1px solid rgba(255, 255, 255, 0.08); /* Border tipis biar tegas */
 }
 [data-theme="dark"] .btn:hover {
-  filter: brightness(1.15); /* Sedikit lebih terang saat di-hover */
+  filter: brightness(1.15); /* Efek hover lebih terang */
 }
 [data-theme="dark"] .btn-secondary {
   background: var(--blue);
 }
 [data-theme="dark"] .btn-secondary:hover {
-  background: #2563EB; /* Biru lebih pekat */
+  background: #2563EB;
 }
 
-/* Paksa warna tombol jika di HTML pakai hardcode #DC2626 / #2563EB */
+/* Timpa jika tombol pakai hardcode warna di HTML */
 [data-theme="dark"] [style*="background:#DC2626"],
 [data-theme="dark"] [style*="background: #DC2626"],
 [data-theme="dark"] [style*="background:#dc2626"],
 [data-theme="dark"] [style*="background: #dc2626"] {
-  background: #EF4444 !important; /* Merah yang pas di mata gelap */
+  background: #EF4444 !important;
   color: #FFFFFF !important;
 }
 [data-theme="dark"] [style*="background:#2563EB"],
 [data-theme="dark"] [style*="background: #2563EB"],
 [data-theme="dark"] [style*="background:#2563eb"],
 [data-theme="dark"] [style*="background: #2563eb"] {
-  background: #3B82F6 !important; /* Biru yang pas di mata gelap */
+  background: #3B82F6 !important;
   color: #FFFFFF !important;
 }
 
-/* ===== SKELETON (DARK) ===== */
+/* 3. SKELETON (DARK) - Dibuat jauh lebih terang biar ga nyatu */
 [data-theme="dark"] .skeleton-line,
 [data-theme="dark"] .skeleton-btn {
-  /* Warna highlight diganti #64748B agar kontras & ga nyatu */
-  background: linear-gradient(90deg, #334155 25%, #64748B 37%, #334155 63%) !important;
+  /* Base: #475569 (Abu-abu kebiruan) | Highlight: #94A3B8 (Abu-abu terang) */
+  background: linear-gradient(90deg, #475569 25%, #94A3B8 37%, #475569 63%) !important;
   background-size: 400px 100% !important;
   animation: shimmer 1.4s ease-in-out infinite !important;
 }
@@ -809,50 +817,7 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 [data-theme="dark"] [style*="background: #e2e8f0"],
 [data-theme="dark"] [style*="background:#f3f4f6"],
 [data-theme="dark"] [style*="background: #f3f4f6"] {
-  background: linear-gradient(90deg, #334155 25%, #64748B 37%, #334155 63%) !important;
+  background: linear-gradient(90deg, #475569 25%, #94A3B8 37%, #475569 63%) !important;
   background-size: 400px 100% !important;
   animation: shimmer 1.4s ease-in-out infinite !important;
 }
-
-/* ===== DASHBOARD ===== */
-[data-theme="dark"] #tab-dashboard > h1 { color: #F1F5F9; }
-[data-theme="dark"] #tab-dashboard .label { color: #94A3B8; }
-[data-theme="dark"] #tab-dashboard .big { color: #F1F5F9; }
-[data-theme="dark"] #tab-dashboard .url { color: #CBD5E1; }
-[data-theme="dark"] #tab-dashboard h2 { color: #F1F5F9; }
-[data-theme="dark"] #tab-dashboard .muted { color: #94A3B8; }
-[data-theme="dark"] #tab-dashboard .btn-outline { color: #F1F5F9; border-color: #475569; }
-[data-theme="dark"] #tab-dashboard .btn-outline:hover { background: #334155; }
-[data-theme="dark"] #copy.btn-secondary { background: var(--blue); color: #fff; }
-
-[data-theme="dark"] #trial-row[style*="FEF2F2"] {
-  background: #450A0A !important;
-  border-color: #7F1D1D !important;
-  color: #FCA5A5 !important;
-}
-[data-theme="dark"] #trial-row[style*="EFF6FF"] {
-  background: #1E3A5F !important;
-  border-color: #1E40AF !important;
-  color: #BFDBFE !important;
-}
-[data-theme="dark"] #trial-count { color: #60A5FA; }
-[data-theme="dark"] #trial-row[style*="FEF2F2"] #trial-count { color: inherit; }
-
-[data-theme="dark"] #bell-dot { border-color: #162032; }
-[data-theme="dark"] #qr { background: #F8FAFC; border-color: var(--border); }
-[data-theme="dark"] .topbar button[onclick*="shop.html"] {
-  background: #1E293B !important;
-  border-color: #334155 !important;
-  color: #F1F5F9 !important;
-}
-[data-theme="dark"] .topbar button[onclick*="shop.html"]:hover {
-  background: #334155 !important;
-}
-[data-theme="dark"] .fab {
-  background: var(--blue);
-  box-shadow: 0 8px 20px rgba(59,130,246,.5);
-}
-[data-theme="dark"] .modal-box p.muted { color: #94A3B8; }
-[data-theme="dark"] .chip-ic { background: #334155; color: #F1F5F9; }
-[data-theme="dark"] .chip-ic.wa { background: #14532D; color: #86EFAC; }
-[data-theme="dark"] .chip-ic.tg { background: #1E3A8A; color: #BFDBFE; }
