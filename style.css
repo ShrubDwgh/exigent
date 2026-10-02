@@ -750,3 +750,140 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   font-size: 13px;
   margin: 0;
 }
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0B1220;
+  --surface: #1E293B;
+  --text: #F1F5F9;
+  --muted: #94A3B8;
+  --border: #334155;
+  --ice-blue: #1E3A5F;
+  --shadow: 0 4px 20px rgba(0,0,0,.4);
+  --red: #EF4444;
+  --red-dark: #DC2626;
+  --blue: #3B82F6;
+  --green: #22C55E;
+}
+
+/* Badges */
+[data-theme="dark"] .badge-active { background: #14532D; color: #86EFAC; }
+[data-theme="dark"] .badge-inactive { background: #334155; color: #CBD5E1; }
+[data-theme="dark"] .badge-emergency { background: #7F1D1D; color: #FCA5A5; }
+[data-theme="dark"] .badge-medical { background: #1E3A8A; color: #BFDBFE; }
+
+/* Emergency card */
+[data-theme="dark"] .blood { background: #7F1D1D; border-color: #991B1B; }
+[data-theme="dark"] .blood span { color: #FCA5A5; }
+[data-theme="dark"] .blood strong { color: #FCA5A5; }
+[data-theme="dark"] .tag-allergy { background: #7F1D1D; color: #FCA5A5; }
+[data-theme="dark"] .tag-cond { background: #1E3A8A; color: #BFDBFE; }
+[data-theme="dark"] .notes { background: #0F172A; }
+[data-theme="dark"] .blood-badge { background: #7F1D1D; color: #FCA5A5; }
+
+/* Sapaan */
+[data-theme="dark"] .greet-card {
+  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+}
+[data-theme="dark"] .greet-avatar {
+  box-shadow: 0 0 0 3px #1E293B, 0 0 0 4px #334155;
+}
+
+/* Hero (landing) */
+[data-theme="dark"] .hero-front {
+  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+  border-color: #334155;
+}
+[data-theme="dark"] .hero-back {
+  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+  border-color: #334155;
+}
+[data-theme="dark"] .hero-back .muted { color: #94A3B8; }
+
+/* Form & Modal */
+[data-theme="dark"] .input {
+  background: #0F172A;
+  color: #F1F5F9;
+  border-color: #334155;
+}
+[data-theme="dark"] .modal-box {
+  background: #1E293B;
+  color: #F1F5F9;
+}
+[data-theme="dark"] .modal-box h2 { color: #FCA5A5; }
+[data-theme="dark"] .sheet {
+  background: #1E293B;
+  color: #F1F5F9;
+}
+[data-theme="dark"] .opt {
+  background: #1E293B;
+  color: #F1F5F9;
+  border-color: #334155;
+}
+[data-theme="dark"] .opt[aria-checked="true"] {
+  background: #1E3A5F;
+  border-color: #3B82F6;
+}
+
+/* Menu list */
+[data-theme="dark"] .mrow-ic { background: #1E3A5F; color: #60A5FA; }
+[data-theme="dark"] .mrow.danger .mrow-ic { background: #7F1D1D; color: #FCA5A5; }
+[data-theme="dark"] .menu { background: var(--surface); }
+
+/* Empty state, About, FAQ */
+[data-theme="dark"] .empty-ic { background: #1E3A5F; color: #60A5FA; }
+[data-theme="dark"] .about-logo { background: #7F1D1D; color: #FCA5A5; }
+[data-theme="dark"] .steps li::before { background: #1E3A5F; color: #60A5FA; }
+
+/* Messages */
+[data-theme="dark"] .msg { background: #7F1D1D; color: #FCA5A5; }
+[data-theme="dark"] .msg.ok { background: #14532D; color: #86EFAC; }
+
+/* FAQ */
+[data-theme="dark"] .faq-item .muted { color: #94A3B8; }
+
+/* Paket Upgrade */
+[data-theme="dark"] .pkg-light {
+  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+  border-color: #334155;
+}
+[data-theme="dark"] .pkg-light .pkg-name { color: #F1F5F9; }
+[data-theme="dark"] .pkg-light .pkg-desc { color: #94A3B8; }
+[data-theme="dark"] .pkg-light .pkg-price { color: #F87171; }
+[data-theme="dark"] .pkg-light .pkg-card-icon { color: #F87171; }
+[data-theme="dark"] .pkg-light .pkg-save { color: #4ADE80; }
+[data-theme="dark"] .pkg-dot { background: #334155; }
+[data-theme="dark"] .pkg-dot.active { background: #EF4444; }
+
+/* Icon links */
+[data-theme="dark"] .icon-link:hover { background: #334155; }
+
+/* Skeleton */
+[data-theme="dark"] .skeleton-line,
+[data-theme="dark"] .skeleton-btn {
+  background: linear-gradient(90deg, #334155 25%, #475569 37%, #334155 63%);
+  background-size: 400px 100%;
+}
+
+/* QR code — tetap putih biar bisa discan */
+[data-theme="dark"] .qr { background: #fff; }
+
+/* Toast */
+[data-theme="dark"] .toast { background: #F1F5F9; color: #0F172A; }
+
+/* Btn outline di dark mode */
+[data-theme="dark"] .btn-outline { color: #F1F5F9; border-color: #475569; }
+[data-theme="dark"] .btn-outline:hover { background: #334155; }
+
+/* Chip (medical search) */
+[data-theme="dark"] .chip { border-color: #475569; }
+[data-theme="dark"] .chip:hover { background: #334155; }
+
+/* Scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar { width: 8px; height: 8px; }
+[data-theme="dark"] ::-webkit-scrollbar-track { background: #0B1220; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #475569; }
