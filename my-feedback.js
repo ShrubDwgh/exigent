@@ -88,7 +88,6 @@ async function load() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
-  $('fb-skeleton').hidden = true;
   const list = $('fb-list');
 
   if (error) {
