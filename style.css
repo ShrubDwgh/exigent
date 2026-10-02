@@ -505,6 +505,16 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 .chip-ic.tg { background:#DBEAFE; color:#1E40AF; }
 
 /* ============================================
+   FAQ (halaman upgrade)
+   ============================================ */
+.faq-item summary { list-style: none; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::-moz-list-bullet { list-style: none; }
+.faq-item[open] summary i[data-lucide="chevron-down"] {
+  transform: rotate(180deg);
+}
+
+/* ============================================
    Loader Awan (pengganti skeleton)
    ============================================ */
 .loader {
