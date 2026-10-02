@@ -113,8 +113,7 @@ async function search() {
   if (!pos) return;
   const id = ++seq;
   results.innerHTML = skeleton();
-  const spin = el('span', 'spin-sm');
-  status.replaceChildren(spin, document.createTextNode(t('med_searching', { cat: catLabel(), km: radius / 1000 })));
+  status.textContent = t('med_searching', { cat: catLabel(), km: radius / 1000 });
   const around = `(around:${radius},${pos.lat},${pos.lon})`;
   try {
     const els = await overpass(`[out:json][timeout:10];(${CATS[cat].q(around)});out center tags 60;`);
@@ -150,11 +149,9 @@ async function search() {
 function locate() {
   if (!window.isSecureContext) { status.textContent = t('med_err_insecure'); return; }
   if (!navigator.geolocation) { status.textContent = t('med_err_gps_unsupported'); return; }
-  btn.classList.add('loading');
   navigator.geolocation.getCurrentPosition(
-    (p) => { btn.classList.remove('loading'); pos = { lat: p.coords.latitude, lon: p.coords.longitude }; btn.lastChild.textContent = t('med_update_location'); radius = 5000; search(); },
+    (p) => { pos = { lat: p.coords.latitude, lon: p.coords.longitude }; btn.lastChild.textContent = t('med_update_location'); radius = 5000; search(); },
     (e) => {
-      btn.classList.remove('loading');
       status.textContent = e.code === 1 ? t('med_err_gps_denied')
         : e.code === 2 ? t('med_err_gps_unavailable')
         : e.code === 3 ? t('med_err_gps_timeout')
