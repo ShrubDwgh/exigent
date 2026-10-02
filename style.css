@@ -181,7 +181,18 @@ textarea.input { resize:vertical; }
 
 /* Modal konfirmasi darurat, QR, fieldset */
 .modal { position:fixed; inset:0; z-index:var(--z-modal); display:grid; place-items:center; padding:16px; background:rgba(15,23,42,.55); }
-.modal-box { width:100%; max-width:420px; padding:24px; background:#fff; border-radius:20px; box-shadow:0 12px 40px rgba(15,23,42,.25); }
+.modal-box {
+  width: 100%;
+  max-width: 340px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 22px 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 24px 60px -12px rgba(15,23,42,.4),
+    0 0 0 1px rgba(15,23,42,.06);
+}
 .modal-box h2 { color:var(--red-dark); }
 .modal-box p { margin:12px 0 20px; }
 .modal-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
