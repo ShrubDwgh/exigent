@@ -760,10 +760,10 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   color: #4ADE80 !important;
 }
 
-/* ===== SKELETON (dark) — sama ritme dengan light ===== */
+/* ===== SKELETON (dark) ===== */
 [data-theme="dark"] .skeleton-line,
 [data-theme="dark"] .skeleton-btn {
-  background: linear-gradient(90deg, #2D3A52 25%, #3B4A63 37%, #2D3A52 63%) !important;
+  background: linear-gradient(90deg, #334155 25%, #4B5C7C 37%, #334155 63%) !important;
   background-size: 400px 100% !important;
   animation: shimmer 1.4s ease-in-out infinite !important;
 }
@@ -777,7 +777,7 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 [data-theme="dark"] [style*="background: #e2e8f0"],
 [data-theme="dark"] [style*="background:#f3f4f6"],
 [data-theme="dark"] [style*="background: #f3f4f6"] {
-  background: linear-gradient(90deg, #2D3A52 25%, #3B4A63 37%, #2D3A52 63%) !important;
+  background: linear-gradient(90deg, #334155 25%, #4B5C7C 37%, #334155 63%) !important;
   background-size: 400px 100% !important;
   animation: shimmer 1.4s ease-in-out infinite !important;
 }
