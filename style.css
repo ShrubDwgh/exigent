@@ -517,20 +517,25 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 /* ===== Carousel Paket (upgrade) ===== */
 .pkg-carousel-wrap {
   position: relative;
+  width: 100%;
+  overflow: hidden;
 }
 .pkg-scroll {
   display: flex;
   gap: 12px;
   overflow-x: auto;
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 10px 0;
+  padding: 10px 4px;
 }
 .pkg-scroll::-webkit-scrollbar { display: none; }
 
 .pkg-slide {
-  flex: 0 0 100%;
+  flex: 0 0 calc(100% - 8px);
+  min-width: 0;
+  max-width: calc(100% - 8px);
   scroll-snap-align: center;
   display: flex;
 }
@@ -563,6 +568,7 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   gap: 12px;
   padding: 20px;
   width: 100%;
+  min-width: 0;
   position: relative;
 }
 
