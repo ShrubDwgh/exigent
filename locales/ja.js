@@ -286,4 +286,8 @@ upgrade_help_title: 'まだ迷っていますか？',
 upgrade_help_desc: '購入前にCSへお問い合わせください。',
 upgrade_help_btn: 'CSに連絡',
 upgrade_back: '戻る',
+
+  // Notifikasi
+notif_login_title: '新しいログインを検出',
+notif_login_body: 'ログイン元: {device}',
 };
