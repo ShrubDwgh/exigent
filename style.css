@@ -118,68 +118,41 @@ textarea.input { resize:vertical; }
 .site-head { display:flex; justify-content:space-between; align-items:center; max-width:960px; margin:0 auto; padding:12px 16px; }
 .site-head .brand { margin:0; color:var(--text); text-decoration:none; }
 
-/* Hero */
-.hero { padding-top:24px; }
-.hero h1 { font-size:clamp(1.75rem, 6vw, 2.25rem); }
-.lead { margin:8px 0 12px; font-size:1.125rem; font-weight:600; }
-.hero .btns { margin-top:20px; }
+/* Hero — 2 card bertumpuk */
+.hero { padding-top:24px; position:relative; }
 
-/* Hero card — putih lembut + timbul + kilap jelas */
-.hero-card {
+/* Card depan (kecil) — judul + lead — di DEPAN */
+.hero-front {
   position: relative;
-  background: linear-gradient(180deg, #fafbfc 0%, #eef1f6 100%);
+  z-index: 2;
+  margin: 0 16px -24px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid rgba(203,213,225,0.8);
-  border-radius: 24px;
-  padding: 28px 22px;
-  overflow: hidden;
+  border-radius: 18px;
+  padding: 18px 20px;
   box-shadow:
     inset 1px 1px 0 rgba(255,255,255,1),
-    inset -1px -1px 0 rgba(148,163,184,0.18),
-    inset 0 -10px 20px -10px rgba(148,163,184,0.18),
-    0 22px 44px -16px rgba(15,23,42,0.28),
-    0 8px 18px -8px rgba(15,23,42,0.14),
-    0 1px 0 rgba(255,255,255,0.95);
+    0 12px 24px -10px rgba(15,23,42,0.18),
+    0 4px 10px -4px rgba(15,23,42,0.08);
 }
+.hero-front h1 { font-size:clamp(1.35rem, 5vw, 1.75rem); margin-bottom:6px; line-height:1.2; }
+.hero-front .lead { margin:0; font-size:.9375rem; font-weight:600; color:var(--text); line-height:1.4; }
 
-.hero-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,1) 0%,
-      rgba(255,255,255,0.85) 8%,
-      rgba(255,255,255,0.35) 22%,
-      rgba(255,255,255,0) 40%
-    ),
-    radial-gradient(
-      ellipse 80% 55% at 50% -10%,
-      rgba(255,255,255,0.95) 0%,
-      rgba(255,255,255,0.4) 35%,
-      rgba(255,255,255,0) 70%
-    );
-}
-
-.hero-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(145deg, rgba(255,255,255,1), rgba(255,255,255,0) 45%, rgba(148,163,184,0.5));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events: none;
-}
-
-.hero-card > * {
+/* Card belakang (gede) — deskripsi + tombol — di BELAKANG */
+.hero-back {
   position: relative;
   z-index: 1;
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  border: 1px solid rgba(203,213,225,0.8);
+  border-radius: 22px;
+  padding: 44px 20px 22px;
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,0.9),
+    0 22px 40px -20px rgba(15,23,42,0.22),
+    0 8px 16px -8px rgba(15,23,42,0.1);
 }
+.hero-back .muted { margin:0 0 18px; color:#475569; }
+.hero-back .btns { margin-top:0; }
 
 #cara-kerja { padding-top:24px; }
 .flow { list-style:none; margin:16px 0; padding:0; display:grid; gap:8px; }
