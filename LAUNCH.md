@@ -17,11 +17,11 @@
 ## 2. Backend — Supabase
 
 - [ ] Row Level Security (RLS) aktif di **semua tabel**
-  - [ ] `cards`
-  - [ ] `emergency_profiles`
-  - [ ] `notifications`
-  - [ ] `user_devices`
-  - [ ] (tabel lain: ________)
+- [ ] `cards`
+- [ ] `emergency_profiles`
+- [ ] `notifications`
+- [ ]  - [ ] `user_devices`
+- [ ] (tabel lain: ________)
 - [ ] Policy RLS dites: user A tidak bisa baca data user B
 - [ ] Frontend hanya pakai `anon key` (bukan `service_role`)
 - [ ] Backup database otomatis aktif
