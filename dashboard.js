@@ -1,7 +1,7 @@
 import { supabase } from './supabase.js';
 import { requireSession, busy, toast } from './auth.js';
 import { STRINGS, getLang, applyNavLabels } from './i18n.js';
-import { getTrialStatus, canEdit, formatTimeLeft } from './trial.js';
+import { getTrialStatus, canEdit, formatTimeLeft, getTrialCountdown } from './trial.js';
 
 // ==========================================
 // LOG LOGIN GOOGLE
@@ -124,19 +124,21 @@ function renderDashboard() {
   const url = `${location.origin}/card/${card.card_id}`;
   const trialStatus = getTrialStatus(card);
   const isExpired = trialStatus.status === 'expired';
-  const bannerHtml = (trialStatus.status === 'trial' || isExpired)
-    ? `<div class="card stack-sm" style="background:${isExpired ? '#FEF2F2' : '#EFF6FF'};border-color:${isExpired ? '#FECACA' : '#BFDBFE'};margin-bottom:12px">
-        <strong style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="${isExpired ? 'lock' : 'clock'}" style="width:16px;height:16px" aria-hidden="true"></i> ${isExpired ? 'Trial habis' : 'Trial aktif'}</strong>
-        <p class="muted small" style="margin:4px 0 0">${isExpired
-          ? 'Beli kartu untuk lanjut edit data medis. Data kamu tetap aman.'
-          : formatTimeLeft(card) + ' — nikmati semua fitur gratis.'}</p>
+  const showTrial = trialStatus.status === 'trial' || isExpired;
+
+  const trialRow = showTrial
+    ? `<div id="trial-row" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;font-size:0.9375rem;${isExpired ? 'background:#FEF2F2;border:1px solid #FECACA;color:#991B1B' : 'background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF'}">
+        <i data-lucide="${isExpired ? 'lock' : 'clock'}" style="width:18px;height:18px;flex:none" aria-hidden="true"></i>
+        <span>${isExpired
+          ? '<strong>Trial habis.</strong> Beli kartu untuk lanjut edit data.'
+          : `<strong>Trial aktif.</strong> <span id="trial-count">${getTrialCountdown(card)}</span> tersisa.`}</span>
       </div>`
     : '';
 
   box.innerHTML = `<h1>${t('dash_title')}</h1>
-    ${bannerHtml}
     <div class="card stack-lg">
       <div class="row"><h2>${t('card_status')}</h2>${card.is_active ? `<span class="badge badge-active">${t('active')}</span>` : `<span class="badge badge-inactive">${t('inactive')}</span>`}</div>
+      ${trialRow}
       <div><p class="label">${t('card_id')}</p><p class="big">${esc(card.card_id)}</p></div>
       <div><p class="label">${t('card_url')}</p><p class="url">${esc(url)}</p></div>
       <div class="btns"><button class="btn btn-secondary" id="copy">${t('copy_url')}</button>
@@ -308,4 +310,11 @@ function openUpgradeModal() {
 }
 
 $('fab-edit').onclick = openMedisModal;
+
+// Auto-refresh countdown trial tiap 1 menit
+setInterval(() => {
+  const el = document.getElementById('trial-count');
+  if (el && card) el.textContent = getTrialCountdown(card);
+}, 60000);
+
 requireSession().then((s) => { if (s) { applyNavLabels(t); load(); registerCurrentDevice(); } });
