@@ -798,7 +798,7 @@ function notifItemHtml(n) {
     </span>
     <div style="flex:1;min-width:0">
       <strong style="display:block;font-size:14px;color:#111827">${esc(t(n.title))}</strong>
-      ${n.body ? `<p style="margin:4px 0 0;font-size:13px;color:#4b5563;line-height:1.5">${esc(tr(n.body, n.data || {}))}</p>` : ''}
+      ${n.body ? `<p style="margin:4px 0 0;font-size:13px;color:#4b5563;line-height:1.5;white-space:pre-line">${esc(tr(n.body, n.data || {}))}</p>` : ''}
       <small style="display:block;margin-top:6px;font-size:12px;color:#9ca3af">${esc(when)}</small>
     </div>
     ${link ? '<i data-lucide="chevron-right" aria-hidden="true" style="flex-shrink:0;align-self:center;color:#9ca3af"></i>' : ''}`;
