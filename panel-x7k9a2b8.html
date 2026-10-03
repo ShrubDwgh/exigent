@@ -204,6 +204,37 @@
     .admin-chip:hover { background: var(--bg); }
     .admin-chip.active { background: var(--blue); border-color: var(--blue); color: #fff; }
 
+    /* Badge count di chip filter */
+    .admin-chip-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      margin-left: 6px;
+      border-radius: 999px;
+      background: var(--bg);
+      color: var(--muted);
+      font-size: .6875rem;
+      font-weight: 700;
+      line-height: 1;
+      box-sizing: border-box;
+      vertical-align: middle;
+    }
+    .admin-chip.active .admin-chip-badge {
+      background: rgba(255,255,255,.25);
+      color: #fff;
+    }
+    [data-theme="dark"] .admin-chip-badge {
+      background: #334155;
+      color: #94A3B8;
+    }
+    [data-theme="dark"] .admin-chip.active .admin-chip-badge {
+      background: rgba(255,255,255,.2);
+      color: #fff;
+    }
+
     .admin-stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -261,9 +292,7 @@
       margin: 2px 0 0;
     }
 
-    /* =====================================================
-       Pesan feedback — sekarang jadi card tenggelam-timbul
-       ===================================================== */
+    /* Pesan feedback — card tenggelam-timbul */
     .admin-item-msg {
       margin: 12px 0;
       padding: 14px 16px;
@@ -543,9 +572,7 @@
       text-align: right;
     }
 
-    /* =====================================================
-       Catatan internal — textarea timbul-tenggelam
-       ===================================================== */
+    /* Catatan internal — textarea neumorphism */
     .admin-note { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
     .admin-note textarea {
       width: 100%;
