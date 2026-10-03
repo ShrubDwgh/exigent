@@ -7,7 +7,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 
 let me = null;
 let currentTab = 'dashboard';
-let cache = { feedback: [], products: [], users: [], products_loaded: false, users_loaded: false };
+let cache = { feedback: [], products: [], users: [] };
 
 /* ---------- Toast ---------- */
 let toastTimer = null;
@@ -37,7 +37,7 @@ const fmtSeconds = (s) => {
 };
 const icons = () => window.lucide && window.lucide.createIcons();
 
-/* ---------- Modal builder ---------- */
+/* ---------- Modal ---------- */
 function openModal(innerHtml, onMount) {
   const wrap = document.createElement('div');
   wrap.className = 'admin-modal-bg';
@@ -52,31 +52,29 @@ function closeModal(wrap) {
   if (wrap && wrap.parentNode) wrap.remove();
 }
 
-/* ---------- Audio player mini (Web Audio API) ---------- */
-async function loadAudioBufferFor(blobOrUrl) {
+/* ---------- Mini audio player (Web Audio API) ---------- */
+async function loadAudioBufferFor(url) {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   if (ctx.state === 'suspended') await ctx.resume();
-  let ab;
-  if (typeof blobOrUrl === 'string') {
-    const res = await fetch(blobOrUrl);
-    ab = await res.arrayBuffer();
-  } else {
-    ab = await blobOrUrl.arrayBuffer();
-  }
+  const res = await fetch(url);
+  const ab = await res.arrayBuffer();
   return { ctx, buffer: await ctx.decodeAudioData(ab) };
 }
 
 function initMiniPlayer(root, url) {
+  if (!root || !url) return;
   const btn = root.querySelector('[data-play]');
   const bar = root.querySelector('.bar');
   const fill = root.querySelector('.bar-fill');
   const time = root.querySelector('.time');
+  if (!btn || !bar || !fill || !time) return;
+
   let ctx, buffer, src = null, playing = false, startAt = 0, pausedAt = 0, raf = null;
 
   const setIcon = (p) => {
     btn.innerHTML = p
-      ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
-      : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
+      ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+      : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
   };
   const update = () => {
     if (!buffer) { fill.style.width = '0%'; time.textContent = '0:00 / 0:00'; return; }
@@ -113,7 +111,6 @@ function initMiniPlayer(root, url) {
     raf = null; update();
   };
 
-  // Lazy-load buffer saat pertama klik
   btn.onclick = async () => {
     if (!ctx) {
       try {
@@ -131,17 +128,19 @@ function initMiniPlayer(root, url) {
     if (playing) pause();
     else play();
   };
+
   bar.addEventListener('pointerdown', (e) => {
     if (!buffer) return;
     const r = bar.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
     const newT = ratio * buffer.duration;
+    const wasPlaying = playing;
     if (playing) { try { src.stop(); } catch (_) {} playing = false; }
     pausedAt = newT;
-    if (playing === false) { /* noop */ }
     update();
-    if (playing) play();
+    if (wasPlaying) play();
   });
+
   setIcon(false);
   update();
 }
@@ -162,8 +161,6 @@ document.querySelectorAll('.admin-tab').forEach((b) => {
 });
 
 $('admin-reload').onclick = () => {
-  cache.products_loaded = false;
-  cache.users_loaded = false;
   renderCurrentTab();
   toast('Dimuat ulang');
 };
@@ -184,7 +181,7 @@ async function renderDashboard() {
   content.innerHTML = `<div class="admin-loading">Memuat statistik...</div>`;
 
   const [cardsRes, feedbackRes, productsRes] = await Promise.all([
-    supabase.from('cards').select('id, is_active, has_purchased_card, trial_ends_at, created_at'),
+    supabase.from('cards').select('id, is_active, has_purchased_card, created_at'),
     supabase.from('feedback').select('id, status, type, created_at'),
     supabase.from('products').select('id, is_available'),
   ]);
@@ -262,19 +259,14 @@ async function renderFeedback() {
   drawFeedback();
 }
 
+function chipHtml(group, value, label) {
+  const active = group === 'status' ? fbFilters.status === value : fbFilters.type === value;
+  return `<button type="button" class="admin-chip${active ? ' active' : ''}" data-group="${group}" data-value="${value}">${esc(label)}</button>`;
+}
+
 function drawFeedback() {
   const content = $('admin-content');
-  const list = cache.feedback.filter((f) => {
-    if (fbFilters.status !== 'all' && f.status !== fbFilters.status) return false;
-    if (fbFilters.type !== 'all' && f.type !== fbFilters.type) return false;
-    if (fbFilters.search) {
-      const q = fbFilters.search.toLowerCase();
-      return (f.message || '').toLowerCase().includes(q)
-          || (f.device_info || '').toLowerCase().includes(q)
-          || (f.user_id || '').toLowerCase().includes(q);
-    }
-    return true;
-  });
+  const list = filterFeedback();
 
   content.innerHTML = `
     <div class="admin-search">
@@ -300,7 +292,7 @@ function drawFeedback() {
 
   $('fb-search').oninput = (e) => {
     fbFilters.search = e.target.value.trim();
-    drawFeedbackListOnly();
+    drawFeedback();
   };
   $('fb-status-filters').querySelectorAll('.admin-chip').forEach((c) => {
     c.onclick = () => { fbFilters.status = c.dataset.value; drawFeedback(); };
@@ -309,16 +301,11 @@ function drawFeedback() {
     c.onclick = () => { fbFilters.type = c.dataset.value; drawFeedback(); };
   });
 
-  drawFeedbackListOnly();
+  drawFeedbackList();
 }
 
-function chipHtml(group, value, label) {
-  const active = group === 'status' ? fbFilters.status === value : fbFilters.type === value;
-  return `<button type="button" class="admin-chip${active ? ' active' : ''}" data-group="${group}" data-value="${value}">${esc(label)}</button>`;
-}
-
-function drawFeedbackListOnly() {
-  const list = cache.feedback.filter((f) => {
+function filterFeedback() {
+  return cache.feedback.filter((f) => {
     if (fbFilters.status !== 'all' && f.status !== fbFilters.status) return false;
     if (fbFilters.type !== 'all' && f.type !== fbFilters.type) return false;
     if (fbFilters.search) {
@@ -329,7 +316,10 @@ function drawFeedbackListOnly() {
     }
     return true;
   });
+}
 
+function drawFeedbackList() {
+  const list = filterFeedback();
   const listEl = $('fb-list');
   if (!listEl) return;
 
@@ -341,14 +331,9 @@ function drawFeedbackListOnly() {
   listEl.innerHTML = list.map(fbItemHtml).join('');
   icons();
 
-  // Bind actions
+  // Bind action buttons
   listEl.querySelectorAll('[data-fb-action]').forEach((btn) => {
     btn.onclick = () => handleFeedbackAction(btn.dataset.fbAction, btn.dataset.id);
-  });
-
-  // Init mini player for each feedback with audio
-  listEl.querySelectorAll('[data-audio-url]').forEach((root) => {
-    initMiniPlayer(root, root.dataset.audioUrl);
   });
 
   // Load screenshot signed URLs
@@ -361,6 +346,16 @@ function drawFeedbackListOnly() {
       ? `<a href="${esc(d.signedUrl)}" target="_blank" rel="noopener"><img src="${esc(d.signedUrl)}" loading="lazy" alt=""></a>`
       : '').join('');
   });
+
+  // Load audio signed URLs + init player
+  listEl.querySelectorAll('[data-audio-path]').forEach(async (el) => {
+    const path = el.dataset.audioPath;
+    if (!path) return;
+    const { data } = await supabase.storage.from('feedback-files').createSignedUrl(path, 3600);
+    if (data?.signedUrl) {
+      initMiniPlayer(el, data.signedUrl);
+    }
+  });
 }
 
 function fbItemHtml(f) {
@@ -370,22 +365,24 @@ function fbItemHtml(f) {
     ? `<div class="admin-shot-grid" data-shot-paths='${esc(JSON.stringify(shots))}'></div>`
     : '';
   const audioHtml = f.audio_url
-    ? `<div class="admin-audio" data-audio-url="" data-path="${esc(f.audio_url)}">
+    ? `<div class="admin-audio" data-audio-path="${esc(f.audio_url)}">
          <button type="button" data-play aria-label="Putar"></button>
          <div class="bar"><div class="bar-fill"></div></div>
          <span class="time">0:00 / 0:00</span>
        </div>`
     : '';
-  const noteHtml = f.admin_note
-    ? `<div class="admin-note"><label style="font-size:.75rem;font-weight:600;color:var(--muted)">Catatan internal</label><textarea data-note-id="${f.id}" rows="2">${esc(f.admin_note)}</textarea></div>`
-    : `<div class="admin-note"><textarea data-note-id="${f.id}" rows="2" placeholder="Catatan internal (muncul di riwayat user)..."></textarea></div>`;
+  const noteVal = f.admin_note || '';
+  const noteHtml = `<div class="admin-note">
+    <label style="font-size:.75rem;font-weight:600;color:var(--muted)">Catatan internal (muncul di riwayat user)</label>
+    <textarea data-note-id="${f.id}" rows="2" placeholder="Tulis catatan...">${esc(noteVal)}</textarea>
+  </div>`;
 
   return `<article class="admin-item">
     <div class="admin-item-head">
       <div style="min-width:0;flex:1">
         <p class="admin-item-title">${esc(typeLabel)}</p>
         <p class="admin-item-sub">${esc(fmtDate(f.created_at))} · ${esc(f.device_info || '-')}</p>
-        <p class="admin-item-sub" style="font-family:monospace;font-size:.7rem">${esc(f.user_id || '-')}</p>
+        <p class="admin-item-sub" style="font-family:monospace;font-size:.7rem;word-break:break-all">${esc(f.user_id || '-')}</p>
       </div>
       <span class="admin-badge ${esc(f.status)}">${esc(statusLabel(f.status))}</span>
     </div>
@@ -430,11 +427,6 @@ async function handleFeedbackAction(action, id) {
   }
 }
 
-// Set data-audio-url after fetching signed URL
-document.addEventListener('DOMContentLoaded', () => {});
-// (kita set di drawFeedbackListOnly)
-const originalDraw = drawFeedbackListOnly;
-
 /* ============================================================
    TAB 3: PRODUCTS
    ============================================================ */
@@ -454,8 +446,12 @@ async function renderProducts() {
     return;
   }
   cache.products = data || [];
-  cache.products_loaded = true;
   drawProducts();
+}
+
+function prodCatChip(value, label) {
+  const active = prodFilters.category === value;
+  return `<button type="button" class="admin-chip${active ? ' active' : ''}" data-value="${value}">${esc(label)}</button>`;
 }
 
 function drawProducts() {
@@ -513,11 +509,6 @@ function drawProducts() {
   listEl.querySelectorAll('[data-prod-del]').forEach((b) => {
     b.onclick = () => deleteProduct(b.dataset.prodDel);
   });
-}
-
-function prodCatChip(value, label) {
-  const active = prodFilters.category === value;
-  return `<button type="button" class="admin-chip${active ? ' active' : ''}" data-value="${value}">${esc(label)}</button>`;
 }
 
 function prodCardHtml(p) {
@@ -602,7 +593,6 @@ function openProductForm(p) {
       btn.disabled = true; btn.textContent = 'Menyimpan...';
       try {
         let imageUrl = pendingImage;
-        // Upload kalau ada file baru
         if (pendingFile) {
           const blob = await compressAdminImage(pendingFile);
           const ts = Date.now();
@@ -639,7 +629,6 @@ function openProductForm(p) {
         }
         if (err) throw err;
         closeModal(w);
-        cache.products_loaded = false;
         await renderProducts();
         toast(isNew ? 'Produk ditambahkan' : 'Produk disimpan', 'success');
       } catch (e) {
@@ -655,7 +644,6 @@ async function toggleProduct(id) {
   if (!p) return;
   const { error } = await supabase.from('products').update({ is_available: !p.is_available }).eq('id', id);
   if (error) return toast('Gagal: ' + error.message, 'error');
-  cache.products_loaded = false;
   await renderProducts();
   toast('Status diubah', 'success');
 }
@@ -664,7 +652,6 @@ async function deleteProduct(id) {
   if (!confirm('Hapus produk ini? Tidak bisa dibatalkan.')) return;
   const { error } = await supabase.from('products').delete().eq('id', id);
   if (error) return toast('Gagal: ' + error.message, 'error');
-  cache.products_loaded = false;
   await renderProducts();
   toast('Produk dihapus', 'success');
 }
@@ -707,7 +694,6 @@ async function renderUsers() {
     return;
   }
 
-  // Ambil nama dari emergency_profiles
   const ids = (cards || []).map((c) => c.id);
   let profiles = [];
   if (ids.length) {
@@ -721,7 +707,6 @@ async function renderUsers() {
     full_name: profileMap.get(c.id)?.full_name || '',
     photo_data_url: profileMap.get(c.id)?.photo_data_url || '',
   }));
-  cache.users_loaded = true;
   drawUsers();
 }
 
@@ -779,7 +764,7 @@ function userRowHtml(u) {
         <div style="min-width:0">
           <p class="admin-item-title">${esc(u.full_name || 'Tanpa nama')}</p>
           <p class="admin-item-sub" style="font-family:monospace">${esc(u.card_id || '-')}</p>
-          <p class="admin-item-sub">${esc(u.owner_id || '-')}</p>
+          <p class="admin-item-sub" style="word-break:break-all">${esc(u.owner_id || '-')}</p>
         </div>
       </div>
       <span class="admin-badge ${u.is_active ? 'resolved' : 'read'}">${u.is_active ? 'Aktif' : 'Nonaktif'}</span>
@@ -830,8 +815,8 @@ function renderNotif() {
       <div class="field">
         <label>Target</label>
         <div style="display:flex;gap:8px;margin-bottom:8px">
-          <label class="admin-chip active" id="notif-t-all" style="cursor:pointer"><input type="radio" name="notif-target" value="all" checked hidden>Semua User</label>
-          <label class="admin-chip" id="notif-t-one" style="cursor:pointer"><input type="radio" name="notif-target" value="one" hidden>User Tertentu</label>
+          <button type="button" class="admin-chip active" id="notif-t-all">Semua User</button>
+          <button type="button" class="admin-chip" id="notif-t-one">User Tertentu</button>
         </div>
         <select class="input" id="notif-user" style="display:none">
           <option value="">-- Pilih user --</option>
@@ -856,21 +841,23 @@ function renderNotif() {
   `;
   icons();
 
+  let targetMode = 'all';
   const allBtn = $('notif-t-all');
   const oneBtn = $('notif-t-one');
   const userSelect = $('notif-user');
 
   allBtn.onclick = () => {
+    targetMode = 'all';
     allBtn.classList.add('active'); oneBtn.classList.remove('active');
     userSelect.style.display = 'none';
   };
   oneBtn.onclick = async () => {
+    targetMode = 'one';
     oneBtn.classList.add('active'); allBtn.classList.remove('active');
     userSelect.style.display = 'block';
     if (userSelect.options.length <= 1) {
-      // Load users
       userSelect.innerHTML = '<option value="">Memuat...</option>';
-      const { data } = await supabase.from('cards').select('owner_id, card_id');
+      const { data } = await supabase.from('cards').select('owner_id, card_id, id');
       const { data: profs } = await supabase.from('emergency_profiles').select('card_uuid, full_name');
       const pm = new Map((profs || []).map((p) => [p.card_uuid, p.full_name]));
       const cards = data || [];
@@ -881,16 +868,15 @@ function renderNotif() {
     }
   };
 
-  $('notif-send').onclick = sendNotif;
+  $('notif-send').onclick = () => sendNotif(targetMode);
 }
 
-async function sendNotif() {
+async function sendNotif(targetMode) {
   const btn = $('notif-send');
   const title = $('notif-title').value.trim();
   const body = $('notif-body').value.trim();
   const type = $('notif-type').value;
   const link = $('notif-link').value.trim();
-  const targetMode = document.querySelector('input[name="notif-target"]:checked').value;
 
   if (!title) return toast('Judul wajib diisi', 'error');
   if (!body) return toast('Isi pesan wajib diisi', 'error');
