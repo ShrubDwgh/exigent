@@ -31,16 +31,24 @@
   <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
   <title>Kirim Masukan · Emergency Card</title>
   <style>
-    /* Override khusus halaman ini: kurangi padding bawah biar nggak scroll */
     .main { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
     @media (min-width:1024px) { .main { padding-bottom: 40px !important; } }
 
-    .fb-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+    /* Card atas: deskripsi + tabs */
+    .fb-intro {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .fb-intro p { margin: 0; }
+
+    .fb-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .fb-tab {
       display:flex; align-items:center; justify-content:center; gap:8px;
       min-height:52px; padding:0 12px;
       border:1.5px solid var(--border); border-radius:14px;
-      background:var(--surface); color:var(--text);
+      background:var(--bg); color:var(--text);
       font:600 .9375rem var(--font); cursor:pointer;
       transition:border-color .15s, background .15s;
     }
@@ -136,15 +144,18 @@
   </aside>
 
   <main class="main" id="fb-main">
-    <p class="muted" style="margin:0 0 16px">Sampaikan ide atau laporkan masalah. Kami baca semuanya.</p>
+    <!-- Card atas: deskripsi + tabs -->
+    <div class="card fb-intro">
+      <p class="muted">Sampaikan ide atau laporkan masalah. Kami baca semuanya.</p>
 
-    <div class="fb-tabs" role="group" aria-label="Jenis masukan">
-      <button type="button" class="fb-tab" id="tab-idea" data-type="idea" aria-pressed="true">
-        <i data-lucide="lightbulb" aria-hidden="true"></i>Ide & Saran
-      </button>
-      <button type="button" class="fb-tab" id="tab-bug" data-type="bug" aria-pressed="false">
-        <i data-lucide="bug" aria-hidden="true"></i>Lapor Masalah
-      </button>
+      <div class="fb-tabs" role="group" aria-label="Jenis masukan">
+        <button type="button" class="fb-tab" id="tab-idea" data-type="idea" aria-pressed="true">
+          <i data-lucide="lightbulb" aria-hidden="true"></i>Ide & Saran
+        </button>
+        <button type="button" class="fb-tab" id="tab-bug" data-type="bug" aria-pressed="false">
+          <i data-lucide="bug" aria-hidden="true"></i>Lapor Masalah
+        </button>
+      </div>
     </div>
 
     <form id="fb-form" class="card stack-lg">
