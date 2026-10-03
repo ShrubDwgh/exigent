@@ -19,6 +19,36 @@ const fail = (e) => toast(t('failed') + ((e && e.message) || e));
 
 let session = null, card = null, profile = null, loadFailed = false;
 
+/* ---------- Cache profil (biar greeting langsung muncul tanpa flicker) ---------- */
+function cacheKey() {
+  return session && session.user ? 'exigent_profile_cache_' + session.user.id : null;
+}
+function getCachedProfile() {
+  try {
+    const k = cacheKey();
+    if (!k) return null;
+    const raw = localStorage.getItem(k);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) { return null; }
+}
+function setCachedProfile(p) {
+  try {
+    const k = cacheKey();
+    if (!k) return;
+    if (!p) { localStorage.removeItem(k); return; }
+    localStorage.setItem(k, JSON.stringify({
+      full_name: p.full_name || '',
+      photo_data_url: p.photo_data_url || ''
+    }));
+  } catch (_) {}
+}
+function clearCachedProfile() {
+  try {
+    const k = cacheKey();
+    if (k) localStorage.removeItem(k);
+  } catch (_) {}
+}
+
 /* ---------- Data ---------- */
 async function loadData() {
   loadFailed = false; card = null; profile = null;
@@ -38,6 +68,9 @@ async function loadData() {
     if (card) {
       const p = await supabase.from('emergency_profiles').select('full_name, photo_data_url').eq('card_uuid', card.id).maybeSingle();
       profile = p.data || null;
+      setCachedProfile(profile);
+    } else {
+      clearCachedProfile();
     }
   } catch (e) {
     loadFailed = true; card = null; profile = null; fail(e);
@@ -46,7 +79,15 @@ async function loadData() {
 
 const meta = () => session.user.user_metadata || {};
 const googleName = () => String(meta().full_name || meta().name || '').trim();
-const displayName = () => googleName() || String((profile && profile.full_name) || '').trim() || String(session.user.email || '').split('@')[0].trim();
+
+/* displayName: profil (atau cache) > Google > email */
+const displayName = () => {
+  const p = profile || getCachedProfile() || {};
+  return String(p.full_name || '').trim()
+    || googleName()
+    || String(session.user.email || '').split('@')[0].trim();
+};
+
 const providers = () => { const a = session.user.app_metadata || {}; return a.providers || [a.provider || 'email']; };
 const fmtDate = (iso) => {
   if (!iso) return '—';
@@ -113,8 +154,9 @@ function renderHome() {
   const fullName = displayName();
   const name = shortName(fullName);
   const googleAvatar = meta().avatar_url || meta().picture || '';
-  const cardPhoto = (profile && profile.photo_data_url) || '';
-  const avatarUrl = googleAvatar || cardPhoto;
+  const cached = getCachedProfile();
+  const cardPhoto = (profile && profile.photo_data_url) || (cached && cached.photo_data_url) || '';
+  const avatarUrl = cardPhoto || googleAvatar;
 
   const avatarHtml = avatarUrl
     ? `<img class="greet-avatar" src="${esc(avatarUrl)}" alt="" referrerpolicy="no-referrer">`
@@ -184,11 +226,12 @@ function renderGmail() {
   const u = session.user;
   const name = displayName();
   const googleAvatar = meta().avatar_url || meta().picture || '';
-  const cardPhoto = (profile && profile.photo_data_url) || '';
-  const avatar = googleAvatar || cardPhoto;
+  const cached = getCachedProfile();
+  const cardPhoto = (profile && profile.photo_data_url) || (cached && cached.photo_data_url) || '';
+  const avatar = cardPhoto || googleAvatar;
   const pv = providers();
   const method = pv.map((p) => (p === 'google' ? 'Google' : p === 'email' ? t('gmail_prov_email') : p)).join(', ');
-  const nameValue = googleName() || String((profile && profile.full_name) || '').trim() || '—';
+  const nameValue = String((profile && profile.full_name) || (cached && cached.full_name) || '').trim() || googleName() || '—';
 
   main.innerHTML = `<section class="screen stack-lg"><div class="card stack-lg">
     <div class="id-head">
@@ -542,7 +585,6 @@ function renderPermissions() {
   watchPermission('geolocation', (st) => setBadge(geo, st));
   watchPermission('nfc', (st) => setBadge(nfc, st));
 
-  // Mikrofon: toggle
   const micSwitch = $('mic-switch');
   if (micSwitch) {
     const updateMicSwitch = async () => {
@@ -806,7 +848,12 @@ function confirmSheet({ title, text, okLabel, danger = true, onConfirm }) {
 
 const askLogout = () => confirmSheet({
   title: t('logout_q'), text: t('logout_desc'), okLabel: t('logout'),
-  onConfirm: (c, btn) => busy(btn, async () => { try { await signOut(); } catch (e) { fail(e); } }),
+  onConfirm: (c, btn) => busy(btn, async () => {
+    try {
+      clearCachedProfile();
+      await signOut();
+    } catch (e) { fail(e); }
+  }),
 });
 
 /* ---------- Hapus Akun ---------- */
@@ -838,7 +885,7 @@ const askDeleteAccount = () => {
           const { error } = await supabase.rpc('delete_user_account');
           if (error) { msg.textContent = t('failed') + error.message; msg.hidden = false; return; }
           c.close();
-          try { await signOut(); } catch (_) { /* abaikan */ }
+          try { clearCachedProfile(); await signOut(); } catch (_) { /* abaikan */ }
           toast(t('delete_success'));
           setTimeout(() => location.replace('/'), 900);
         });
@@ -960,10 +1007,10 @@ requireSession().then(async (s) => {
   if (!s) return;
   session = s;
 
-  // Render pertama pakai data session saja — greeting langsung muncul
+  // Render pertama pakai cache (kalau ada) — biar langsung tampil nama & foto yang benar
   onRoute();
 
-  // Fetch data kartu di background, refresh home kalau sudah siap
+  // Fetch data profil di background, refresh kalau sudah siap
   loadData().then(() => {
     if (currentPath() === '/') {
       renderHome();
