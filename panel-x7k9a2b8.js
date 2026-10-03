@@ -52,7 +52,7 @@ function closeModal(wrap) {
   if (wrap && wrap.parentNode) wrap.remove();
 }
 
-/* ---------- Mini audio player (Web Audio API) ---------- */
+/* ---------- Mini audio player ---------- */
 async function loadAudioBufferFor(url) {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   if (ctx.state === 'suspended') await ctx.resume();
@@ -331,12 +331,10 @@ function drawFeedbackList() {
   listEl.innerHTML = list.map(fbItemHtml).join('');
   icons();
 
-  // Bind action buttons
   listEl.querySelectorAll('[data-fb-action]').forEach((btn) => {
     btn.onclick = () => handleFeedbackAction(btn.dataset.fbAction, btn.dataset.id);
   });
 
-  // Load screenshot signed URLs
   listEl.querySelectorAll('[data-shot-paths]').forEach(async (box) => {
     const paths = JSON.parse(box.dataset.shotPaths || '[]');
     if (!paths.length) return;
@@ -347,14 +345,11 @@ function drawFeedbackList() {
       : '').join('');
   });
 
-  // Load audio signed URLs + init player
   listEl.querySelectorAll('[data-audio-path]').forEach(async (el) => {
     const path = el.dataset.audioPath;
     if (!path) return;
     const { data } = await supabase.storage.from('feedback-files').createSignedUrl(path, 3600);
-    if (data?.signedUrl) {
-      initMiniPlayer(el, data.signedUrl);
-    }
+    if (data?.signedUrl) initMiniPlayer(el, data.signedUrl);
   });
 }
 
@@ -684,29 +679,17 @@ async function renderUsers() {
   const content = $('admin-content');
   content.innerHTML = `<div class="admin-loading">Memuat user...</div>`;
 
-  const { data: cards, error } = await supabase
-    .from('cards')
-    .select('*')
-    .order('created_at', { ascending: false });
+  // Panggil RPC admin_list_users — dia join auth.users + cards + emergency_profiles
+  const { data, error } = await supabase.rpc('admin_list_users');
 
   if (error) {
-    content.innerHTML = `<div class="admin-empty">Gagal memuat: ${esc(error.message)}</div>`;
+    content.innerHTML = `<div class="admin-empty">Gagal memuat: ${esc(error.message)}<br><br>
+      Pastikan RPC <code>admin_list_users</code> sudah dibuat di Supabase.<br>
+      Lihat panduan SQL di pesan.</div>`;
     return;
   }
 
-  const ids = (cards || []).map((c) => c.id);
-  let profiles = [];
-  if (ids.length) {
-    const { data: p } = await supabase.from('emergency_profiles').select('card_uuid, full_name, photo_data_url').in('card_uuid', ids);
-    profiles = p || [];
-  }
-  const profileMap = new Map(profiles.map((p) => [p.card_uuid, p]));
-
-  cache.users = (cards || []).map((c) => ({
-    ...c,
-    full_name: profileMap.get(c.id)?.full_name || '',
-    photo_data_url: profileMap.get(c.id)?.photo_data_url || '',
-  }));
+  cache.users = data || [];
   drawUsers();
 }
 
@@ -715,15 +698,17 @@ function drawUsers() {
   const list = cache.users.filter((u) => {
     if (!userFilters.search) return true;
     const q = userFilters.search.toLowerCase();
-    return (u.card_id || '').toLowerCase().includes(q)
-        || (u.owner_id || '').toLowerCase().includes(q)
-        || (u.full_name || '').toLowerCase().includes(q);
+    return (u.card_code || '').toLowerCase().includes(q)
+        || (u.email || '').toLowerCase().includes(q)
+        || (u.google_name || '').toLowerCase().includes(q)
+        || (u.profile_name || '').toLowerCase().includes(q)
+        || (u.user_id || '').toLowerCase().includes(q);
   });
 
   content.innerHTML = `
     <div class="admin-search">
       <i data-lucide="search" aria-hidden="true"></i>
-      <input type="search" id="user-search" placeholder="Cari card ID, nama, atau user ID..." value="${esc(userFilters.search)}">
+      <input type="search" id="user-search" placeholder="Cari email, nama, atau card ID..." value="${esc(userFilters.search)}">
     </div>
     <p class="muted small" style="margin:0 0 12px">${list.length} user</p>
     <div id="user-list"></div>
@@ -751,39 +736,57 @@ function drawUsers() {
 }
 
 function userRowHtml(u) {
-  const trialActive = u.trial_ends_at && new Date(u.trial_ends_at).getTime() > Date.now();
-  const trialStr = u.trial_ends_at ? `Trial s/d ${fmtDate(u.trial_ends_at)}` : 'Tidak ada trial';
-  const avatar = u.photo_data_url
-    ? `<img src="${esc(u.photo_data_url)}" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none">`
-    : `<span style="width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">${esc((u.full_name || '?')[0].toUpperCase())}</span>`;
+  // Prioritas nama: profile (isi medis) > google_name > email prefix
+  const displayName = u.profile_name || u.google_name || (u.email || '?').split('@')[0];
+  // Prioritas avatar: profile_photo > google_avatar > inisial
+  const avatarUrl = u.profile_photo || u.google_avatar || '';
+  const initial = (displayName || '?')[0].toUpperCase();
+
+  const avatar = avatarUrl
+    ? `<img src="${esc(avatarUrl)}" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none" referrerpolicy="no-referrer">`
+    : `<span style="width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none;font-size:1.125rem">${esc(initial)}</span>`;
+
+  const trialStr = u.trial_ends_at
+    ? (new Date(u.trial_ends_at).getTime() > Date.now()
+        ? `Trial aktif s/d ${fmtDate(u.trial_ends_at)}`
+        : `Trial habis ${fmtDate(u.trial_ends_at)}`)
+    : 'Tidak ada trial';
+
+  const cardCode = u.card_code || '(belum punya kartu)';
 
   return `<div class="admin-item">
     <div class="admin-item-head">
       <div style="display:flex;gap:12px;align-items:center;min-width:0;flex:1">
         ${avatar}
-        <div style="min-width:0">
-          <p class="admin-item-title">${esc(u.full_name || 'Tanpa nama')}</p>
-          <p class="admin-item-sub" style="font-family:monospace">${esc(u.card_id || '-')}</p>
-          <p class="admin-item-sub" style="word-break:break-all">${esc(u.owner_id || '-')}</p>
+        <div style="min-width:0;flex:1">
+          <p class="admin-item-title" style="word-break:break-word">${esc(displayName)}</p>
+          <p class="admin-item-sub" style="font-family:monospace;word-break:break-all">${esc(u.email || '-')}</p>
+          <p class="admin-item-sub" style="font-family:monospace">${esc(cardCode)}</p>
         </div>
       </div>
-      <span class="admin-badge ${u.is_active ? 'resolved' : 'read'}">${u.is_active ? 'Aktif' : 'Nonaktif'}</span>
+      <span class="admin-badge ${u.card_active ? 'resolved' : 'read'}">${u.card_active ? 'Aktif' : 'Nonaktif'}</span>
     </div>
-    <p class="admin-item-sub" style="margin-top:8px">${esc(trialStr)}</p>
-    ${u.has_purchased_card ? '<p class="admin-item-sub" style="color:var(--green);font-weight:600">Premium — sudah beli kartu</p>' : ''}
+    <div style="font-size:.75rem;color:var(--muted);margin-top:10px;display:flex;flex-direction:column;gap:2px">
+      <span>Daftar: ${esc(fmtDate(u.account_created))}</span>
+      <span>Login terakhir: ${esc(fmtDate(u.last_sign_in_at))}</span>
+      <span>${esc(trialStr)}</span>
+      ${u.has_purchased ? '<span style="color:var(--green);font-weight:600">Premium — sudah beli kartu</span>' : ''}
+    </div>
     <div class="admin-item-actions">
-      <button type="button" class="admin-btn" data-user-toggle="${u.id}">${u.is_active ? 'Nonaktifkan Kartu' : 'Aktifkan Kartu'}</button>
-      <button type="button" class="admin-btn" data-user-reset-trial="${u.id}">Reset Trial</button>
+      ${u.card_row_id ? `
+        <button type="button" class="admin-btn" data-user-toggle="${u.card_row_id}">${u.card_active ? 'Nonaktifkan Kartu' : 'Aktifkan Kartu'}</button>
+        <button type="button" class="admin-btn" data-user-reset-trial="${u.card_row_id}">Reset Trial</button>
+      ` : '<span class="muted small">User belum punya kartu</span>'}
     </div>
   </div>`;
 }
 
 async function toggleUserCard(id) {
-  const u = cache.users.find((x) => x.id === id);
+  const u = cache.users.find((x) => x.card_row_id === id);
   if (!u) return;
-  const { error } = await supabase.from('cards').update({ is_active: !u.is_active }).eq('id', id);
+  const { error } = await supabase.from('cards').update({ is_active: !u.card_active }).eq('id', id);
   if (error) return toast('Gagal: ' + error.message, 'error');
-  u.is_active = !u.is_active;
+  u.card_active = !u.card_active;
   drawUsers();
   toast('Kartu diperbarui', 'success');
 }
@@ -797,8 +800,8 @@ async function resetUserTrial(id) {
     trial_ends_at: end.toISOString(),
   }).eq('id', id);
   if (error) return toast('Gagal: ' + error.message, 'error');
-  const u = cache.users.find((x) => x.id === id);
-  if (u) { u.trial_started_at = now.toISOString(); u.trial_ends_at = end.toISOString(); }
+  const u = cache.users.find((x) => x.card_row_id === id);
+  if (u) u.trial_ends_at = end.toISOString();
   drawUsers();
   toast('Trial direset', 'success');
 }
