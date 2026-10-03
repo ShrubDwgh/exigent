@@ -61,18 +61,18 @@ function hideSearch() {
   const bar = $('admin-search-bar');
   const addBtn = $('admin-fab-add');
   bar.classList.remove('active');
+  bar.style.transform = '';
   addBtn.hidden = true;
   addBtn.onclick = null;
   const input = $('admin-search-input');
   if (searchInputHandler) input.removeEventListener('input', searchInputHandler);
   searchInputHandler = null;
   input.value = '';
+  input.blur();
 }
 
 /* ============================================================
-   MODAL — dengan dukungan back button HP
-   Saat modal dibuka, kita pushState supaya back HP nutup modal.
-   Saat modal ditutup manual, kita popState untuk bersihkan history.
+   MODAL — dukungan back button HP
    ============================================================ */
 let activeModal = null;
 let modalHistoryActive = false;
@@ -87,7 +87,6 @@ function openModal(innerHtml, onMount) {
   if (onMount) onMount(wrap);
   activeModal = wrap;
 
-  // Push history entry — biar back HP nutup modal, bukan keluar halaman
   try {
     history.pushState({ adminModal: true }, '');
     modalHistoryActive = true;
@@ -101,7 +100,6 @@ function closeModal(wrap, opts = {}) {
   wrap.remove();
   if (activeModal === wrap) activeModal = null;
 
-  // Kalau ditutup bukan karena popstate (misal klik Batal), kita pop history entry
   if (modalHistoryActive && !opts.fromPopstate) {
     modalHistoryActive = false;
     try { history.back(); } catch (_) {}
@@ -110,7 +108,6 @@ function closeModal(wrap, opts = {}) {
   }
 }
 
-// Listener popstate — kalau ada modal aktif, tutup modalnya
 window.addEventListener('popstate', () => {
   if (activeModal) {
     closeModal(activeModal, { fromPopstate: true });
@@ -1046,8 +1043,7 @@ async function sendNotif(targetMode) {
 })();
 
 /* ============================================================
-   SCROLL BEHAVIOR: sembunyikan appbar saat scroll ke bawah,
-   tampilkan lagi saat scroll ke atas. Tab nav ikut naik.
+   SCROLL BEHAVIOR: sembunyikan appbar saat scroll ke bawah
    ============================================================ */
 (function () {
   const appbar = document.getElementById('admin-appbar');
@@ -1083,4 +1079,51 @@ async function sendNotif(targetMode) {
       ticking = true;
     }
   }, { passive: true });
+})();
+
+/* ============================================================
+   KEYBOARD BEHAVIOR: search bar ikut naik saat keyboard muncul.
+   Pakai visualViewport API. FAB & elemen lain tetap.
+   ============================================================ */
+(function () {
+  const searchBar = document.getElementById('admin-search-bar');
+  if (!searchBar) return;
+  if (!window.visualViewport) return; // browser lama, skip
+
+  const vv = window.visualViewport;
+  let rafId = null;
+  let lastKbHeight = 0;
+
+  function update() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      const windowH = window.innerHeight;
+      const visibleBottom = vv.height + vv.offsetTop;
+      const keyboardHeight = Math.max(0, windowH - visibleBottom);
+
+      // Biar nggak "getar" — cuma update kalau selisih cukup besar (>2px)
+      if (Math.abs(keyboardHeight - lastKbHeight) < 2) return;
+      lastKbHeight = keyboardHeight;
+
+      if (keyboardHeight > 100) {
+        searchBar.style.transform = `translateY(-${keyboardHeight}px)`;
+      } else {
+        searchBar.style.transform = '';
+      }
+    });
+  }
+
+  vv.addEventListener('resize', update);
+  vv.addEventListener('scroll', update);
+
+  // Fallback reset saat input blur (kadang vv.height nggak update tepat waktu)
+  const input = document.getElementById('admin-search-input');
+  if (input) {
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        lastKbHeight = 0;
+        searchBar.style.transform = '';
+      }, 100);
+    });
+  }
 })();
