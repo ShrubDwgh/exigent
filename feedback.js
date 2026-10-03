@@ -36,7 +36,7 @@ function renderShots() {
   const box = $('shot-list');
   box.innerHTML = screenshotFiles.map((s, i) => `
     <div class="shot-thumb">
-      <img src="${s.url}" alt="">
+      <img src="${s.url}" alt="" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('beforeend','<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1E293B;border-radius:10px;color:#94A3B8;font-size:11px;text-align:center;padding:8px\\'>Preview gagal</div>')">
       <button type="button" class="shot-x" data-rm="${i}" aria-label="Hapus">×</button>
     </div>
   `).join('');
@@ -50,10 +50,23 @@ function renderShots() {
   });
 }
 
+/* ---------- Screenshot input (dengan validasi format) ---------- */
 $('f-shots').onchange = (e) => {
   const files = Array.from(e.target.files || []);
+  const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
   for (const file of files) {
-    if (!file.type.startsWith('image/')) continue;
+    if (!file.type) {
+      toast(`File "${file.name}" tidak dikenali. Pakai JPG atau PNG.`);
+      continue;
+    }
+    if (!allowed.includes(file.type)) {
+      toast(`Format "${file.type}" tidak didukung. Pakai JPG, PNG, WebP, atau GIF.`);
+      continue;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast(`"${file.name}" terlalu besar (max 10 MB)`);
+      continue;
+    }
     if (screenshotFiles.length >= 5) { toast('Maksimal 5 screenshot'); break; }
     screenshotFiles.push({ file, url: URL.createObjectURL(file) });
   }
@@ -61,6 +74,7 @@ $('f-shots').onchange = (e) => {
   e.target.value = '';
 };
 
+/* ---------- Voice recording ---------- */
 $('voice-record').onclick = async () => {
   if (mediaRecorder && mediaRecorder.state === 'recording') {
     mediaRecorder.stop();
@@ -119,6 +133,7 @@ $('voice-delete').onclick = () => {
   $('voice-audio').src = '';
 };
 
+/* ---------- Image compress dengan fallback ---------- */
 function compressImage(file, maxSize = 1280, quality = 0.8) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -131,11 +146,26 @@ function compressImage(file, maxSize = 1280, quality = 0.8) {
       const c = document.createElement('canvas');
       c.width = w; c.height = h;
       c.getContext('2d').drawImage(img, 0, 0, w, h);
-      c.toBlob((b) => resolve(b), 'image/jpeg', quality);
+      c.toBlob((b) => {
+        if (b) resolve(b);
+        else reject(new Error('toBlob null'));
+      }, 'image/jpeg', quality);
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Gagal baca gambar')); };
     img.src = url;
   });
+}
+
+async function prepareImage(file) {
+  try {
+    const blob = await compressImage(file);
+    return { blob, ext: 'jpg', contentType: 'image/jpeg' };
+  } catch (err) {
+    console.warn('[feedback] compress gagal, pakai file asli:', err);
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+    const map = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+    return { blob: file, ext, contentType: file.type || map[ext] || 'image/png' };
+  }
 }
 
 async function uploadTo(bucket, path, blob, contentType) {
@@ -144,7 +174,7 @@ async function uploadTo(bucket, path, blob, contentType) {
   return path;
 }
 
-/* ---------- Submit (tanpa loading awan) ---------- */
+/* ---------- Submit ---------- */
 $('fb-form').onsubmit = async (e) => {
   e.preventDefault();
   const message = $('f-message').value.trim();
@@ -153,7 +183,6 @@ $('fb-form').onsubmit = async (e) => {
   const btn = e.target.querySelector('button[type="submit"]');
   const originalHTML = btn.innerHTML;
 
-  // Loading state sederhana
   btn.disabled = true;
   btn.style.opacity = '0.7';
   btn.innerHTML = '<span>Mengirim...</span>';
@@ -169,9 +198,9 @@ $('fb-form').onsubmit = async (e) => {
     // Upload screenshot
     for (let i = 0; i < screenshotFiles.length; i++) {
       btn.innerHTML = `<span>Mengunggah gambar ${i + 1}/${screenshotFiles.length}...</span>`;
-      const blob = await compressImage(screenshotFiles[i].file);
-      const p = `${base}-${i}.jpg`;
-      await uploadTo('feedback-files', p, blob, 'image/jpeg');
+      const { blob, ext, contentType } = await prepareImage(screenshotFiles[i].file);
+      const p = `${base}-${i}.${ext}`;
+      await uploadTo('feedback-files', p, blob, contentType);
       shotPaths.push(p);
     }
 
