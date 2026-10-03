@@ -33,16 +33,28 @@
   <style>
     body.admin-page { background: var(--bg); }
 
+    /* Appbar: smooth hide/show saat scroll */
+    .appbar {
+      transition: transform .28s cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
+    }
+    .appbar.appbar-hidden {
+      transform: translateY(-100%);
+    }
+
     .admin-shell {
       max-width: 1200px;
       margin: 0 auto;
-      padding: calc(60px + env(safe-area-inset-top, 0px)) 0 calc(80px + env(safe-area-inset-bottom, 0px));
+      padding: calc(116px + env(safe-area-inset-top, 0px)) 0 calc(80px + env(safe-area-inset-bottom, 0px));
     }
 
+    /* Tab nav: fixed, posisi diatur JS */
     .admin-tabs {
-      position: sticky;
-      top: calc(60px + env(safe-area-inset-top, 0px));
-      z-index: 20;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 19;
       display: flex;
       gap: 4px;
       overflow-x: auto;
@@ -52,6 +64,12 @@
       border-bottom: 1px solid var(--border);
       padding: 8px 12px;
       -webkit-overflow-scrolling: touch;
+      transform: translateY(calc(60px + env(safe-area-inset-top, 0px)));
+      transition: transform .28s cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
+    }
+    .admin-tabs.appbar-hidden {
+      transform: translateY(0);
     }
     .admin-tabs::-webkit-scrollbar { display: none; }
     .admin-tab {
@@ -227,7 +245,7 @@
       margin-top: 12px;
     }
 
-    /* Sub-card info box (buat daftar/login/trial di user) */
+    /* Sub-card info box — tenggelam */
     .admin-info-box {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -237,6 +255,14 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      box-shadow:
+        inset 0 2px 6px rgba(0,0,0,.06),
+        inset 0 -1px 0 rgba(255,255,255,.4);
+    }
+    [data-theme="dark"] .admin-info-box {
+      box-shadow:
+        inset 0 2px 8px rgba(0,0,0,.5),
+        inset 0 -1px 0 rgba(255,255,255,.04);
     }
     .admin-info-row {
       display: flex;
@@ -488,7 +514,9 @@
     }
 
     @media (min-width: 1024px) {
-      .admin-shell { padding: 0 0 100px; }
+      .admin-shell { padding: 56px 0 100px; }
+      .admin-tabs { transform: none; left: 240px; }
+      .appbar { transition: none; }
     }
 
     .admin-loading {
@@ -525,7 +553,7 @@
   </style>
 </head>
 <body class="dash acct admin-page">
-  <header class="appbar">
+  <header class="appbar" id="admin-appbar">
     <div class="appbar-in">
       <div class="appbar-lead">
         <a class="icon-btn" href="/dashboard.html" aria-label="Kembali"><i data-lucide="chevron-left" aria-hidden="true"></i></a>
