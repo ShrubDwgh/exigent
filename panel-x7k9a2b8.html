@@ -106,17 +106,10 @@
       box-shadow: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px -2px rgba(0,0,0,.3);
     }
     @media (min-width: 1024px) {
-      .admin-search-bar {
-        bottom: 16px;
-        left: 240px;
-      }
+      .admin-search-bar { bottom: 16px; left: 240px; }
     }
 
-    /* Search input */
-    .admin-search {
-      position: relative;
-      margin-bottom: 12px;
-    }
+    .admin-search { position: relative; margin-bottom: 12px; }
     .admin-search .lucide {
       position: absolute;
       left: 12px;
@@ -144,12 +137,7 @@
       box-shadow: 0 0 0 3px rgba(37,99,235,.15);
     }
 
-    .admin-filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
+    .admin-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
     .admin-chip {
       min-height: 32px;
       padding: 0 12px;
@@ -191,11 +179,7 @@
       color: var(--text);
       line-height: 1;
     }
-    .admin-stat-sub {
-      font-size: .75rem;
-      color: var(--muted);
-      margin: 4px 0 0;
-    }
+    .admin-stat-sub { font-size: .75rem; color: var(--muted); margin: 4px 0 0; }
 
     .admin-item {
       background: var(--surface);
@@ -239,6 +223,35 @@
       margin-top: 12px;
     }
 
+    /* Sub-card info box (buat daftar/login/trial di user) */
+    .admin-info-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .admin-info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: .8125rem;
+      line-height: 1.4;
+    }
+    .admin-info-row > span {
+      color: var(--muted);
+      flex: none;
+    }
+    .admin-info-row > strong {
+      color: var(--text);
+      font-weight: 600;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
     .admin-badge {
       display: inline-flex;
       align-items: center;
@@ -257,7 +270,6 @@
     [data-theme="dark"] .admin-badge.in_progress { background: #312E81; color: #C7D2FE; }
     [data-theme="dark"] .admin-badge.resolved    { background: #14532D; color: #86EFAC; }
 
-    /* Compact provider badge */
     .admin-provider-badge {
       display: inline-flex;
       align-items: center;
@@ -271,10 +283,7 @@
       white-space: nowrap;
       line-height: 1.4;
     }
-    [data-theme="dark"] .admin-provider-badge {
-      background: #334155;
-      color: #94A3B8;
-    }
+    [data-theme="dark"] .admin-provider-badge { background: #334155; color: #94A3B8; }
 
     .admin-btn {
       display: inline-flex;
@@ -339,11 +348,7 @@
       -webkit-box-orient: vertical;
     }
     .admin-product-meta { font-size: .75rem; color: var(--muted); }
-    .admin-product-price {
-      font-weight: 800;
-      color: var(--green);
-      font-size: .9375rem;
-    }
+    .admin-product-price { font-weight: 800; color: var(--green); font-size: .9375rem; }
 
     .admin-empty {
       text-align: center;
@@ -378,11 +383,7 @@
     @media (min-width: 640px) {
       .admin-modal { border-radius: 20px; padding-bottom: 20px; }
     }
-    .admin-modal h2 {
-      margin: 0 0 16px;
-      font-size: 1.125rem;
-      font-weight: 700;
-    }
+    .admin-modal h2 { margin: 0 0 16px; font-size: 1.125rem; font-weight: 700; }
     .admin-modal .field { margin-bottom: 14px; }
     .admin-modal-actions {
       display: grid;
@@ -392,12 +393,7 @@
       margin-top: 16px;
     }
 
-    .admin-shot-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin: 8px 0;
-    }
+    .admin-shot-grid { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
     .admin-shot-grid a {
       display: block;
       width: 60px;
@@ -406,12 +402,7 @@
       overflow: hidden;
       border: 1px solid var(--border);
     }
-    .admin-shot-grid img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+    .admin-shot-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     .admin-audio {
       display: flex;
@@ -464,12 +455,7 @@
       text-align: right;
     }
 
-    .admin-note {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-top: 12px;
-    }
+    .admin-note { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
     .admin-note textarea {
       width: 100%;
       min-height: 60px;
@@ -487,11 +473,7 @@
       box-shadow: 0 0 0 3px rgba(37,99,235,.15);
     }
 
-    .admin-photo-box {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .admin-photo-box { display: flex; flex-direction: column; gap: 8px; }
     .admin-photo-box img {
       width: 100%;
       max-width: 200px;
@@ -575,7 +557,6 @@
     </div>
   </div>
 
-  <!-- Floating search bar -->
   <div class="admin-search-bar" id="admin-search-bar">
     <div class="admin-search">
       <i data-lucide="search" aria-hidden="true"></i>
