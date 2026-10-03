@@ -320,7 +320,6 @@ async function renderFeedback() {
   drawFeedback();
 }
 
-/* Hitung jumlah untuk tiap kategori — dasar hitungan ikut filter search */
 function getFbCounts() {
   const base = cache.feedback.filter((f) => {
     if (!fbFilters.search) return true;
@@ -952,13 +951,19 @@ async function deleteUserCard(id) {
 /* ============================================================
    TAB 5: NOTIFIKASI
    ============================================================ */
+let notifFilter = { search: '', read: 'all' };
+let selectedNotifs = new Set();
+let notifData = [];
+
 function renderNotif() {
   hideSearch();
   const content = $('admin-content');
   content.innerHTML = `
-    <p class="muted" style="margin:0 0 16px">Kirim notifikasi ke user. Notif akan muncul di ikon lonceng.</p>
+    <p class="muted" style="margin:0 0 16px">Kirim notifikasi ke user, atau kelola notifikasi yang sudah ada.</p>
+
+    <!-- Form kirim -->
     <div class="admin-item">
-      <h3 style="margin:0 0 12px;font-size:1rem">Komposisi Notifikasi</h3>
+      <h3 style="margin:0 0 12px;font-size:1rem">Kirim Notifikasi Baru</h3>
       <div class="field">
         <label>Target</label>
         <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -979,15 +984,83 @@ function renderNotif() {
         </select>
       </div>
       <div class="field"><label>Judul</label><input class="input" id="notif-title" placeholder="Mis. Update Aplikasi"></div>
-      <div class="field"><label>Isi Pesan</label><textarea class="input" id="notif-body" rows="3" placeholder="Tulis isi notifikasi..."></textarea></div>
+      <div class="field">
+        <label>Isi Pesan</label>
+        <textarea class="input" id="notif-body" rows="5" placeholder="Tulis isi notifikasi..."></textarea>
+        <p class="muted small" style="margin:4px 0 0">Tip: baris baru akan dipertahankan. Pisahkan paragraf dengan Enter.</p>
+      </div>
       <div class="field"><label>Link (opsional)</label><input class="input" id="notif-link" placeholder="Mis. /dashboard.html atau #/settings"></div>
       <button type="button" class="admin-btn primary" id="notif-send" style="width:100%;min-height:44px;justify-content:center">
         <i data-lucide="send" aria-hidden="true"></i>Kirim Notifikasi
       </button>
     </div>
+
+    <!-- Kelola notifikasi -->
+    <div class="admin-item" style="margin-top:16px">
+      <h3 style="margin:0 0 12px;font-size:1rem">Kelola Notifikasi</h3>
+
+      <div class="admin-search" style="margin:0 0 12px">
+        <i data-lucide="search" aria-hidden="true"></i>
+        <input type="search" id="notif-search" placeholder="Cari judul atau isi notifikasi...">
+      </div>
+
+      <div class="admin-filters" id="notif-read-filters" style="margin-bottom:12px">
+        <button type="button" class="admin-chip active" data-read="all">Semua</button>
+        <button type="button" class="admin-chip" data-read="unread">Belum dibaca</button>
+        <button type="button" class="admin-chip" data-read="read">Sudah dibaca</button>
+      </div>
+
+      <div id="notif-bulk-bar" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--bg);border-radius:10px;align-items:center;justify-content:space-between;gap:8px">
+        <span id="notif-bulk-count" class="muted small">0 dipilih</span>
+        <button type="button" class="admin-btn danger" id="notif-del-selected">
+          <i data-lucide="trash-2" aria-hidden="true"></i>Hapus Dipilih
+        </button>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+        <button type="button" class="admin-btn" id="notif-select-all">
+          <i data-lucide="check-square" aria-hidden="true"></i>Pilih Semua
+        </button>
+        <button type="button" class="admin-btn danger" id="notif-del-all">
+          <i data-lucide="trash-2" aria-hidden="true"></i>Hapus Semua
+        </button>
+      </div>
+
+      <p class="muted small" id="notif-list-count" style="margin:0 0 8px"></p>
+      <div id="notif-list"></div>
+    </div>
   `;
   icons();
 
+  bindNotifForm();
+
+  $('notif-search').oninput = (e) => {
+    notifFilter.search = e.target.value.trim();
+    renderNotifListFiltered();
+  };
+
+  $('notif-read-filters').querySelectorAll('.admin-chip').forEach((c) => {
+    c.onclick = () => {
+      $('notif-read-filters').querySelectorAll('.admin-chip').forEach((x) => x.classList.toggle('active', x === c));
+      notifFilter.read = c.dataset.read;
+      renderNotifListFiltered();
+    };
+  });
+
+  $('notif-select-all').onclick = () => {
+    const list = filterNotifs(notifData);
+    if (selectedNotifs.size === list.length && list.length > 0) selectedNotifs.clear();
+    else list.forEach((n) => selectedNotifs.add(n.id));
+    renderNotifListFiltered();
+  };
+
+  $('notif-del-selected').onclick = deleteSelectedNotifs;
+  $('notif-del-all').onclick = deleteAllNotifs;
+
+  loadNotifList();
+}
+
+function bindNotifForm() {
   let targetMode = 'all';
   const allBtn = $('notif-t-all');
   const oneBtn = $('notif-t-one');
@@ -1016,6 +1089,151 @@ function renderNotif() {
   };
 
   $('notif-send').onclick = () => sendNotif(targetMode);
+}
+
+async function loadNotifList() {
+  const listEl = $('notif-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="admin-loading">Memuat...</div>';
+
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(300);
+
+  if (error) {
+    listEl.innerHTML = `<div class="admin-empty">Gagal memuat: ${esc(error.message)}</div>`;
+    return;
+  }
+
+  notifData = data || [];
+  selectedNotifs.clear();
+  renderNotifListFiltered();
+}
+
+function filterNotifs(list) {
+  return list.filter((n) => {
+    if (notifFilter.read === 'unread' && n.read_at) return false;
+    if (notifFilter.read === 'read' && !n.read_at) return false;
+    if (notifFilter.search) {
+      const q = notifFilter.search.toLowerCase();
+      return (n.title || '').toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q);
+    }
+    return true;
+  });
+}
+
+function renderNotifListFiltered() {
+  const list = filterNotifs(notifData);
+  const listEl = $('notif-list');
+  const countEl = $('notif-list-count');
+
+  if (countEl) countEl.textContent = `${list.length} notifikasi`;
+
+  if (!list.length) {
+    listEl.innerHTML = `<div class="admin-empty">Tidak ada notifikasi.</div>`;
+    updateBulkBar();
+    return;
+  }
+
+  listEl.innerHTML = list.map(notifAdminRow).join('');
+  icons();
+
+  listEl.querySelectorAll('[data-notif-check]').forEach((cb) => {
+    cb.checked = selectedNotifs.has(cb.dataset.notifCheck);
+    cb.onchange = () => {
+      if (cb.checked) selectedNotifs.add(cb.dataset.notifCheck);
+      else selectedNotifs.delete(cb.dataset.notifCheck);
+      updateBulkBar();
+    };
+  });
+
+  listEl.querySelectorAll('[data-notif-del]').forEach((btn) => {
+    btn.onclick = () => deleteOneNotif(btn.dataset.notifDel);
+  });
+
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const bulkBar = $('notif-bulk-bar');
+  const bulkCount = $('notif-bulk-count');
+  if (!bulkBar) return;
+  if (selectedNotifs.size > 0) {
+    bulkBar.style.display = 'flex';
+    bulkCount.textContent = `${selectedNotifs.size} dipilih`;
+  } else {
+    bulkBar.style.display = 'none';
+  }
+}
+
+function notifAdminRow(n) {
+  const when = (() => { try { return new Intl.DateTimeFormat('id-ID', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(n.created_at)); } catch (_) { return ''; } })();
+  const unread = !n.read_at;
+  const checked = selectedNotifs.has(n.id);
+  const typeLabel = { info: 'Info', security: 'Keamanan', policy: 'Kebijakan', card: 'Kartu' }[n.type] || n.type;
+
+  return `<div class="admin-item" style="padding:12px;margin-bottom:8px">
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <input type="checkbox" data-notif-check="${n.id}" ${checked ? 'checked' : ''} style="margin-top:2px;width:18px;height:18px;flex:none;cursor:pointer">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
+          <strong style="font-size:.9375rem;color:var(--text);overflow-wrap:anywhere">${esc(n.title)}</strong>
+          <span class="admin-badge ${unread ? 'new' : 'read'}">${unread ? 'Baru' : 'Dibaca'}</span>
+        </div>
+        <p style="margin:6px 0 0;font-size:.8125rem;color:var(--muted);white-space:pre-line;line-height:1.4;overflow-wrap:anywhere">${esc(n.body || '')}</p>
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center">
+          <span class="muted" style="font-size:.6875rem">${esc(typeLabel)} · ${esc(when)}</span>
+          <button type="button" class="admin-btn danger" data-notif-del="${n.id}" style="min-height:28px;padding:0 10px;font-size:.75rem">
+            <i data-lucide="trash-2" aria-hidden="true"></i>Hapus
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function deleteOneNotif(id) {
+  if (!confirm('Hapus notifikasi ini?')) return;
+  const { error } = await supabase.from('notifications').delete().eq('id', id);
+  if (error) return toast('Gagal: ' + error.message, 'error');
+  toast('Notifikasi dihapus', 'success');
+  selectedNotifs.delete(id);
+  loadNotifList();
+}
+
+async function deleteSelectedNotifs() {
+  if (!selectedNotifs.size) return;
+  if (!confirm(`Hapus ${selectedNotifs.size} notifikasi terpilih?`)) return;
+  const ids = [...selectedNotifs];
+  const { error } = await supabase.from('notifications').delete().in('id', ids);
+  if (error) return toast('Gagal: ' + error.message, 'error');
+  toast(`${ids.length} notifikasi dihapus`, 'success');
+  selectedNotifs.clear();
+  loadNotifList();
+}
+
+async function deleteAllNotifs() {
+  const total = notifData.length;
+  if (!total) return toast('Tidak ada notifikasi', 'error');
+  const answer = prompt(
+    `Hapus SEMUA ${total} notifikasi?\n\n` +
+    `Tindakan ini tidak bisa dibatalkan.\n\n` +
+    `Ketik HAPUS (huruf besar) untuk konfirmasi:`
+  );
+  if (answer !== 'HAPUS') {
+    if (answer !== null) toast('Dibatalkan', 'error');
+    return;
+  }
+  const { error } = await supabase
+    .from('notifications')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000');
+  if (error) return toast('Gagal: ' + error.message, 'error');
+  toast(`Semua notifikasi dihapus`, 'success');
+  selectedNotifs.clear();
+  loadNotifList();
 }
 
 async function sendNotif(targetMode) {
@@ -1058,6 +1276,7 @@ async function sendNotif(targetMode) {
     $('notif-title').value = '';
     $('notif-body').value = '';
     $('notif-link').value = '';
+    loadNotifList();
   } catch (e) {
     toast('Gagal: ' + (e.message || e), 'error');
   } finally {
@@ -1092,7 +1311,7 @@ async function sendNotif(targetMode) {
 })();
 
 /* ============================================================
-   SCROLL BEHAVIOR: sembunyikan appbar saat scroll ke bawah
+   SCROLL BEHAVIOR
    ============================================================ */
 (function () {
   const appbar = document.getElementById('admin-appbar');
@@ -1131,8 +1350,7 @@ async function sendNotif(targetMode) {
 })();
 
 /* ============================================================
-   KEYBOARD BEHAVIOR: search bar ikut naik saat keyboard muncul.
-   Debounce + threshold biar smooth (nggak kaku/jump).
+   KEYBOARD BEHAVIOR
    ============================================================ */
 (function () {
   const searchBar = document.getElementById('admin-search-bar');
