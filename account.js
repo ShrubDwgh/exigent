@@ -552,10 +552,23 @@ function renderPermissions() {
         ${trow('contacts', t('perm_contacts'), t('perm_contacts_desc'))}
       </div></div>
     <div><p class="sec-label">${T('perm_device_title')}</p>
-      <div class="card">
-        <div class="crow"><div><strong>${T('perm_geo')}</strong><p class="muted small">${T('perm_geo_desc')}</p></div><span id="perm-geo" class="badge">${T('perm_checking')}</span></div>
-        <div class="crow"><div><strong>${T('perm_nfc')}</strong><p class="muted small">${T('perm_nfc_desc')}</p></div><span id="perm-nfc" class="badge">${T('perm_checking')}</span></div>
-        <div class="crow"><div><strong>${lang === 'id' ? 'Mikrofon' : 'Microphone'}</strong><p class="muted small">${lang === 'id' ? 'Untuk kirim voice note di masukan' : 'For sending voice notes in feedback'}</p></div><span id="perm-mic" class="badge">${T('perm_checking')}</span></div>
+      <div class="card menu">
+        <div class="crow" style="padding:16px 20px">
+          <div><strong>${T('perm_geo')}</strong><p class="muted small">${T('perm_geo_desc')}</p></div>
+          <span id="perm-geo" class="badge">${T('perm_checking')}</span>
+        </div>
+      </div>
+      <div class="card menu" style="margin-top:12px">
+        <div class="crow" style="padding:16px 20px">
+          <div><strong>${T('perm_nfc')}</strong><p class="muted small">${T('perm_nfc_desc')}</p></div>
+          <span id="perm-nfc" class="badge">${T('perm_checking')}</span>
+        </div>
+      </div>
+      <div class="card menu" style="margin-top:12px">
+        <div class="crow" style="padding:16px 20px">
+          <div><strong>${lang === 'id' ? 'Mikrofon' : 'Microphone'}</strong><p class="muted small">${lang === 'id' ? 'Untuk kirim voice note di masukan' : 'For sending voice notes in feedback'}</p></div>
+          <span id="perm-mic" class="badge">${T('perm_checking')}</span>
+        </div>
       </div>
       <p class="muted small" style="margin-top:12px">${T('perm_hint')}</p></div>
   </section>`;
@@ -586,7 +599,6 @@ function renderPermissions() {
       setBadge(mic, status.state);
       status.onchange = () => setBadge(mic, status.state);
     }).catch(() => {
-      // Browser nggak support query 'microphone' — cek dukungan getUserMedia
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         if (mic && mic.isConnected) {
           mic.textContent = lang === 'id' ? 'Didukung' : 'Supported';
