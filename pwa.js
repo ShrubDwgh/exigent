@@ -75,7 +75,7 @@ let installBannerShown = false;
 let activeTimer = null;
 let activeSeconds = 0;
 
-const TRIGGER_SECONDS = 30;         // setelah 30 detik aktif
+const TRIGGER_SECONDS = 15;         // setelah 30 detik aktif
 const DISMISS_KEY = 'exigent_install_dismiss_until';
 const DISMISS_DAYS = 7;
 
