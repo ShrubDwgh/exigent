@@ -315,12 +315,12 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 .icon-btn:active { transform:scale(.94); }
 .icon-btn .lucide { width:24px; height:24px; }
 .dot { position:absolute; top:9px; right:10px; width:10px; height:10px; border-radius:50%; background:var(--red); border:2px solid var(--surface); }
-.acct .main { padding-top:calc(104px + env(safe-area-inset-top, 0px)); }
+.acct .main { padding-top:calc(88px + env(safe-area-inset-top, 0px)); }
 .acct .main:focus { outline:0; }
 @media (min-width:1024px) {
   .appbar { left:240px; padding-top:0; }
   .appbar-in { padding:0 22px 0 24px; }
-  .acct .main { padding-top:112px; }
+  .acct .main { padding-top:96px; }
 }
 
 .stack-lg > p { margin:0; }
@@ -974,7 +974,6 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   .install-banner { bottom: 24px; }
 }
 
-/* Dark mode override */
 [data-theme="dark"] .install-banner {
   background: var(--surface);
   border-color: var(--border);
@@ -990,7 +989,6 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 [data-theme="dark"] .install-banner-later { color: #94A3B8; }
 [data-theme="dark"] .install-banner-later:hover { background: #162032; }
 
-/* ===== Update toast (opsional) ===== */
 .update-toast {
   position: fixed;
   left: 50%;
