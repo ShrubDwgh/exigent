@@ -80,7 +80,6 @@ async function loadData() {
 const meta = () => session.user.user_metadata || {};
 const googleName = () => String(meta().full_name || meta().name || '').trim();
 
-/* displayName: profil (atau cache) > Google > email */
 const displayName = () => {
   const p = profile || getCachedProfile() || {};
   return String(p.full_name || '').trim()
@@ -556,12 +555,7 @@ function renderPermissions() {
       <div class="card">
         <div class="crow"><div><strong>${T('perm_geo')}</strong><p class="muted small">${T('perm_geo_desc')}</p></div><span id="perm-geo" class="badge">${T('perm_checking')}</span></div>
         <div class="crow"><div><strong>${T('perm_nfc')}</strong><p class="muted small">${T('perm_nfc_desc')}</p></div><span id="perm-nfc" class="badge">${T('perm_checking')}</span></div>
-      </div>
-      <div class="card menu" style="margin-top:12px">
-        <button type="button" class="trow" role="switch" aria-checked="false" id="mic-switch">
-          <span class="mrow-tx"><strong>${lang === 'id' ? 'Mikrofon' : 'Microphone'}</strong><small>${lang === 'id' ? 'Untuk kirim voice note di masukan' : 'For sending voice notes in feedback'}</small></span>
-          <span class="switch" aria-hidden="true"></span>
-        </button>
+        <div class="crow"><div><strong>${lang === 'id' ? 'Mikrofon' : 'Microphone'}</strong><p class="muted small">${lang === 'id' ? 'Untuk kirim voice note di masukan' : 'For sending voice notes in feedback'}</p></div><span id="perm-mic" class="badge">${T('perm_checking')}</span></div>
       </div>
       <p class="muted small" style="margin-top:12px">${T('perm_hint')}</p></div>
   </section>`;
@@ -579,50 +573,37 @@ function renderPermissions() {
   }));
   paint();
 
-  const geo = $('perm-geo'), nfc = $('perm-nfc');
+  const geo = $('perm-geo'), nfc = $('perm-nfc'), mic = $('perm-mic');
   const MAP = { granted: ['perm_granted', 'badge-active'], denied: ['perm_denied', 'badge-emergency'], prompt: ['perm_prompt', 'badge-inactive'] };
-  const setBadge = (el, st) => { if (!el.isConnected) return; const [k, cls] = MAP[st] || ['perm_unknown', '']; el.textContent = t(k); el.className = 'badge ' + cls; };
+  const setBadge = (el, st) => { if (!el || !el.isConnected) return; const [k, cls] = MAP[st] || ['perm_unknown', '']; el.textContent = t(k); el.className = 'badge ' + cls; };
+
   watchPermission('geolocation', (st) => setBadge(geo, st));
   watchPermission('nfc', (st) => setBadge(nfc, st));
 
-  const micSwitch = $('mic-switch');
-  if (micSwitch) {
-    const updateMicSwitch = async () => {
-      if (!navigator.permissions || !navigator.permissions.query) {
-        micSwitch.setAttribute('aria-checked', 'false');
-        return;
+  // Mikrofon — cuma info status (nggak bisa diubah dari web, harus lewat browser settings)
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'microphone' }).then((status) => {
+      setBadge(mic, status.state);
+      status.onchange = () => setBadge(mic, status.state);
+    }).catch(() => {
+      // Browser nggak support query 'microphone' — cek dukungan getUserMedia
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        if (mic && mic.isConnected) {
+          mic.textContent = lang === 'id' ? 'Didukung' : 'Supported';
+          mic.className = 'badge badge-inactive';
+        }
+      } else {
+        if (mic && mic.isConnected) {
+          mic.textContent = lang === 'id' ? 'Tidak didukung' : 'Not supported';
+          mic.className = 'badge badge-emergency';
+        }
       }
-      try {
-        const status = await navigator.permissions.query({ name: 'microphone' });
-        micSwitch.setAttribute('aria-checked', String(status.state === 'granted'));
-        status.onchange = () => micSwitch.setAttribute('aria-checked', String(status.state === 'granted'));
-      } catch (_) {
-        micSwitch.setAttribute('aria-checked', 'false');
-      }
-    };
-    updateMicSwitch();
-
-    micSwitch.onclick = async () => {
-      const isOn = micSwitch.getAttribute('aria-checked') === 'true';
-      if (isOn) {
-        toast(lang === 'id' ? 'Untuk mematikan, atur lewat pengaturan browser' : 'To turn off, use browser settings');
-        return;
-      }
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        return toast(lang === 'id' ? 'Browser tidak mendukung mikrofon' : 'Browser does not support microphone');
-      }
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach((t) => t.stop());
-        toast(lang === 'id' ? 'Izin mikrofon diberikan' : 'Microphone permission granted');
-        updateMicSwitch();
-      } catch (err) {
-        toast(err.name === 'NotAllowedError'
-          ? (lang === 'id' ? 'Izin ditolak' : 'Permission denied')
-          : (lang === 'id' ? 'Gagal: ' : 'Failed: ') + (err.message || ''));
-        updateMicSwitch();
-      }
-    };
+    });
+  } else {
+    if (mic && mic.isConnected) {
+      mic.textContent = lang === 'id' ? 'Tidak didukung' : 'Not supported';
+      mic.className = 'badge badge-emergency';
+    }
   }
 }
 
@@ -1007,10 +988,8 @@ requireSession().then(async (s) => {
   if (!s) return;
   session = s;
 
-  // Render pertama pakai cache (kalau ada) — biar langsung tampil nama & foto yang benar
   onRoute();
 
-  // Fetch data profil di background, refresh kalau sudah siap
   loadData().then(() => {
     if (currentPath() === '/') {
       renderHome();
