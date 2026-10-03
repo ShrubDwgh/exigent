@@ -1008,6 +1008,7 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 
 /* ============================================
    EFFECT: TOMBOL TIMBUL & CARD NEUMORPHISM
+   (dipasang paling akhir biar override semua)
    ============================================ */
 
 /* ---- TOMBOL: TIMBUL ---- */
@@ -1016,7 +1017,13 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 .btn-success,
 .btn-danger,
 .btn-outline,
-.btn-sm,
+.btn-sm {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    0 2px 4px rgba(15,23,42,.08),
+    0 6px 14px -4px rgba(15,23,42,.15) !important;
+  transition: background var(--t), transform var(--t), box-shadow .2s ease, filter .15s ease !important;
+}
 .icon-btn,
 .chip,
 .opt,
@@ -1028,12 +1035,19 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
     0 6px 14px -4px rgba(15,23,42,.15);
   transition: background var(--t), transform var(--t), box-shadow .2s ease, filter .15s ease;
 }
+
 .btn:hover,
 .btn-secondary:hover,
 .btn-success:hover,
 .btn-danger:hover,
 .btn-outline:hover,
-.btn-sm:hover,
+.btn-sm:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.45),
+    0 4px 8px rgba(15,23,42,.1),
+    0 10px 20px -6px rgba(15,23,42,.2) !important;
+}
 .icon-btn:hover,
 .chip:hover,
 .opt:hover,
@@ -1045,11 +1059,18 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
     0 4px 8px rgba(15,23,42,.1),
     0 10px 20px -6px rgba(15,23,42,.2);
 }
+
 .btn:active,
 .btn-secondary:active,
 .btn-success:active,
 .btn-danger:active,
 .btn-outline:active,
+.btn-sm:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 6px rgba(15,23,42,.15),
+    0 1px 2px rgba(15,23,42,.06) !important;
+}
 .icon-btn:active,
 .chip:active,
 .opt:active,
@@ -1069,16 +1090,21 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
     0 2px 4px rgba(15,23,42,.06),
     0 6px 14px -4px rgba(15,23,42,.12),
     inset 0 3px 8px rgba(15,23,42,.1),
-    inset 0 -2px 4px rgba(255,255,255,.7);
+    inset 0 -2px 4px rgba(255,255,255,.7) !important;
 }
 
-/* ---- Dark mode ---- */
+/* ---- DARK MODE OVERRIDES ---- */
 [data-theme="dark"] .btn,
 [data-theme="dark"] .btn-secondary,
 [data-theme="dark"] .btn-success,
 [data-theme="dark"] .btn-danger,
 [data-theme="dark"] .btn-outline,
-[data-theme="dark"] .btn-sm,
+[data-theme="dark"] .btn-sm {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 2px 4px rgba(0,0,0,.3),
+    0 6px 14px -4px rgba(0,0,0,.5) !important;
+}
 [data-theme="dark"] .icon-btn,
 [data-theme="dark"] .chip,
 [data-theme="dark"] .opt,
@@ -1089,12 +1115,18 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
     0 2px 4px rgba(0,0,0,.3),
     0 6px 14px -4px rgba(0,0,0,.5);
 }
+
 [data-theme="dark"] .btn:hover,
 [data-theme="dark"] .btn-secondary:hover,
 [data-theme="dark"] .btn-success:hover,
 [data-theme="dark"] .btn-danger:hover,
 [data-theme="dark"] .btn-outline:hover,
-[data-theme="dark"] .btn-sm:hover,
+[data-theme="dark"] .btn-sm:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 4px 8px rgba(0,0,0,.4),
+    0 10px 20px -6px rgba(0,0,0,.6) !important;
+}
 [data-theme="dark"] .icon-btn:hover,
 [data-theme="dark"] .chip:hover,
 [data-theme="dark"] .opt:hover,
@@ -1105,11 +1137,17 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
     0 4px 8px rgba(0,0,0,.4),
     0 10px 20px -6px rgba(0,0,0,.6);
 }
+
 [data-theme="dark"] .btn:active,
 [data-theme="dark"] .btn-secondary:active,
 [data-theme="dark"] .btn-success:active,
 [data-theme="dark"] .btn-danger:active,
 [data-theme="dark"] .btn-outline:active,
+[data-theme="dark"] .btn-sm:active {
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,.5),
+    0 1px 2px rgba(0,0,0,.2) !important;
+}
 [data-theme="dark"] .icon-btn:active,
 [data-theme="dark"] .chip:active,
 [data-theme="dark"] .opt:active,
@@ -1127,5 +1165,5 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
     0 2px 4px rgba(0,0,0,.35),
     0 6px 14px -4px rgba(0,0,0,.5),
     inset 0 3px 10px rgba(0,0,0,.55),
-    inset 0 -2px 4px rgba(255,255,255,.05);
+    inset 0 -2px 4px rgba(255,255,255,.05) !important;
 }
