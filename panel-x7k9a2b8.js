@@ -9,7 +9,6 @@ let me = null;
 let currentTab = 'dashboard';
 let cache = { feedback: [], products: [], users: [] };
 
-/* ---------- Toast ---------- */
 let toastTimer = null;
 function toast(msg, type = '') {
   const el = $('admin-toast');
@@ -19,7 +18,6 @@ function toast(msg, type = '') {
   toastTimer = setTimeout(() => { el.className = 'admin-toast'; }, 2600);
 }
 
-/* ---------- Helpers ---------- */
 const fmtDate = (iso) => {
   if (!iso) return '-';
   try { return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso)); }
@@ -37,7 +35,6 @@ const fmtSeconds = (s) => {
 };
 const icons = () => window.lucide && window.lucide.createIcons();
 
-/* ---------- Floating search bar ---------- */
 let searchInputHandler = null;
 function setupSearch(placeholder, value, onInput) {
   const bar = $('admin-search-bar');
@@ -58,7 +55,6 @@ function hideSearch() {
   input.value = '';
 }
 
-/* ---------- Modal ---------- */
 function openModal(innerHtml, onMount) {
   const wrap = document.createElement('div');
   wrap.className = 'admin-modal-bg';
@@ -73,7 +69,6 @@ function closeModal(wrap) {
   if (wrap && wrap.parentNode) wrap.remove();
 }
 
-/* ---------- Mini audio player ---------- */
 async function loadAudioBufferFor(url) {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   if (ctx.state === 'suspended') await ctx.resume();
@@ -166,9 +161,6 @@ function initMiniPlayer(root, url) {
   update();
 }
 
-/* ============================================================
-   TAB SWITCHING
-   ============================================================ */
 function setActiveTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.admin-tab').forEach((b) => {
@@ -748,6 +740,9 @@ function drawUsers() {
   listEl.querySelectorAll('[data-user-reset-trial]').forEach((b) => {
     b.onclick = () => resetUserTrial(b.dataset.userResetTrial);
   });
+  listEl.querySelectorAll('[data-user-del-card]').forEach((b) => {
+    b.onclick = () => deleteUserCard(b.dataset.userDelCard);
+  });
 }
 
 function userRowHtml(u) {
@@ -759,10 +754,9 @@ function userRowHtml(u) {
     ? `<img src="${esc(avatarUrl)}" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none" referrerpolicy="no-referrer">`
     : `<span style="width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none;font-size:1.125rem">${esc(initial)}</span>`;
 
+  const trialActive = u.trial_ends_at && new Date(u.trial_ends_at).getTime() > Date.now();
   const trialStr = u.trial_ends_at
-    ? (new Date(u.trial_ends_at).getTime() > Date.now()
-        ? `Trial aktif s/d ${fmtDate(u.trial_ends_at)}`
-        : `Trial habis ${fmtDate(u.trial_ends_at)}`)
+    ? (trialActive ? `Aktif s/d ${fmtDate(u.trial_ends_at)}` : `Habis ${fmtDate(u.trial_ends_at)}`)
     : 'Tidak ada trial';
 
   const cardCode = u.card_code || '(belum punya kartu)';
@@ -789,16 +783,19 @@ function userRowHtml(u) {
       </div>
       <span class="admin-badge ${u.card_active ? 'resolved' : 'read'}">${u.card_active ? 'Aktif' : 'Nonaktif'}</span>
     </div>
-    <div style="font-size:.75rem;color:var(--muted);margin-top:10px;display:flex;flex-direction:column;gap:2px">
-      <span>Daftar: ${esc(fmtDate(u.account_created))}</span>
-      <span>Login terakhir: ${esc(fmtDate(u.last_sign_in_at))}</span>
-      <span>${esc(trialStr)}</span>
-      ${u.has_purchased ? '<span style="color:var(--green);font-weight:600">Premium — sudah beli kartu</span>' : ''}
+
+    <div class="admin-info-box">
+      <div class="admin-info-row"><span>Daftar</span><strong>${esc(fmtDate(u.account_created))}</strong></div>
+      <div class="admin-info-row"><span>Login terakhir</span><strong>${esc(fmtDate(u.last_sign_in_at))}</strong></div>
+      <div class="admin-info-row"><span>Trial</span><strong>${esc(trialStr)}</strong></div>
+      ${u.has_purchased ? '<div class="admin-info-row"><span>Status</span><strong style="color:var(--green)">Premium</strong></div>' : ''}
     </div>
+
     <div class="admin-item-actions">
       ${u.card_row_id ? `
         <button type="button" class="admin-btn" data-user-toggle="${u.card_row_id}">${u.card_active ? 'Nonaktifkan Kartu' : 'Aktifkan Kartu'}</button>
         <button type="button" class="admin-btn" data-user-reset-trial="${u.card_row_id}">Reset Trial</button>
+        <button type="button" class="admin-btn danger" data-user-del-card="${u.card_row_id}"><i data-lucide="trash-2" aria-hidden="true"></i>Hapus Kartu</button>
       ` : '<span class="muted small">User belum punya kartu</span>'}
     </div>
   </div>`;
@@ -827,6 +824,38 @@ async function resetUserTrial(id) {
   if (u) u.trial_ends_at = end.toISOString();
   drawUsers();
   toast('Trial direset', 'success');
+}
+
+async function deleteUserCard(id) {
+  const u = cache.users.find((x) => x.card_row_id === id);
+  if (!u) return;
+
+  const name = u.profile_name || u.google_name || u.email || 'user ini';
+  const code = u.card_code || '-';
+
+  const answer = prompt(
+    `Hapus kartu PERMANEN?\n\n` +
+    `User: ${name}\n` +
+    `Email: ${u.email}\n` +
+    `Card ID: ${code}\n\n` +
+    `Semua data kartu, profil medis, dan kontak darurat akan terhapus.\n` +
+    `Tindakan ini tidak bisa dibatalkan.\n\n` +
+    `Ketik HAPUS (huruf besar) untuk konfirmasi:`
+  );
+
+  if (answer !== 'HAPUS') {
+    if (answer !== null) toast('Dibatalkan (ketikan salah)', 'error');
+    return;
+  }
+
+  try {
+    const { error } = await supabase.from('cards').delete().eq('id', id);
+    if (error) throw error;
+    toast('Kartu dihapus permanen', 'success');
+    await renderUsers();
+  } catch (e) {
+    toast('Gagal: ' + (e.message || e), 'error');
+  }
 }
 
 /* ============================================================
