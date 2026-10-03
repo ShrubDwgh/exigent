@@ -132,18 +132,18 @@
       .admin-search-bar { bottom: 16px; left: 240px; right: 0; }
     }
 
-    /* FAB tambah: kotak dengan sudut melengkung, isi cuma icon plus */
+    /* FAB tambah: kotak melengkung, cuma icon plus, ukuran besar */
     .admin-fab-add {
       align-self: flex-end;
       pointer-events: auto;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 52px;
-      height: 52px;
+      width: 64px;
+      height: 64px;
       padding: 0;
       border: 0;
-      border-radius: 14px;
+      border-radius: 16px;
       background: var(--blue);
       color: #fff;
       cursor: pointer;
@@ -156,7 +156,7 @@
     .admin-fab-add:hover { filter: brightness(1.1); }
     .admin-fab-add:active { transform: scale(.94); }
     .admin-fab-add[hidden] { display: none; }
-    .admin-fab-add .lucide { width: 26px; height: 26px; }
+    .admin-fab-add .lucide { width: 32px; height: 32px; }
 
     .admin-search { position: relative; margin-bottom: 0; }
     .admin-search .lucide {
@@ -373,7 +373,6 @@
       display: flex;
       flex-direction: column;
     }
-    /* Gambar produk: aspect ratio lebih lebar biar ga ada space kosong atas-bawah */
     .admin-product-img {
       width: 100%;
       aspect-ratio: 16 / 10;
