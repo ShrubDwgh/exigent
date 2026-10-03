@@ -93,6 +93,7 @@
 
     .admin-content { padding: 16px 16px 0; }
 
+    /* ===== Search bar (CUMAN input) ===== */
     .admin-search-bar {
       position: fixed;
       left: 0;
@@ -102,12 +103,13 @@
       padding: 12px 16px;
       pointer-events: none;
       display: none;
-      flex-direction: column;
-      gap: 8px;
       max-width: 1200px;
       margin: 0 auto;
+      box-sizing: border-box;
+      transition: transform .25s cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
     }
-    .admin-search-bar.active { display: flex; }
+    .admin-search-bar.active { display: block; }
     .admin-search-bar .admin-search {
       margin: 0 auto;
       width: 100%;
@@ -132,8 +134,12 @@
       .admin-search-bar { bottom: 16px; left: 240px; right: 0; }
     }
 
+    /* ===== FAB tambah (fixed sendiri, di atas search bar) ===== */
     .admin-fab-add {
-      align-self: flex-end;
+      position: fixed;
+      right: 16px;
+      bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+      z-index: 16;
       pointer-events: auto;
       display: inline-flex;
       align-items: center;
@@ -271,12 +277,6 @@
       margin-top: 12px;
     }
 
-    /* =====================================================
-       Info box: TENGGELAM + TIMBUL (neumorphism)
-       - Outer shadow (bawah) bikin kesan "timbul/melayang"
-       - Inner shadow bikin kesan "tenggelam/cekung"
-       - Highlight tipis di atas-bawah untuk kesan timbul
-       ===================================================== */
     .admin-info-box {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -287,10 +287,8 @@
       flex-direction: column;
       gap: 8px;
       box-shadow:
-        /* Outer shadow: bikin kesan timbul ke atas */
         0 2px 4px rgba(15,23,42,.06),
         0 6px 14px -4px rgba(15,23,42,.12),
-        /* Inner shadow: bikin kesan cekung/tenggelam */
         inset 0 3px 8px rgba(15,23,42,.1),
         inset 0 -2px 4px rgba(255,255,255,.7);
     }
@@ -633,10 +631,13 @@
     </div>
   </div>
 
+  <!-- FAB tambah — fixed sendiri, di atas search bar -->
+  <button type="button" class="admin-fab-add" id="admin-fab-add" hidden aria-label="Tambah produk">
+    <i data-lucide="plus" aria-hidden="true"></i>
+  </button>
+
+  <!-- Search bar — cuma input -->
   <div class="admin-search-bar" id="admin-search-bar">
-    <button type="button" class="admin-fab-add" id="admin-fab-add" hidden aria-label="Tambah produk">
-      <i data-lucide="plus" aria-hidden="true"></i>
-    </button>
     <div class="admin-search">
       <i data-lucide="search" aria-hidden="true"></i>
       <input type="search" id="admin-search-input" placeholder="">
