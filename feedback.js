@@ -32,14 +32,34 @@ function setType(type) {
 $('tab-idea').onclick = () => setType('idea');
 $('tab-bug').onclick = () => setType('bug');
 
+/* ---------- Screenshot preview dengan fallback canvas ---------- */
 function renderShots() {
   const box = $('shot-list');
   box.innerHTML = screenshotFiles.map((s, i) => `
     <div class="shot-thumb">
-      <img src="${s.url}" alt="" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('beforeend','<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1E293B;border-radius:10px;color:#94A3B8;font-size:11px;text-align:center;padding:8px\\'>Preview gagal</div>')">
+      <img src="${s.url}" alt="" data-idx="${i}">
       <button type="button" class="shot-x" data-rm="${i}" aria-label="Hapus">×</button>
     </div>
   `).join('');
+
+  box.querySelectorAll('img[data-idx]').forEach((img) => {
+    img.onerror = async () => {
+      const idx = +img.dataset.idx;
+      const file = screenshotFiles[idx] && screenshotFiles[idx].file;
+      if (!file) return;
+      try {
+        const blob = await compressImage(file);
+        const newUrl = URL.createObjectURL(blob);
+        img.src = newUrl;
+      } catch (e) {
+        const div = document.createElement('div');
+        div.textContent = 'Preview gagal';
+        div.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1E293B;border-radius:10px;color:#94A3B8;font-size:11px;text-align:center;padding:8px';
+        img.replaceWith(div);
+      }
+    };
+  });
+
   box.querySelectorAll('[data-rm]').forEach((b) => {
     b.onclick = () => {
       const i = +b.dataset.rm;
@@ -50,7 +70,6 @@ function renderShots() {
   });
 }
 
-/* ---------- Screenshot input (dengan validasi format) ---------- */
 $('f-shots').onchange = (e) => {
   const files = Array.from(e.target.files || []);
   const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
@@ -75,6 +94,21 @@ $('f-shots').onchange = (e) => {
 };
 
 /* ---------- Voice recording ---------- */
+function pickAudioMime() {
+  if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+  const opts = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg;codecs=opus',
+    'audio/ogg',
+    'audio/mp4',
+  ];
+  for (const m of opts) {
+    try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (_) {}
+  }
+  return '';
+}
+
 $('voice-record').onclick = async () => {
   if (mediaRecorder && mediaRecorder.state === 'recording') {
     mediaRecorder.stop();
@@ -86,15 +120,20 @@ $('voice-record').onclick = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     audioChunks = [];
-    mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = (ev) => { if (ev.data.size) audioChunks.push(ev.data); };
+    const mime = pickAudioMime();
+    mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) audioChunks.push(ev.data); };
+
     mediaRecorder.onstop = () => {
-      stream.getTracks().forEach((t) => t.stop());
-      audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+      stream.getTracks().forEach((tr) => tr.stop());
+      const detectedType = (mediaRecorder.mimeType || mime || 'audio/webm').split(';')[0];
+      audioBlob = new Blob(audioChunks, { type: detectedType });
       stopTimer();
       showVoicePreview();
     };
-    mediaRecorder.start();
+
+    mediaRecorder.start(250);
     recordingStart = Date.now();
     startTimer();
     $('voice-record').innerHTML = '<i data-lucide="square" aria-hidden="true"></i><span>Stop rekaman</span><span class="rec-dot"></span>';
@@ -119,18 +158,110 @@ function stopTimer() {
   window.lucide && window.lucide.createIcons();
 }
 
+/* ---------- Custom Voice Player ---------- */
+const audioEl = $('voice-audio');
+const playBtn = $('voice-play');
+const trackWrap = $('voice-track-wrap');
+const fillEl = $('voice-fill');
+const dotEl = $('voice-dot');
+const timeEl = $('voice-time');
+
+function fmtTime(sec) {
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function setPlayIcon(playing) {
+  playBtn.innerHTML = playing
+    ? '<i data-lucide="pause" aria-hidden="true"></i>'
+    : '<i data-lucide="play" aria-hidden="true"></i>';
+  window.lucide && window.lucide.createIcons();
+}
+
+function updateProgress() {
+  const d = audioEl.duration || 0;
+  const c = audioEl.currentTime || 0;
+  const pct = d > 0 ? (c / d) * 100 : 0;
+  fillEl.style.width = pct + '%';
+  dotEl.style.left = pct + '%';
+  timeEl.textContent = `${fmtTime(c)} / ${fmtTime(d)}`;
+}
+
+audioEl.addEventListener('loadedmetadata', updateProgress);
+audioEl.addEventListener('durationchange', updateProgress);
+audioEl.addEventListener('timeupdate', updateProgress);
+audioEl.addEventListener('play', () => setPlayIcon(true));
+audioEl.addEventListener('pause', () => setPlayIcon(false));
+audioEl.addEventListener('ended', () => {
+  setPlayIcon(false);
+  audioEl.currentTime = 0;
+  updateProgress();
+});
+
+playBtn.onclick = () => {
+  if (audioEl.paused) audioEl.play().catch(() => {});
+  else audioEl.pause();
+};
+
+/* Seek: pointer events (mouse + touch) */
+let seeking = false;
+function seekFromEvent(ev) {
+  const rect = trackWrap.getBoundingClientRect();
+  const x = (ev.clientX ?? (ev.touches && ev.touches[0] && ev.touches[0].clientX) ?? 0) - rect.left;
+  const ratio = Math.max(0, Math.min(1, x / rect.width));
+  if (audioEl.duration) {
+    audioEl.currentTime = ratio * audioEl.duration;
+    updateProgress();
+  }
+}
+trackWrap.addEventListener('pointerdown', (e) => {
+  seeking = true;
+  try { trackWrap.setPointerCapture(e.pointerId); } catch (_) {}
+  seekFromEvent(e);
+});
+trackWrap.addEventListener('pointermove', (e) => {
+  if (seeking) seekFromEvent(e);
+});
+trackWrap.addEventListener('pointerup', () => { seeking = false; });
+trackWrap.addEventListener('pointercancel', () => { seeking = false; });
+
+/* Tampilkan player + load blob */
 function showVoicePreview() {
   $('voice-record').hidden = true;
   $('voice-preview').hidden = false;
-  const url = URL.createObjectURL(audioBlob);
-  $('voice-audio').src = url;
+
+  const t0 = (audioBlob.type || 'audio/webm').toLowerCase();
+  const forcedType = t0.includes('ogg') ? 'audio/ogg'
+                   : t0.includes('mp4') ? 'audio/mp4'
+                   : 'audio/webm';
+  const blob = new Blob([audioBlob], { type: forcedType });
+  const url = URL.createObjectURL(blob);
+
+  if (audioEl._oldUrl) URL.revokeObjectURL(audioEl._oldUrl);
+  audioEl._oldUrl = url;
+
+  audioEl.pause();
+  audioEl.removeAttribute('src');
+  audioEl.load();
+  audioEl.src = url;
+  audioEl.load();
+
+  setPlayIcon(false);
+  fillEl.style.width = '0%';
+  dotEl.style.left = '0%';
+  timeEl.textContent = '0:00 / 0:00';
 }
 
 $('voice-delete').onclick = () => {
+  if (audioEl._oldUrl) { URL.revokeObjectURL(audioEl._oldUrl); audioEl._oldUrl = null; }
   audioBlob = null;
+  audioEl.pause();
+  audioEl.removeAttribute('src');
+  audioEl.load();
   $('voice-preview').hidden = true;
   $('voice-record').hidden = false;
-  $('voice-audio').src = '';
 };
 
 /* ---------- Image compress dengan fallback ---------- */
@@ -195,7 +326,6 @@ $('fb-form').onsubmit = async (e) => {
     const base = `${user.id}/${ts}`;
     const shotPaths = [];
 
-    // Upload screenshot
     for (let i = 0; i < screenshotFiles.length; i++) {
       btn.innerHTML = `<span>Mengunggah gambar ${i + 1}/${screenshotFiles.length}...</span>`;
       const { blob, ext, contentType } = await prepareImage(screenshotFiles[i].file);
@@ -204,16 +334,16 @@ $('fb-form').onsubmit = async (e) => {
       shotPaths.push(p);
     }
 
-    // Upload audio
     let audioPath = null;
     if (audioBlob) {
       btn.innerHTML = '<span>Mengunggah voice note...</span>';
-      const ext = audioBlob.type.includes('webm') ? 'webm' : 'ogg';
+      const t0 = (audioBlob.type || '').toLowerCase();
+      const ext = t0.includes('ogg') ? 'ogg' : t0.includes('mp4') ? 'm4a' : 'webm';
+      const ct = t0.includes('ogg') ? 'audio/ogg' : t0.includes('mp4') ? 'audio/mp4' : 'audio/webm';
       audioPath = `${base}-voice.${ext}`;
-      await uploadTo('feedback-files', audioPath, audioBlob, audioBlob.type);
+      await uploadTo('feedback-files', audioPath, audioBlob, ct);
     }
 
-    // Insert row
     btn.innerHTML = '<span>Menyimpan...</span>';
     const { error } = await supabase.from('feedback').insert({
       user_id: user.id,
