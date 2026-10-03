@@ -32,7 +32,17 @@ function setType(type) {
 $('tab-idea').onclick = () => setType('idea');
 $('tab-bug').onclick = () => setType('bug');
 
-/* ---------- Screenshot preview dengan fallback canvas ---------- */
+/* ---------- Helper: file -> data URL ---------- */
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error || new Error('Gagal baca file'));
+    r.readAsDataURL(file);
+  });
+}
+
+/* ---------- Screenshot ---------- */
 function renderShots() {
   const box = $('shot-list');
   box.innerHTML = screenshotFiles.map((s, i) => `
@@ -42,15 +52,20 @@ function renderShots() {
     </div>
   `).join('');
 
+  // Fallback kalau <img> tetap gagal: pakai createImageBitmap -> canvas -> data URL
   box.querySelectorAll('img[data-idx]').forEach((img) => {
     img.onerror = async () => {
       const idx = +img.dataset.idx;
-      const file = screenshotFiles[idx] && screenshotFiles[idx].file;
-      if (!file) return;
+      const s = screenshotFiles[idx];
+      if (!s) return;
       try {
-        const blob = await compressImage(file);
-        const newUrl = URL.createObjectURL(blob);
-        img.src = newUrl;
+        if (!('createImageBitmap' in window)) throw new Error('no bitmap');
+        const bmp = await createImageBitmap(s.file);
+        const c = document.createElement('canvas');
+        c.width = bmp.width; c.height = bmp.height;
+        c.getContext('2d').drawImage(bmp, 0, 0);
+        img.src = c.toDataURL('image/jpeg', 0.85);
+        bmp.close && bmp.close();
       } catch (e) {
         const div = document.createElement('div');
         div.textContent = 'Preview gagal';
@@ -63,23 +78,18 @@ function renderShots() {
   box.querySelectorAll('[data-rm]').forEach((b) => {
     b.onclick = () => {
       const i = +b.dataset.rm;
-      URL.revokeObjectURL(screenshotFiles[i].url);
       screenshotFiles.splice(i, 1);
       renderShots();
     };
   });
 }
 
-$('f-shots').onchange = (e) => {
+$('f-shots').onchange = async (e) => {
   const files = Array.from(e.target.files || []);
   const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
   for (const file of files) {
-    if (!file.type) {
-      toast(`File "${file.name}" tidak dikenali. Pakai JPG atau PNG.`);
-      continue;
-    }
-    if (!allowed.includes(file.type)) {
-      toast(`Format "${file.type}" tidak didukung. Pakai JPG, PNG, WebP, atau GIF.`);
+    if (!file.type || !allowed.includes(file.type)) {
+      toast(`Format "${file.type || 'tidak dikenal'}" tidak didukung. Pakai JPG, PNG, WebP, atau GIF.`);
       continue;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -87,13 +97,20 @@ $('f-shots').onchange = (e) => {
       continue;
     }
     if (screenshotFiles.length >= 5) { toast('Maksimal 5 screenshot'); break; }
-    screenshotFiles.push({ file, url: URL.createObjectURL(file) });
+
+    try {
+      // Pakai data URL, bukan blob URL — lebih reliable di Android
+      const dataUrl = await fileToDataURL(file);
+      screenshotFiles.push({ file, url: dataUrl });
+    } catch (err) {
+      toast(`Gagal baca "${file.name}"`);
+    }
   }
   renderShots();
   e.target.value = '';
 };
 
-/* ---------- Voice recording ---------- */
+/* ---------- Recording ---------- */
 function pickAudioMime() {
   if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
   const opts = [
@@ -125,12 +142,12 @@ $('voice-record').onclick = async () => {
 
     mediaRecorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) audioChunks.push(ev.data); };
 
-    mediaRecorder.onstop = () => {
+    mediaRecorder.onstop = async () => {
       stream.getTracks().forEach((tr) => tr.stop());
       const detectedType = (mediaRecorder.mimeType || mime || 'audio/webm').split(';')[0];
       audioBlob = new Blob(audioChunks, { type: detectedType });
       stopTimer();
-      showVoicePreview();
+      await showVoicePreview();
     };
 
     mediaRecorder.start(250);
@@ -158,8 +175,15 @@ function stopTimer() {
   window.lucide && window.lucide.createIcons();
 }
 
-/* ---------- Custom Voice Player ---------- */
-const audioEl = $('voice-audio');
+/* ---------- Custom Voice Player (Web Audio API) ---------- */
+let audioCtx = null;
+let audioBuffer = null;
+let sourceNode = null;
+let isPlaying = false;
+let startedAt = 0;
+let pausedAt = 0;
+let progressRAF = null;
+
 const playBtn = $('voice-play');
 const trackWrap = $('voice-track-wrap');
 const fillEl = $('voice-fill');
@@ -180,39 +204,109 @@ function setPlayIcon(playing) {
   window.lucide && window.lucide.createIcons();
 }
 
+function getCurrentTime() {
+  if (!audioBuffer) return 0;
+  if (isPlaying) return Math.min(audioCtx.currentTime - startedAt, audioBuffer.duration);
+  return pausedAt;
+}
+
 function updateProgress() {
-  const d = audioEl.duration || 0;
-  const c = audioEl.currentTime || 0;
+  if (!audioBuffer) {
+    fillEl.style.width = '0%';
+    dotEl.style.left = '0%';
+    timeEl.textContent = '0:00 / 0:00';
+    return;
+  }
+  const c = getCurrentTime();
+  const d = audioBuffer.duration;
   const pct = d > 0 ? (c / d) * 100 : 0;
   fillEl.style.width = pct + '%';
   dotEl.style.left = pct + '%';
   timeEl.textContent = `${fmtTime(c)} / ${fmtTime(d)}`;
 }
 
-audioEl.addEventListener('loadedmetadata', updateProgress);
-audioEl.addEventListener('durationchange', updateProgress);
-audioEl.addEventListener('timeupdate', updateProgress);
-audioEl.addEventListener('play', () => setPlayIcon(true));
-audioEl.addEventListener('pause', () => setPlayIcon(false));
-audioEl.addEventListener('ended', () => {
-  setPlayIcon(false);
-  audioEl.currentTime = 0;
+function tick() {
+  if (!isPlaying || !audioBuffer) return;
+  if (getCurrentTime() >= audioBuffer.duration - 0.03) {
+    isPlaying = false;
+    pausedAt = 0;
+    setPlayIcon(false);
+    updateProgress();
+    progressRAF = null;
+    return;
+  }
   updateProgress();
-});
+  progressRAF = requestAnimationFrame(tick);
+}
+
+async function loadAudioBuffer(blob) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+  const arrayBuffer = await blob.arrayBuffer();
+  audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+  pausedAt = 0;
+  isPlaying = false;
+  updateProgress();
+}
+
+function playAudio() {
+  if (!audioBuffer) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  sourceNode = audioCtx.createBufferSource();
+  sourceNode.buffer = audioBuffer;
+  sourceNode.connect(audioCtx.destination);
+  sourceNode.onended = () => {
+    if (!isPlaying) return;
+    if (getCurrentTime() >= audioBuffer.duration - 0.05) {
+      isPlaying = false;
+      pausedAt = 0;
+      setPlayIcon(false);
+      updateProgress();
+    }
+  };
+  sourceNode.start(0, pausedAt);
+  startedAt = audioCtx.currentTime - pausedAt;
+  isPlaying = true;
+  setPlayIcon(true);
+  if (progressRAF) cancelAnimationFrame(progressRAF);
+  progressRAF = requestAnimationFrame(tick);
+}
+
+function pauseAudio() {
+  if (!isPlaying) return;
+  pausedAt = getCurrentTime();
+  try { sourceNode.stop(); } catch (_) {}
+  try { sourceNode.disconnect(); } catch (_) {}
+  sourceNode = null;
+  isPlaying = false;
+  setPlayIcon(false);
+  if (progressRAF) cancelAnimationFrame(progressRAF);
+  progressRAF = null;
+  updateProgress();
+}
 
 playBtn.onclick = () => {
-  if (audioEl.paused) audioEl.play().catch(() => {});
-  else audioEl.pause();
+  if (!audioBuffer) return;
+  if (isPlaying) pauseAudio();
+  else playAudio();
 };
 
-/* Seek: pointer events (mouse + touch) */
+/* Seek */
 let seeking = false;
 function seekFromEvent(ev) {
+  if (!audioBuffer) return;
   const rect = trackWrap.getBoundingClientRect();
-  const x = (ev.clientX ?? (ev.touches && ev.touches[0] && ev.touches[0].clientX) ?? 0) - rect.left;
+  const x = (ev.clientX ?? 0) - rect.left;
   const ratio = Math.max(0, Math.min(1, x / rect.width));
-  if (audioEl.duration) {
-    audioEl.currentTime = ratio * audioEl.duration;
+  const newTime = ratio * audioBuffer.duration;
+  if (isPlaying) {
+    try { sourceNode.stop(); } catch (_) {}
+    try { sourceNode.disconnect(); } catch (_) {}
+    sourceNode = null;
+    pausedAt = newTime;
+    playAudio();
+  } else {
+    pausedAt = newTime;
     updateProgress();
   }
 }
@@ -221,45 +315,31 @@ trackWrap.addEventListener('pointerdown', (e) => {
   try { trackWrap.setPointerCapture(e.pointerId); } catch (_) {}
   seekFromEvent(e);
 });
-trackWrap.addEventListener('pointermove', (e) => {
-  if (seeking) seekFromEvent(e);
-});
+trackWrap.addEventListener('pointermove', (e) => { if (seeking) seekFromEvent(e); });
 trackWrap.addEventListener('pointerup', () => { seeking = false; });
 trackWrap.addEventListener('pointercancel', () => { seeking = false; });
 
-/* Tampilkan player + load blob */
-function showVoicePreview() {
+async function showVoicePreview() {
   $('voice-record').hidden = true;
   $('voice-preview').hidden = false;
-
-  const t0 = (audioBlob.type || 'audio/webm').toLowerCase();
-  const forcedType = t0.includes('ogg') ? 'audio/ogg'
-                   : t0.includes('mp4') ? 'audio/mp4'
-                   : 'audio/webm';
-  const blob = new Blob([audioBlob], { type: forcedType });
-  const url = URL.createObjectURL(blob);
-
-  if (audioEl._oldUrl) URL.revokeObjectURL(audioEl._oldUrl);
-  audioEl._oldUrl = url;
-
-  audioEl.pause();
-  audioEl.removeAttribute('src');
-  audioEl.load();
-  audioEl.src = url;
-  audioEl.load();
-
   setPlayIcon(false);
-  fillEl.style.width = '0%';
-  dotEl.style.left = '0%';
-  timeEl.textContent = '0:00 / 0:00';
+  pausedAt = 0;
+  try {
+    await loadAudioBuffer(audioBlob);
+  } catch (e) {
+    console.error('[feedback] decode audio gagal:', e);
+    toast('Audio tidak bisa diputar ulang, tapi tetap bisa dikirim');
+    audioBuffer = null;
+    updateProgress();
+  }
 }
 
 $('voice-delete').onclick = () => {
-  if (audioEl._oldUrl) { URL.revokeObjectURL(audioEl._oldUrl); audioEl._oldUrl = null; }
+  if (isPlaying) pauseAudio();
+  audioBuffer = null;
   audioBlob = null;
-  audioEl.pause();
-  audioEl.removeAttribute('src');
-  audioEl.load();
+  pausedAt = 0;
+  updateProgress();
   $('voice-preview').hidden = true;
   $('voice-record').hidden = false;
 };
