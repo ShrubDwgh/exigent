@@ -36,19 +36,34 @@ const fmtSeconds = (s) => {
 const icons = () => window.lucide && window.lucide.createIcons();
 
 let searchInputHandler = null;
-function setupSearch(placeholder, value, onInput) {
+function setupSearch(placeholder, value, onInput, opts = {}) {
   const bar = $('admin-search-bar');
   const input = $('admin-search-input');
+  const addBtn = $('admin-fab-add');
+
   bar.classList.add('active');
   input.placeholder = placeholder;
   if (input.value !== value) input.value = value || '';
+
+  // Tombol FAB tambah — hanya kalau opts.showAdd
+  if (opts.showAdd) {
+    addBtn.hidden = false;
+    addBtn.onclick = opts.onAdd || null;
+  } else {
+    addBtn.hidden = true;
+    addBtn.onclick = null;
+  }
+
   if (searchInputHandler) input.removeEventListener('input', searchInputHandler);
   searchInputHandler = (e) => onInput(e.target.value);
   input.addEventListener('input', searchInputHandler);
 }
 function hideSearch() {
   const bar = $('admin-search-bar');
+  const addBtn = $('admin-fab-add');
   bar.classList.remove('active');
+  addBtn.hidden = true;
+  addBtn.onclick = null;
   const input = $('admin-search-input');
   if (searchInputHandler) input.removeEventListener('input', searchInputHandler);
   searchInputHandler = null;
@@ -166,7 +181,6 @@ function setActiveTab(tab) {
   document.querySelectorAll('.admin-tab').forEach((b) => {
     b.classList.toggle('active', b.dataset.tab === tab);
   });
-  // Reset scroll ke atas saat ganti tab
   window.scrollTo(0, 0);
   renderCurrentTab();
 }
@@ -478,30 +492,26 @@ function drawProducts() {
   });
 
   content.innerHTML = `
-    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:stretch">
-      <div class="admin-filters" id="prod-cat-filters" style="flex:1;margin:0">
-        ${prodCatChip('all', 'Semua')}
-        ${prodCatChip('nfc', 'NFC')}
-        ${prodCatChip('template', 'Template')}
-      </div>
-      <button type="button" class="admin-btn primary" id="prod-add" style="flex:none;min-height:36px;padding:0 14px">
-        <i data-lucide="plus" aria-hidden="true"></i>Tambah
-      </button>
+    <div class="admin-filters" id="prod-cat-filters">
+      ${prodCatChip('all', 'Semua')}
+      ${prodCatChip('nfc', 'NFC')}
+      ${prodCatChip('template', 'Template')}
     </div>
     <p class="muted small" style="margin:0 0 12px">${list.length} produk</p>
     <div class="admin-products" id="prod-list"></div>
   `;
   icons();
 
-  $('prod-add').onclick = () => openProductForm(null);
   $('prod-cat-filters').querySelectorAll('.admin-chip').forEach((c) => {
     c.onclick = () => { prodFilters.category = c.dataset.value; drawProducts(); };
   });
 
-  setupSearch('Cari nama, kode, deskripsi produk...', prodFilters.search, (v) => {
-    prodFilters.search = v.trim();
-    drawProducts();
-  });
+  setupSearch(
+    'Cari nama, kode, deskripsi produk...',
+    prodFilters.search,
+    (v) => { prodFilters.search = v.trim(); drawProducts(); },
+    { showAdd: true, onAdd: () => openProductForm(null) }
+  );
 
   const listEl = $('prod-list');
   if (!list.length) {
