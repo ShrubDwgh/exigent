@@ -1005,3 +1005,127 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
   transition: opacity .25s ease;
 }
 .update-toast.show { opacity: 1; }
+
+/* ============================================
+   EFFECT: TOMBOL TIMBUL & CARD NEUMORPHISM
+   ============================================ */
+
+/* ---- TOMBOL: TIMBUL ---- */
+.btn,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.btn-outline,
+.btn-sm,
+.icon-btn,
+.chip,
+.opt,
+.admin-btn,
+.admin-chip {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    0 2px 4px rgba(15,23,42,.08),
+    0 6px 14px -4px rgba(15,23,42,.15);
+  transition: background var(--t), transform var(--t), box-shadow .2s ease, filter .15s ease;
+}
+.btn:hover,
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-danger:hover,
+.btn-outline:hover,
+.btn-sm:hover,
+.icon-btn:hover,
+.chip:hover,
+.opt:hover,
+.admin-btn:hover,
+.admin-chip:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.45),
+    0 4px 8px rgba(15,23,42,.1),
+    0 10px 20px -6px rgba(15,23,42,.2);
+}
+.btn:active,
+.btn-secondary:active,
+.btn-success:active,
+.btn-danger:active,
+.btn-outline:active,
+.icon-btn:active,
+.chip:active,
+.opt:active,
+.admin-btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 6px rgba(15,23,42,.15),
+    0 1px 2px rgba(15,23,42,.06);
+}
+
+/* ---- CARD: TIMBUL + TENGGELAM (neumorphism) ---- */
+.card,
+.menu,
+.admin-item,
+.admin-stat {
+  box-shadow:
+    0 2px 4px rgba(15,23,42,.06),
+    0 6px 14px -4px rgba(15,23,42,.12),
+    inset 0 3px 8px rgba(15,23,42,.1),
+    inset 0 -2px 4px rgba(255,255,255,.7);
+}
+
+/* ---- Dark mode ---- */
+[data-theme="dark"] .btn,
+[data-theme="dark"] .btn-secondary,
+[data-theme="dark"] .btn-success,
+[data-theme="dark"] .btn-danger,
+[data-theme="dark"] .btn-outline,
+[data-theme="dark"] .btn-sm,
+[data-theme="dark"] .icon-btn,
+[data-theme="dark"] .chip,
+[data-theme="dark"] .opt,
+[data-theme="dark"] .admin-btn,
+[data-theme="dark"] .admin-chip {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 2px 4px rgba(0,0,0,.3),
+    0 6px 14px -4px rgba(0,0,0,.5);
+}
+[data-theme="dark"] .btn:hover,
+[data-theme="dark"] .btn-secondary:hover,
+[data-theme="dark"] .btn-success:hover,
+[data-theme="dark"] .btn-danger:hover,
+[data-theme="dark"] .btn-outline:hover,
+[data-theme="dark"] .btn-sm:hover,
+[data-theme="dark"] .icon-btn:hover,
+[data-theme="dark"] .chip:hover,
+[data-theme="dark"] .opt:hover,
+[data-theme="dark"] .admin-btn:hover,
+[data-theme="dark"] .admin-chip:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 4px 8px rgba(0,0,0,.4),
+    0 10px 20px -6px rgba(0,0,0,.6);
+}
+[data-theme="dark"] .btn:active,
+[data-theme="dark"] .btn-secondary:active,
+[data-theme="dark"] .btn-success:active,
+[data-theme="dark"] .btn-danger:active,
+[data-theme="dark"] .btn-outline:active,
+[data-theme="dark"] .icon-btn:active,
+[data-theme="dark"] .chip:active,
+[data-theme="dark"] .opt:active,
+[data-theme="dark"] .admin-btn:active {
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,.5),
+    0 1px 2px rgba(0,0,0,.2);
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .menu,
+[data-theme="dark"] .admin-item,
+[data-theme="dark"] .admin-stat {
+  box-shadow:
+    0 2px 4px rgba(0,0,0,.35),
+    0 6px 14px -4px rgba(0,0,0,.5),
+    inset 0 3px 10px rgba(0,0,0,.55),
+    inset 0 -2px 4px rgba(255,255,255,.05);
+}
