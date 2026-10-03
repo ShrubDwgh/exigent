@@ -37,6 +37,27 @@ const fmtSeconds = (s) => {
 };
 const icons = () => window.lucide && window.lucide.createIcons();
 
+/* ---------- Floating search bar ---------- */
+let searchInputHandler = null;
+function setupSearch(placeholder, value, onInput) {
+  const bar = $('admin-search-bar');
+  const input = $('admin-search-input');
+  bar.classList.add('active');
+  input.placeholder = placeholder;
+  if (input.value !== value) input.value = value || '';
+  if (searchInputHandler) input.removeEventListener('input', searchInputHandler);
+  searchInputHandler = (e) => onInput(e.target.value);
+  input.addEventListener('input', searchInputHandler);
+}
+function hideSearch() {
+  const bar = $('admin-search-bar');
+  bar.classList.remove('active');
+  const input = $('admin-search-input');
+  if (searchInputHandler) input.removeEventListener('input', searchInputHandler);
+  searchInputHandler = null;
+  input.value = '';
+}
+
 /* ---------- Modal ---------- */
 function openModal(innerHtml, onMount) {
   const wrap = document.createElement('div');
@@ -177,6 +198,7 @@ function renderCurrentTab() {
    TAB 1: DASHBOARD
    ============================================================ */
 async function renderDashboard() {
+  hideSearch();
   const content = $('admin-content');
   content.innerHTML = `<div class="admin-loading">Memuat statistik...</div>`;
 
@@ -251,6 +273,7 @@ async function renderFeedback() {
     .order('created_at', { ascending: false });
 
   if (error) {
+    hideSearch();
     content.innerHTML = `<div class="admin-empty">Gagal memuat: ${esc(error.message)}</div>`;
     return;
   }
@@ -269,10 +292,6 @@ function drawFeedback() {
   const list = filterFeedback();
 
   content.innerHTML = `
-    <div class="admin-search">
-      <i data-lucide="search" aria-hidden="true"></i>
-      <input type="search" id="fb-search" placeholder="Cari pesan, device, atau user ID..." value="${esc(fbFilters.search)}">
-    </div>
     <div class="admin-filters" id="fb-status-filters">
       ${chipHtml('status', 'all', 'Semua status')}
       ${chipHtml('status', 'new', 'Baru')}
@@ -290,15 +309,16 @@ function drawFeedback() {
   `;
   icons();
 
-  $('fb-search').oninput = (e) => {
-    fbFilters.search = e.target.value.trim();
-    drawFeedback();
-  };
   $('fb-status-filters').querySelectorAll('.admin-chip').forEach((c) => {
     c.onclick = () => { fbFilters.status = c.dataset.value; drawFeedback(); };
   });
   $('fb-type-filters').querySelectorAll('.admin-chip').forEach((c) => {
     c.onclick = () => { fbFilters.type = c.dataset.value; drawFeedback(); };
+  });
+
+  setupSearch('Cari pesan, device, atau user ID...', fbFilters.search, (v) => {
+    fbFilters.search = v.trim();
+    drawFeedback();
   });
 
   drawFeedbackList();
@@ -437,6 +457,7 @@ async function renderProducts() {
     .order('sort_order', { ascending: true });
 
   if (error) {
+    hideSearch();
     content.innerHTML = `<div class="admin-empty">Gagal memuat: ${esc(error.message)}</div>`;
     return;
   }
@@ -463,29 +484,29 @@ function drawProducts() {
   });
 
   content.innerHTML = `
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <div class="admin-search" style="flex:1;margin:0">
-        <i data-lucide="search" aria-hidden="true"></i>
-        <input type="search" id="prod-search" placeholder="Cari nama, kode, deskripsi..." value="${esc(prodFilters.search)}">
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:stretch">
+      <div class="admin-filters" id="prod-cat-filters" style="flex:1;margin:0">
+        ${prodCatChip('all', 'Semua')}
+        ${prodCatChip('nfc', 'NFC')}
+        ${prodCatChip('template', 'Template')}
       </div>
-      <button type="button" class="admin-btn primary" id="prod-add" style="flex:none;min-height:44px;padding:0 16px">
+      <button type="button" class="admin-btn primary" id="prod-add" style="flex:none;min-height:36px;padding:0 14px">
         <i data-lucide="plus" aria-hidden="true"></i>Tambah
       </button>
-    </div>
-    <div class="admin-filters" id="prod-cat-filters">
-      ${prodCatChip('all', 'Semua')}
-      ${prodCatChip('nfc', 'NFC')}
-      ${prodCatChip('template', 'Template')}
     </div>
     <p class="muted small" style="margin:0 0 12px">${list.length} produk</p>
     <div class="admin-products" id="prod-list"></div>
   `;
   icons();
 
-  $('prod-search').oninput = (e) => { prodFilters.search = e.target.value.trim(); drawProducts(); };
   $('prod-add').onclick = () => openProductForm(null);
   $('prod-cat-filters').querySelectorAll('.admin-chip').forEach((c) => {
     c.onclick = () => { prodFilters.category = c.dataset.value; drawProducts(); };
+  });
+
+  setupSearch('Cari nama, kode, deskripsi produk...', prodFilters.search, (v) => {
+    prodFilters.search = v.trim();
+    drawProducts();
   });
 
   const listEl = $('prod-list');
@@ -682,6 +703,7 @@ async function renderUsers() {
   const { data, error } = await supabase.rpc('admin_list_users');
 
   if (error) {
+    hideSearch();
     content.innerHTML = `<div class="admin-empty">Gagal memuat: ${esc(error.message)}<br><br>
       Pastikan RPC <code>admin_list_users</code> sudah dibuat di Supabase.</div>`;
     return;
@@ -704,19 +726,14 @@ function drawUsers() {
   });
 
   content.innerHTML = `
-    <div class="admin-search">
-      <i data-lucide="search" aria-hidden="true"></i>
-      <input type="search" id="user-search" placeholder="Cari email, nama, atau card ID..." value="${esc(userFilters.search)}">
-    </div>
     <p class="muted small" style="margin:0 0 12px">${list.length} user</p>
     <div id="user-list"></div>
   `;
-  icons();
 
-  $('user-search').oninput = (e) => {
-    userFilters.search = e.target.value.trim();
+  setupSearch('Cari email, nama, atau card ID...', userFilters.search, (v) => {
+    userFilters.search = v.trim();
     drawUsers();
-  };
+  });
 
   const listEl = $('user-list');
   if (!list.length) {
@@ -734,9 +751,7 @@ function drawUsers() {
 }
 
 function userRowHtml(u) {
-  // Prioritas nama: profile (isi medis) > google_name > email prefix
   const displayName = u.profile_name || u.google_name || (u.email || '?').split('@')[0];
-  // Prioritas avatar: profile_photo > google_avatar > inisial
   const avatarUrl = u.profile_photo || u.google_avatar || '';
   const initial = (displayName || '?')[0].toUpperCase();
 
@@ -752,32 +767,27 @@ function userRowHtml(u) {
 
   const cardCode = u.card_code || '(belum punya kartu)';
 
-  // Provider label
   const p = (u.provider || '').toLowerCase();
   const providerLabel = p === 'google' ? 'Google'
                       : p === 'email' ? 'Email'
                       : p ? p.charAt(0).toUpperCase() + p.slice(1)
                       : 'Tidak diketahui';
-  const providerIcon = p === 'google' ? 'chrome' : 'mail';
-  const providerColor = p === 'google' ? '#2563EB' : '#64748B';
 
   return `<div class="admin-item">
     <div class="admin-item-head">
       <div style="display:flex;gap:12px;align-items:center;min-width:0;flex:1">
         ${avatar}
         <div style="min-width:0;flex:1">
-          <p class="admin-item-title" style="word-break:break-word">${esc(displayName)}</p>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <p class="admin-item-title" style="word-break:break-word;margin:0">${esc(displayName)}</p>
+            <span class="admin-provider-badge">${esc(providerLabel)}</span>
+          </div>
           <p class="admin-item-sub" style="font-family:monospace;word-break:break-all">${esc(u.email || '-')}</p>
           <p class="admin-item-sub" style="font-family:monospace">${esc(cardCode)}</p>
           <p class="admin-item-sub" style="font-family:monospace;font-size:.7rem;word-break:break-all;color:var(--muted)">${esc(u.user_id || '-')}</p>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
-        <span class="admin-badge ${u.card_active ? 'resolved' : 'read'}">${u.card_active ? 'Aktif' : 'Nonaktif'}</span>
-        <span class="admin-badge" style="background:#F1F5F9;color:${providerColor};display:inline-flex;align-items:center;gap:4px">
-          <i data-lucide="${providerIcon}" style="width:12px;height:12px"></i>${esc(providerLabel)}
-        </span>
-      </div>
+      <span class="admin-badge ${u.card_active ? 'resolved' : 'read'}">${u.card_active ? 'Aktif' : 'Nonaktif'}</span>
     </div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:10px;display:flex;flex-direction:column;gap:2px">
       <span>Daftar: ${esc(fmtDate(u.account_created))}</span>
@@ -823,6 +833,7 @@ async function resetUserTrial(id) {
    TAB 5: NOTIFIKASI
    ============================================================ */
 function renderNotif() {
+  hideSearch();
   const content = $('admin-content');
   content.innerHTML = `
     <p class="muted" style="margin:0 0 16px">Kirim notifikasi ke user. Notif akan muncul di ikon lonceng.</p>
