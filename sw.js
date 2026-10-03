@@ -1,7 +1,7 @@
 // Service Worker — Emergency Card
 // Strategi: HTML network-first (biar update cepat), asset cache-first
 
-const VERSION = 'v1.0.2';
+const VERSION = 'v1.0.3';
 const STATIC_CACHE = 'exigent-static-' + VERSION;
 const RUNTIME_CACHE = 'exigent-runtime-' + VERSION;
 
