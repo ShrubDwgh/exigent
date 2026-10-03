@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script>
+  (function(){
+    try {
+      var t = localStorage.getItem('exigent_theme');
+      if (t !== 'dark' && t !== 'light') {
+        t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    } catch(e){}
+  })();
+  </script>
+  <meta name="theme-color" content="#DC2626">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="/icons/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Exigent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+  <title>Panel Admin · Exigent</title>
+  <style>
+    /* ===== Admin Panel styles ===== */
+    body.admin-page { background: var(--bg); }
+
+    .admin-shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 0 40px;
+    }
+
+    /* Tab nav horizontal scroll */
+    .admin-tabs {
+      position: sticky;
+      top: calc(60px + env(safe-area-inset-top, 0px));
+      z-index: 20;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .admin-tabs::-webkit-scrollbar { display: none; }
+    .admin-tab {
+      flex: none;
+      min-height: 40px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font: 600 .875rem var(--font);
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s, color .15s;
+    }
+    .admin-tab:hover { background: var(--bg); color: var(--text); }
+    .admin-tab.active { background: #EFF6FF; color: var(--blue); }
+    [data-theme="dark"] .admin-tab.active { background: #1E3A5F; color: #60A5FA; }
+    .admin-tab .lucide { width: 16px; height: 16px; }
+
+    .admin-content {
+      padding: 16px 16px 0;
+    }
+
+    /* Search bar */
+    .admin-search {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .admin-search .lucide {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .admin-search input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 14px 10px 40px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      font: 400 .9375rem var(--font);
+    }
+    .admin-search input:focus {
+      outline: 0;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    }
+
+    /* Filter chips */
+    .admin-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .admin-chip {
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text);
+      font: 600 .8125rem var(--font);
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .admin-chip:hover { background: var(--bg); }
+    .admin-chip.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+    /* Stat cards grid */
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .admin-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .admin-stat-label {
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin: 0 0 6px;
+    }
+    .admin-stat-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin: 0;
+      color: var(--text);
+      line-height: 1;
+    }
+    .admin-stat-sub {
+      font-size: .75rem;
+      color: var(--muted);
+      margin: 4px 0 0;
+    }
+
+    /* Item card */
+    .admin-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .admin-item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .admin-item-title {
+      font-weight: 700;
+      font-size: .9375rem;
+      margin: 0;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+    .admin-item-sub {
+      font-size: .8125rem;
+      color: var(--muted);
+      margin: 2px 0 0;
+    }
+    .admin-item-msg {
+      margin: 10px 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      color: var(--text);
+      font-size: .9375rem;
+      line-height: 1.5;
+    }
+    .admin-item-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    /* Badge status */
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: .75rem;
+      font-weight: 700;
+    }
+    .admin-badge.new         { background: #FEF3C7; color: #92400E; }
+    .admin-badge.read        { background: #DBEAFE; color: #1E40AF; }
+    .admin-badge.in_progress { background: #E0E7FF; color: #4338CA; }
+    .admin-badge.resolved    { background: #DCFCE7; color: #166534; }
+    [data-theme="dark"] .admin-badge.new         { background: #78350F; color: #FCD34D; }
+    [data-theme="dark"] .admin-badge.read        { background: #1E3A8A; color: #BFDBFE; }
+    [data-theme="dark"] .admin-badge.in_progress { background: #312E81; color: #C7D2FE; }
+    [data-theme="dark"] .admin-badge.resolved    { background: #14532D; color: #86EFAC; }
+
+    /* Small buttons */
+    .admin-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      font: 600 .8125rem var(--font);
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .admin-btn:hover { background: var(--bg); }
+    .admin-btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .admin-btn.primary:hover { filter: brightness(1.1); }
+    .admin-btn.danger { color: var(--red); border-color: #FECACA; }
+    .admin-btn.danger:hover { background: #FEF2F2; }
+    [data-theme="dark"] .admin-btn.danger:hover { background: #450A0A; }
+    .admin-btn .lucide { width: 14px; height: 14px; }
+
+    /* Product grid */
+    .admin-products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .admin-product {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .admin-product-img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .admin-product-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .admin-product-body {
+      padding: 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .admin-product-name {
+      font-weight: 700;
+      font-size: .9375rem;
+      margin: 0;
+      color: var(--text);
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .admin-product-meta {
+      font-size: .75rem;
+      color: var(--muted);
+    }
+    .admin-product-price {
+      font-weight: 800;
+      color: var(--green);
+      font-size: .9375rem;
+    }
+
+    /* Empty state */
+    .admin-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: .9375rem;
+    }
+
+    /* Modal */
+    .admin-modal-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(15,23,42,.6);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    @media (min-width: 640px) {
+      .admin-modal-bg { align-items: center; padding: 16px; }
+    }
+    .admin-modal {
+      background: var(--surface);
+      width: 100%;
+      max-width: 500px;
+      max-height: 88vh;
+      overflow-y: auto;
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+    @media (min-width: 640px) {
+      .admin-modal { border-radius: 20px; padding-bottom: 20px; }
+    }
+    .admin-modal h2 {
+      margin: 0 0 16px;
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+    .admin-modal .field { margin-bottom: 14px; }
+    .admin-modal-actions {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    /* Photo preview in admin */
+    .admin-shot-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .admin-shot-grid a {
+      display: block;
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .admin-shot-grid img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Custom audio player (mini) */
+    .admin-audio {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin: 8px 0;
+    }
+    .admin-audio button {
+      flex: none;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+    }
+    .admin-audio button .lucide { width: 16px; height: 16px; }
+    .admin-audio .bar {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+      touch-action: none;
+    }
+    .admin-audio .bar-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      background: var(--blue);
+      border-radius: 2px;
+      width: 0;
+      transition: width .08s linear;
+    }
+    .admin-audio .time {
+      flex: none;
+      font-size: .75rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      min-width: 60px;
+      text-align: right;
+    }
+
+    /* Admin note input */
+    .admin-note {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .admin-note textarea {
+      width: 100%;
+      min-height: 60px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--text);
+      font: 400 .875rem var(--font);
+      resize: vertical;
+    }
+    .admin-note textarea:focus {
+      outline: 0;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    }
+
+    /* Foto produk di form */
+    .admin-photo-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .admin-photo-box img {
+      width: 100%;
+      max-width: 200px;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    /* Table-ish row */
+    .admin-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+    }
+    .admin-row:first-child { border-top: 0; }
+
+    /* On desktop, hide bottom nav override */
+    @media (min-width: 1024px) {
+      .admin-tabs {
+        top: 0;
+        position: sticky;
+      }
+      .admin-shell { padding: 0 0 40px; }
+    }
+
+    /* Loader */
+    .admin-loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: .9375rem;
+    }
+
+    /* Toast for admin */
+    .admin-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: .875rem;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+      pointer-events: none;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+    }
+    .admin-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .admin-toast.error { background: var(--red); color: #fff; }
+    .admin-toast.success { background: var(--green); color: #fff; }
+  </style>
+</head>
+<body class="dash acct admin-page">
+  <header class="appbar">
+    <div class="appbar-in">
+      <div class="appbar-lead">
+        <a class="icon-btn" href="/dashboard.html" aria-label="Kembali"><i data-lucide="chevron-left" aria-hidden="true"></i></a>
+        <h1 class="appbar-title">Panel Admin</h1>
+      </div>
+      <button class="icon-btn" id="admin-reload" type="button" aria-label="Muat ulang">
+        <i data-lucide="refresh-cw" aria-hidden="true"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="admin-shell">
+    <nav class="admin-tabs" id="admin-tabs" role="tablist">
+      <button type="button" class="admin-tab active" data-tab="dashboard" role="tab">
+        <i data-lucide="layout-dashboard" aria-hidden="true"></i>Dashboard
+      </button>
+      <button type="button" class="admin-tab" data-tab="feedback" role="tab">
+        <i data-lucide="inbox" aria-hidden="true"></i>Masukan
+      </button>
+      <button type="button" class="admin-tab" data-tab="products" role="tab">
+        <i data-lucide="package" aria-hidden="true"></i>Produk
+      </button>
+      <button type="button" class="admin-tab" data-tab="users" role="tab">
+        <i data-lucide="users" aria-hidden="true"></i>User
+      </button>
+      <button type="button" class="admin-tab" data-tab="notif" role="tab">
+        <i data-lucide="bell" aria-hidden="true"></i>Notifikasi
+      </button>
+    </nav>
+
+    <div class="admin-content" id="admin-content">
+      <div class="admin-loading">Memuat...</div>
+    </div>
+  </div>
+
+  <div class="admin-toast" id="admin-toast" role="status"></div>
+
+  <script type="module" src="/panel-x7k9a2b8.js"></script>
+</body>
+</html>
