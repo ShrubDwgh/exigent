@@ -19,7 +19,7 @@ const fail = (e) => toast(t('failed') + ((e && e.message) || e));
 
 let session = null, card = null, profile = null, loadFailed = false;
 
-/* ---------- Cache profil (biar greeting langsung muncul tanpa flicker) ---------- */
+/* ---------- Cache profil ---------- */
 function cacheKey() {
   return session && session.user ? 'exigent_profile_cache_' + session.user.id : null;
 }
@@ -571,6 +571,22 @@ function renderPermissions() {
         </div>
       </div>
       <p class="muted small" style="margin-top:12px">${T('perm_hint')}</p></div>
+
+    <div><p class="sec-label">${lang === 'id' ? 'Pengaturan Lanjutan' : 'Advanced Settings'}</p>
+      <div class="card menu">
+        <div class="crow" style="padding:16px 20px;gap:12px;align-items:center;display:flex">
+          <span class="mrow-ic" style="flex-shrink:0"><i data-lucide="fingerprint" aria-hidden="true"></i></span>
+          <div style="flex:1;min-width:0">
+            <strong style="display:block">User ID</strong>
+            <p class="muted" style="font-family:monospace;font-size:.6875rem;word-break:break-all;margin:4px 0 0;line-height:1.4">${esc(session.user.id)}</p>
+          </div>
+          <button type="button" class="icon-btn" id="copy-uuid" aria-label="${lang === 'id' ? 'Salin User ID' : 'Copy User ID'}" style="flex-shrink:0">
+            <i data-lucide="copy" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+      <p class="muted small" style="margin-top:12px">${lang === 'id' ? 'User ID adalah identitas unik akunmu. Jangan bagikan ke orang lain kecuali untuk keperluan dukungan teknis.' : "User ID is your account's unique identifier. Do not share with others except for technical support purposes."}</p>
+    </div>
   </section>`;
 
   const vis = loadVis();
@@ -593,7 +609,6 @@ function renderPermissions() {
   watchPermission('geolocation', (st) => setBadge(geo, st));
   watchPermission('nfc', (st) => setBadge(nfc, st));
 
-  // Mikrofon — cuma info status (nggak bisa diubah dari web, harus lewat browser settings)
   if (navigator.permissions && navigator.permissions.query) {
     navigator.permissions.query({ name: 'microphone' }).then((status) => {
       setBadge(mic, status.state);
@@ -616,6 +631,21 @@ function renderPermissions() {
       mic.textContent = lang === 'id' ? 'Tidak didukung' : 'Not supported';
       mic.className = 'badge badge-emergency';
     }
+  }
+
+  const copyBtn = $('copy-uuid');
+  if (copyBtn) {
+    copyBtn.onclick = () => {
+      const uuid = session.user.id;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(uuid).then(
+          () => toast(lang === 'id' ? 'User ID disalin' : 'User ID copied'),
+          () => toast(lang === 'id' ? 'Gagal menyalin' : 'Copy failed')
+        );
+      } else {
+        toast(lang === 'id' ? 'Salin manual dari teks' : 'Copy manually');
+      }
+    };
   }
 }
 
