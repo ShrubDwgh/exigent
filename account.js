@@ -540,16 +540,16 @@ function loadVis() {
 }
 const saveVis = (v) => { try { localStorage.setItem(visStoreKey(), JSON.stringify(v)); } catch (_) { /* abaikan */ } };
 const trow = (key, title, desc) => `<button type="button" class="trow" role="switch" aria-checked="true" data-vis="${key}">
-  <span class="mrow-tx"><strong>${esc(title)}</strong><small>${esc(desc)}</small></span><span class="switch" aria-hidden="true"></span></button>`;
+  <span class="mrow-tx"><strong>${esc(title)}</strong>${desc ? `<small>${esc(desc)}</small>` : ''}</span><span class="switch" aria-hidden="true"></span></button>`;
 
 function renderPermissions() {
   main.innerHTML = `<section class="screen stack-lg">
     <div><p class="sec-label">${T('perm_vis_title')}</p>
-      <div class="card menu">${trow('all', t('perm_all'), t('perm_all_desc'))}</div>
+      <div class="card menu">${trow('all', t('perm_all'), '')}</div>
       <div class="card menu" style="margin-top:12px">
-        ${trow('medical', t('perm_medical'), t('perm_medical_desc'))}
-        ${trow('address', t('perm_address'), t('perm_address_desc'))}
-        ${trow('contacts', t('perm_contacts'), t('perm_contacts_desc'))}
+        ${trow('medical', t('perm_medical'), '')}
+        ${trow('address', t('perm_address'), '')}
+        ${trow('contacts', lang === 'id' ? 'Kontak' : 'Contacts', '')}
       </div></div>
     <div><p class="sec-label">${T('perm_device_title')}</p>
       <div class="card menu">
@@ -570,7 +570,7 @@ function renderPermissions() {
           <span id="perm-mic" class="badge">${T('perm_checking')}</span>
         </div>
       </div>
-      <p class="muted small" style="margin-top:12px">${T('perm_hint')}</p></div>
+    </div>
 
     <div><p class="sec-label">${lang === 'id' ? 'Pengaturan Lanjutan' : 'Advanced Settings'}</p>
       <div class="card menu">
