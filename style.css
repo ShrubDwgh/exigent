@@ -1000,49 +1000,33 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 
 /* ============================================
    EFFECT: TOMBOL TIMBUL & CARD NEUMORPHISM
-   (versi tegas — lebih jelas kelihatan)
+   (versi neumorphism klasik — lebih tegas)
    ============================================ */
 
-/* ---- TOMBOL: TIMBUL LEBIH TEGAS ---- */
+/* ---- TOMBOL: TIMBUL ---- */
 .btn,
 .btn-secondary,
 .btn-success,
 .btn-danger,
 .btn-outline,
-.btn-sm {
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.45),
-    inset 0 -1px 0 rgba(0,0,0,.1),
-    0 3px 6px rgba(15,23,42,.12),
-    0 8px 20px -4px rgba(15,23,42,.22) !important;
-  transition: background var(--t), transform var(--t), box-shadow .2s ease, filter .15s ease !important;
-}
+.btn-sm,
 .icon-btn,
 .chip,
 .opt,
 .admin-btn,
 .admin-chip {
   box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.4),
-    inset 0 -1px 0 rgba(0,0,0,.08),
-    0 3px 6px rgba(15,23,42,.1),
-    0 8px 20px -4px rgba(15,23,42,.18);
-  transition: background var(--t), transform var(--t), box-shadow .2s ease, filter .15s ease;
+    4px 4px 10px rgba(163,177,198,.5),
+    -3px -3px 8px rgba(255,255,255,1),
+    inset 0 1px 0 rgba(255,255,255,.6) !important;
+  transition: background var(--t), transform var(--t), box-shadow .2s ease, filter .15s ease !important;
 }
-
 .btn:hover,
 .btn-secondary:hover,
 .btn-success:hover,
 .btn-danger:hover,
 .btn-outline:hover,
-.btn-sm:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.55),
-    inset 0 -1px 0 rgba(0,0,0,.1),
-    0 5px 10px rgba(15,23,42,.15),
-    0 14px 28px -6px rgba(15,23,42,.28) !important;
-}
+.btn-sm:hover,
 .icon-btn:hover,
 .chip:hover,
 .opt:hover,
@@ -1050,43 +1034,36 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 .admin-chip:hover {
   transform: translateY(-2px);
   box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.5),
-    inset 0 -1px 0 rgba(0,0,0,.08),
-    0 5px 10px rgba(15,23,42,.13),
-    0 14px 28px -6px rgba(15,23,42,.25);
+    6px 6px 16px rgba(163,177,198,.6),
+    -4px -4px 12px rgba(255,255,255,1),
+    inset 0 1px 0 rgba(255,255,255,.7) !important;
 }
-
 .btn:active,
 .btn-secondary:active,
 .btn-success:active,
 .btn-danger:active,
 .btn-outline:active,
-.btn-sm:active {
-  transform: translateY(1px);
-  box-shadow:
-    inset 0 3px 8px rgba(15,23,42,.22),
-    0 1px 2px rgba(15,23,42,.08) !important;
-}
+.btn-sm:active,
 .icon-btn:active,
 .chip:active,
 .opt:active,
 .admin-btn:active {
   transform: translateY(1px);
   box-shadow:
-    inset 0 3px 8px rgba(15,23,42,.2),
-    0 1px 2px rgba(15,23,42,.06);
+    inset 4px 4px 10px rgba(163,177,198,.6),
+    inset -3px -3px 8px rgba(255,255,255,.95) !important;
 }
 
-/* ---- CARD: TIMBUL + TENGGELAM LEBIH TEGAS ---- */
+/* ---- CARD: TIMBUL + TENGGELAM ---- */
 .card,
 .menu,
 .admin-item,
 .admin-stat {
   box-shadow:
-    0 3px 6px rgba(15,23,42,.08),
-    0 10px 22px -6px rgba(15,23,42,.18),
-    inset 0 4px 10px rgba(15,23,42,.14),
-    inset 0 -3px 6px rgba(255,255,255,.9) !important;
+    6px 6px 18px rgba(163,177,198,.55),
+    -5px -5px 14px rgba(255,255,255,1),
+    inset 4px 4px 12px rgba(163,177,198,.4),
+    inset -4px -4px 10px rgba(255,255,255,1) !important;
 }
 
 /* ---- DARK MODE OVERRIDES ---- */
@@ -1095,66 +1072,46 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 [data-theme="dark"] .btn-success,
 [data-theme="dark"] .btn-danger,
 [data-theme="dark"] .btn-outline,
-[data-theme="dark"] .btn-sm {
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.12),
-    inset 0 -1px 0 rgba(0,0,0,.4),
-    0 3px 6px rgba(0,0,0,.4),
-    0 8px 20px -4px rgba(0,0,0,.55) !important;
-}
+[data-theme="dark"] .btn-sm,
 [data-theme="dark"] .icon-btn,
 [data-theme="dark"] .chip,
 [data-theme="dark"] .opt,
 [data-theme="dark"] .admin-btn,
 [data-theme="dark"] .admin-chip {
   box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.1),
-    inset 0 -1px 0 rgba(0,0,0,.35),
-    0 3px 6px rgba(0,0,0,.35),
-    0 8px 20px -4px rgba(0,0,0,.5);
+    4px 4px 10px rgba(0,0,0,.7),
+    -3px -3px 8px rgba(255,255,255,.05),
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
 }
-
 [data-theme="dark"] .btn:hover,
 [data-theme="dark"] .btn-secondary:hover,
 [data-theme="dark"] .btn-success:hover,
 [data-theme="dark"] .btn-danger:hover,
 [data-theme="dark"] .btn-outline:hover,
-[data-theme="dark"] .btn-sm:hover {
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.16),
-    inset 0 -1px 0 rgba(0,0,0,.4),
-    0 5px 10px rgba(0,0,0,.5),
-    0 14px 28px -6px rgba(0,0,0,.7) !important;
-}
+[data-theme="dark"] .btn-sm:hover,
 [data-theme="dark"] .icon-btn:hover,
 [data-theme="dark"] .chip:hover,
 [data-theme="dark"] .opt:hover,
 [data-theme="dark"] .admin-btn:hover,
 [data-theme="dark"] .admin-chip:hover {
   box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.14),
-    inset 0 -1px 0 rgba(0,0,0,.35),
-    0 5px 10px rgba(0,0,0,.45),
-    0 14px 28px -6px rgba(0,0,0,.65);
+    6px 6px 16px rgba(0,0,0,.85),
+    -4px -4px 12px rgba(255,255,255,.07),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
 }
-
 [data-theme="dark"] .btn:active,
 [data-theme="dark"] .btn-secondary:active,
 [data-theme="dark"] .btn-success:active,
 [data-theme="dark"] .btn-danger:active,
 [data-theme="dark"] .btn-outline:active,
-[data-theme="dark"] .btn-sm:active {
-  box-shadow:
-    inset 0 4px 10px rgba(0,0,0,.6),
-    0 1px 2px rgba(0,0,0,.3) !important;
-}
+[data-theme="dark"] .btn-sm:active,
 [data-theme="dark"] .icon-btn:active,
 [data-theme="dark"] .chip:active,
 [data-theme="dark"] .opt:active,
 [data-theme="dark"] .admin-btn:active {
   box-shadow:
-    inset 0 4px 10px rgba(0,0,0,.55),
-    0 1px 2px rgba(0,0,0,.25);
+    inset 4px 4px 10px rgba(0,0,0,.9),
+    inset -3px -3px 8px rgba(255,255,255,.07) !important;
 }
 
 [data-theme="dark"] .card,
@@ -1162,8 +1119,8 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 [data-theme="dark"] .admin-item,
 [data-theme="dark"] .admin-stat {
   box-shadow:
-    0 3px 6px rgba(0,0,0,.45),
-    0 10px 22px -6px rgba(0,0,0,.6),
-    inset 0 4px 12px rgba(0,0,0,.65),
-    inset 0 -3px 6px rgba(255,255,255,.06) !important;
+    6px 6px 18px rgba(0,0,0,.85),
+    -5px -5px 14px rgba(255,255,255,.04),
+    inset 4px 4px 14px rgba(0,0,0,.75),
+    inset -4px -4px 10px rgba(255,255,255,.04) !important;
 }
