@@ -31,16 +31,14 @@
   <script defer src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
   <title>Panel Admin · Exigent</title>
   <style>
-    /* ===== Admin Panel styles ===== */
     body.admin-page { background: var(--bg); }
 
     .admin-shell {
       max-width: 1200px;
       margin: 0 auto;
-      padding: calc(60px + env(safe-area-inset-top, 0px)) 0 40px;
+      padding: calc(60px + env(safe-area-inset-top, 0px)) 0 140px;
     }
 
-    /* Tab nav horizontal scroll */
     .admin-tabs {
       position: sticky;
       top: calc(60px + env(safe-area-inset-top, 0px));
@@ -77,11 +75,43 @@
     [data-theme="dark"] .admin-tab.active { background: #1E3A5F; color: #60A5FA; }
     .admin-tab .lucide { width: 16px; height: 16px; }
 
-    .admin-content {
-      padding: 16px 16px 0;
+    .admin-content { padding: 16px 16px 0; }
+
+    /* ===== Floating search bar ===== */
+    .admin-search-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+      z-index: 15;
+      padding: 12px 16px 14px;
+      background: linear-gradient(to top, var(--bg) 70%, rgba(0,0,0,0));
+      pointer-events: none;
+      display: none;
+    }
+    .admin-search-bar.active { display: block; }
+    .admin-search-bar .admin-search {
+      margin: 0 auto;
+      max-width: 1168px;
+      pointer-events: auto;
+    }
+    .admin-search-bar .admin-search input {
+      box-shadow: 0 10px 28px -10px rgba(15,23,42,.28), 0 2px 6px -2px rgba(15,23,42,.1);
+    }
+    [data-theme="dark"] .admin-search-bar .admin-search input {
+      box-shadow: 0 10px 28px -10px rgba(0,0,0,.6), 0 2px 6px -2px rgba(0,0,0,.4);
+    }
+    @media (min-width: 1024px) {
+      .admin-search-bar {
+        bottom: 16px;
+        left: 240px;
+      }
+      .admin-search-bar .admin-search {
+        max-width: 1168px;
+      }
     }
 
-    /* Search bar */
+    /* Search input */
     .admin-search {
       position: relative;
       margin-bottom: 12px;
@@ -112,7 +142,6 @@
       box-shadow: 0 0 0 3px rgba(37,99,235,.15);
     }
 
-    /* Filter chips */
     .admin-filters {
       display: flex;
       flex-wrap: wrap;
@@ -133,7 +162,6 @@
     .admin-chip:hover { background: var(--bg); }
     .admin-chip.active { background: var(--blue); border-color: var(--blue); color: #fff; }
 
-    /* Stat cards grid */
     .admin-stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -167,7 +195,6 @@
       margin: 4px 0 0;
     }
 
-    /* Item card */
     .admin-item {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -210,7 +237,6 @@
       margin-top: 12px;
     }
 
-    /* Badge status */
     .admin-badge {
       display: inline-flex;
       align-items: center;
@@ -229,7 +255,25 @@
     [data-theme="dark"] .admin-badge.in_progress { background: #312E81; color: #C7D2FE; }
     [data-theme="dark"] .admin-badge.resolved    { background: #14532D; color: #86EFAC; }
 
-    /* Small buttons */
+    /* Compact provider badge — sama warna, lebih ringkas */
+    .admin-provider-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: .6875rem;
+      font-weight: 700;
+      background: #F1F5F9;
+      color: var(--muted);
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+    [data-theme="dark"] .admin-provider-badge {
+      background: #334155;
+      color: #94A3B8;
+    }
+
     .admin-btn {
       display: inline-flex;
       align-items: center;
@@ -252,7 +296,6 @@
     [data-theme="dark"] .admin-btn.danger:hover { background: #450A0A; }
     .admin-btn .lucide { width: 14px; height: 14px; }
 
-    /* Product grid */
     .admin-products {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -275,11 +318,7 @@
       justify-content: center;
       overflow: hidden;
     }
-    .admin-product-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    .admin-product-img img { width: 100%; height: 100%; object-fit: cover; }
     .admin-product-body {
       padding: 12px;
       flex: 1;
@@ -297,17 +336,13 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
     }
-    .admin-product-meta {
-      font-size: .75rem;
-      color: var(--muted);
-    }
+    .admin-product-meta { font-size: .75rem; color: var(--muted); }
     .admin-product-price {
       font-weight: 800;
       color: var(--green);
       font-size: .9375rem;
     }
 
-    /* Empty state */
     .admin-empty {
       text-align: center;
       padding: 40px 20px;
@@ -315,7 +350,6 @@
       font-size: .9375rem;
     }
 
-    /* Modal */
     .admin-modal-bg {
       position: fixed;
       inset: 0;
@@ -356,7 +390,6 @@
       margin-top: 16px;
     }
 
-    /* Photo preview in admin */
     .admin-shot-grid {
       display: flex;
       flex-wrap: wrap;
@@ -378,7 +411,6 @@
       display: block;
     }
 
-    /* Custom audio player (mini) */
     .admin-audio {
       display: flex;
       align-items: center;
@@ -430,7 +462,6 @@
       text-align: right;
     }
 
-    /* Admin note input */
     .admin-note {
       display: flex;
       flex-direction: column;
@@ -454,7 +485,6 @@
       box-shadow: 0 0 0 3px rgba(37,99,235,.15);
     }
 
-    /* Foto produk di form */
     .admin-photo-box {
       display: flex;
       flex-direction: column;
@@ -469,26 +499,10 @@
       border: 1px solid var(--border);
     }
 
-    /* Table-ish row */
-    .admin-row {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      padding: 12px 0;
-      border-top: 1px solid var(--border);
-    }
-    .admin-row:first-child { border-top: 0; }
-
-    /* On desktop */
     @media (min-width: 1024px) {
-      .admin-tabs {
-        top: 0;
-        position: sticky;
-      }
-      .admin-shell { padding: 0 0 40px; }
+      .admin-shell { padding: 0 0 100px; }
     }
 
-    /* Loader */
     .admin-loading {
       text-align: center;
       padding: 40px 20px;
@@ -496,7 +510,6 @@
       font-size: .9375rem;
     }
 
-    /* Toast for admin */
     .admin-toast {
       position: fixed;
       left: 50%;
@@ -557,6 +570,14 @@
 
     <div class="admin-content" id="admin-content">
       <div class="admin-loading">Memuat...</div>
+    </div>
+  </div>
+
+  <!-- Floating search bar -->
+  <div class="admin-search-bar" id="admin-search-bar">
+    <div class="admin-search">
+      <i data-lucide="search" aria-hidden="true"></i>
+      <input type="search" id="admin-search-input" placeholder="">
     </div>
   </div>
 
