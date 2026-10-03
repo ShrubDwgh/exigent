@@ -166,6 +166,8 @@ function setActiveTab(tab) {
   document.querySelectorAll('.admin-tab').forEach((b) => {
     b.classList.toggle('active', b.dataset.tab === tab);
   });
+  // Reset scroll ke atas saat ganti tab
+  window.scrollTo(0, 0);
   renderCurrentTab();
 }
 
@@ -998,4 +1000,44 @@ async function sendNotif(targetMode) {
   me = user;
   icons();
   setActiveTab('dashboard');
+})();
+
+/* ============================================================
+   SCROLL BEHAVIOR: sembunyikan appbar saat scroll ke bawah,
+   tampilkan lagi saat scroll ke atas. Tab nav ikut naik.
+   ============================================================ */
+(function () {
+  const appbar = document.getElementById('admin-appbar');
+  const tabs = document.getElementById('admin-tabs');
+  if (!appbar || !tabs) return;
+
+  let lastY = window.scrollY;
+  let ticking = false;
+  const THRESHOLD_TOP = 40;
+  const THRESHOLD_DELTA = 6;
+
+  function update() {
+    const y = window.scrollY;
+
+    if (y < THRESHOLD_TOP) {
+      appbar.classList.remove('appbar-hidden');
+      tabs.classList.remove('appbar-hidden');
+    } else if (y > lastY + THRESHOLD_DELTA) {
+      appbar.classList.add('appbar-hidden');
+      tabs.classList.add('appbar-hidden');
+    } else if (y < lastY - THRESHOLD_DELTA) {
+      appbar.classList.remove('appbar-hidden');
+      tabs.classList.remove('appbar-hidden');
+    }
+
+    lastY = y;
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(update);
+      ticking = true;
+    }
+  }, { passive: true });
 })();
