@@ -320,27 +320,57 @@ async function renderFeedback() {
   drawFeedback();
 }
 
-function chipHtml(group, value, label) {
+/* Hitung jumlah untuk tiap kategori — dasar hitungan ikut filter search */
+function getFbCounts() {
+  const base = cache.feedback.filter((f) => {
+    if (!fbFilters.search) return true;
+    const q = fbFilters.search.toLowerCase();
+    return (f.message || '').toLowerCase().includes(q)
+        || (f.device_info || '').toLowerCase().includes(q)
+        || (f.user_id || '').toLowerCase().includes(q);
+  });
+  return {
+    all: base.length,
+    status: {
+      all: base.length,
+      new: base.filter((f) => f.status === 'new').length,
+      read: base.filter((f) => f.status === 'read').length,
+      in_progress: base.filter((f) => f.status === 'in_progress').length,
+      resolved: base.filter((f) => f.status === 'resolved').length,
+    },
+    type: {
+      all: base.length,
+      idea: base.filter((f) => f.type === 'idea').length,
+      bug: base.filter((f) => f.type === 'bug').length,
+    },
+  };
+}
+
+function chipHtml(group, value, label, count) {
   const active = group === 'status' ? fbFilters.status === value : fbFilters.type === value;
-  return `<button type="button" class="admin-chip${active ? ' active' : ''}" data-group="${group}" data-value="${value}">${esc(label)}</button>`;
+  const badge = (count !== undefined && count !== null)
+    ? `<span class="admin-chip-badge">${count}</span>`
+    : '';
+  return `<button type="button" class="admin-chip${active ? ' active' : ''}" data-group="${group}" data-value="${value}">${esc(label)}${badge}</button>`;
 }
 
 function drawFeedback() {
   const content = $('admin-content');
   const list = filterFeedback();
+  const counts = getFbCounts();
 
   content.innerHTML = `
     <div class="admin-filters" id="fb-status-filters">
-      ${chipHtml('status', 'all', 'Semua status')}
-      ${chipHtml('status', 'new', 'Baru')}
-      ${chipHtml('status', 'read', 'Dibaca')}
-      ${chipHtml('status', 'in_progress', 'Diproses')}
-      ${chipHtml('status', 'resolved', 'Selesai')}
+      ${chipHtml('status', 'all', 'Semua status', counts.status.all)}
+      ${chipHtml('status', 'new', 'Baru', counts.status.new)}
+      ${chipHtml('status', 'read', 'Dibaca', counts.status.read)}
+      ${chipHtml('status', 'in_progress', 'Diproses', counts.status.in_progress)}
+      ${chipHtml('status', 'resolved', 'Selesai', counts.status.resolved)}
     </div>
     <div class="admin-filters" id="fb-type-filters">
-      ${chipHtml('type', 'all', 'Semua tipe')}
-      ${chipHtml('type', 'idea', 'Ide & Saran')}
-      ${chipHtml('type', 'bug', 'Lapor Masalah')}
+      ${chipHtml('type', 'all', 'Semua tipe', counts.type.all)}
+      ${chipHtml('type', 'idea', 'Ide & Saran', counts.type.idea)}
+      ${chipHtml('type', 'bug', 'Lapor Masalah', counts.type.bug)}
     </div>
     <p class="muted small" style="margin:0 0 12px">${list.length} masukan</p>
     <div id="fb-list"></div>
@@ -503,9 +533,27 @@ async function renderProducts() {
   drawProducts();
 }
 
-function prodCatChip(value, label) {
+function getProdCounts() {
+  const base = cache.products.filter((p) => {
+    if (!prodFilters.search) return true;
+    const q = prodFilters.search.toLowerCase();
+    return (p.name || '').toLowerCase().includes(q)
+        || (p.code || '').toLowerCase().includes(q)
+        || (p.description || '').toLowerCase().includes(q);
+  });
+  return {
+    all: base.length,
+    nfc: base.filter((p) => p.category === 'nfc').length,
+    template: base.filter((p) => p.category === 'template').length,
+  };
+}
+
+function prodCatChip(value, label, count) {
   const active = prodFilters.category === value;
-  return `<button type="button" class="admin-chip${active ? ' active' : ''}" data-value="${value}">${esc(label)}</button>`;
+  const badge = (count !== undefined && count !== null)
+    ? `<span class="admin-chip-badge">${count}</span>`
+    : '';
+  return `<button type="button" class="admin-chip${active ? ' active' : ''}" data-value="${value}">${esc(label)}${badge}</button>`;
 }
 
 function drawProducts() {
@@ -520,12 +568,13 @@ function drawProducts() {
     }
     return true;
   });
+  const counts = getProdCounts();
 
   content.innerHTML = `
     <div class="admin-filters" id="prod-cat-filters">
-      ${prodCatChip('all', 'Semua')}
-      ${prodCatChip('nfc', 'NFC')}
-      ${prodCatChip('template', 'Template')}
+      ${prodCatChip('all', 'Semua', counts.all)}
+      ${prodCatChip('nfc', 'NFC', counts.nfc)}
+      ${prodCatChip('template', 'Template', counts.template)}
     </div>
     <p class="muted small" style="margin:0 0 12px">${list.length} produk</p>
     <div class="admin-products" id="prod-list"></div>
@@ -1115,8 +1164,6 @@ async function sendNotif(targetMode) {
       if (Math.abs(kbHeight - lastKbHeight) < DELTA_MIN) return;
       lastKbHeight = kbHeight;
 
-      // Debounce: set transform SEKALI setelah keyboard stabil,
-      // biar CSS transition yang handle animasi smooth-nya
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => applyTransform(kbHeight), 80);
     });
@@ -1125,7 +1172,6 @@ async function sendNotif(targetMode) {
   vv.addEventListener('resize', update);
   vv.addEventListener('scroll', update);
 
-  // Fallback reset saat input blur
   const input = document.getElementById('admin-search-input');
   if (input) {
     input.addEventListener('blur', () => {
