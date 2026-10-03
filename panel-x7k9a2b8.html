@@ -93,7 +93,6 @@
 
     .admin-content { padding: 16px 16px 0; }
 
-    /* ===== Search bar (CUMAN input) ===== */
     .admin-search-bar {
       position: fixed;
       left: 0;
@@ -134,7 +133,6 @@
       .admin-search-bar { bottom: 16px; left: 240px; right: 0; }
     }
 
-    /* ===== FAB tambah (fixed sendiri, di atas search bar) ===== */
     .admin-fab-add {
       position: fixed;
       right: 16px;
@@ -262,14 +260,35 @@
       color: var(--muted);
       margin: 2px 0 0;
     }
+
+    /* =====================================================
+       Pesan feedback — sekarang jadi card tenggelam-timbul
+       ===================================================== */
     .admin-item-msg {
-      margin: 10px 0;
+      margin: 12px 0;
+      padding: 14px 16px;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       color: var(--text);
       font-size: .9375rem;
-      line-height: 1.5;
+      line-height: 1.55;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow:
+        0 2px 4px rgba(15,23,42,.06),
+        0 6px 14px -4px rgba(15,23,42,.12),
+        inset 0 3px 8px rgba(15,23,42,.1),
+        inset 0 -2px 4px rgba(255,255,255,.7);
     }
+    [data-theme="dark"] .admin-item-msg {
+      box-shadow:
+        0 2px 4px rgba(0,0,0,.35),
+        0 6px 14px -4px rgba(0,0,0,.5),
+        inset 0 3px 10px rgba(0,0,0,.55),
+        inset 0 -2px 4px rgba(255,255,255,.05);
+    }
+
     .admin-item-actions {
       display: flex;
       flex-wrap: wrap;
@@ -524,22 +543,51 @@
       text-align: right;
     }
 
+    /* =====================================================
+       Catatan internal — textarea timbul-tenggelam
+       ===================================================== */
     .admin-note { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
     .admin-note textarea {
       width: 100%;
       min-height: 60px;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       background: var(--bg);
       color: var(--text);
       font: 400 .875rem var(--font);
       resize: vertical;
+      box-shadow:
+        0 2px 4px rgba(15,23,42,.06),
+        0 6px 14px -4px rgba(15,23,42,.12),
+        inset 0 3px 8px rgba(15,23,42,.1),
+        inset 0 -2px 4px rgba(255,255,255,.7);
+      transition: box-shadow .2s ease, border-color .2s ease;
+    }
+    [data-theme="dark"] .admin-note textarea {
+      box-shadow:
+        0 2px 4px rgba(0,0,0,.35),
+        0 6px 14px -4px rgba(0,0,0,.5),
+        inset 0 3px 10px rgba(0,0,0,.55),
+        inset 0 -2px 4px rgba(255,255,255,.05);
     }
     .admin-note textarea:focus {
       outline: 0;
       border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+      box-shadow:
+        0 2px 4px rgba(37,99,235,.15),
+        0 6px 14px -4px rgba(37,99,235,.25),
+        inset 0 3px 8px rgba(15,23,42,.08),
+        inset 0 -2px 4px rgba(255,255,255,.7),
+        0 0 0 3px rgba(37,99,235,.15);
+    }
+    [data-theme="dark"] .admin-note textarea:focus {
+      box-shadow:
+        0 2px 4px rgba(37,99,235,.2),
+        0 6px 14px -4px rgba(37,99,235,.3),
+        inset 0 3px 10px rgba(0,0,0,.5),
+        inset 0 -2px 4px rgba(255,255,255,.05),
+        0 0 0 3px rgba(37,99,235,.25);
     }
 
     .admin-photo-box { display: flex; flex-direction: column; gap: 8px; }
