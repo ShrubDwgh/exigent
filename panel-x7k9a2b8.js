@@ -1083,47 +1083,57 @@ async function sendNotif(targetMode) {
 
 /* ============================================================
    KEYBOARD BEHAVIOR: search bar ikut naik saat keyboard muncul.
-   Pakai visualViewport API. FAB & elemen lain tetap.
+   Debounce + threshold biar smooth (nggak kaku/jump).
    ============================================================ */
 (function () {
   const searchBar = document.getElementById('admin-search-bar');
   if (!searchBar) return;
-  if (!window.visualViewport) return; // browser lama, skip
+  if (!window.visualViewport) return;
 
   const vv = window.visualViewport;
   let rafId = null;
+  let debounceTimer = null;
   let lastKbHeight = 0;
+  const KB_MIN = 100;
+  const DELTA_MIN = 8;
+
+  function applyTransform(kbHeight) {
+    if (kbHeight > KB_MIN) {
+      searchBar.style.transform = `translateY(-${kbHeight}px)`;
+    } else {
+      searchBar.style.transform = '';
+    }
+  }
 
   function update() {
     if (rafId) cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(() => {
       const windowH = window.innerHeight;
       const visibleBottom = vv.height + vv.offsetTop;
-      const keyboardHeight = Math.max(0, windowH - visibleBottom);
+      const kbHeight = Math.max(0, windowH - visibleBottom);
 
-      // Biar nggak "getar" — cuma update kalau selisih cukup besar (>2px)
-      if (Math.abs(keyboardHeight - lastKbHeight) < 2) return;
-      lastKbHeight = keyboardHeight;
+      if (Math.abs(kbHeight - lastKbHeight) < DELTA_MIN) return;
+      lastKbHeight = kbHeight;
 
-      if (keyboardHeight > 100) {
-        searchBar.style.transform = `translateY(-${keyboardHeight}px)`;
-      } else {
-        searchBar.style.transform = '';
-      }
+      // Debounce: set transform SEKALI setelah keyboard stabil,
+      // biar CSS transition yang handle animasi smooth-nya
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => applyTransform(kbHeight), 80);
     });
   }
 
   vv.addEventListener('resize', update);
   vv.addEventListener('scroll', update);
 
-  // Fallback reset saat input blur (kadang vv.height nggak update tepat waktu)
+  // Fallback reset saat input blur
   const input = document.getElementById('admin-search-input');
   if (input) {
     input.addEventListener('blur', () => {
       setTimeout(() => {
         lastKbHeight = 0;
+        clearTimeout(debounceTimer);
         searchBar.style.transform = '';
-      }, 100);
+      }, 120);
     });
   }
 })();
