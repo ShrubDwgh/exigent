@@ -45,7 +45,6 @@ function setupSearch(placeholder, value, onInput, opts = {}) {
   input.placeholder = placeholder;
   if (input.value !== value) input.value = value || '';
 
-  // Tombol FAB tambah — hanya kalau opts.showAdd
   if (opts.showAdd) {
     addBtn.hidden = false;
     addBtn.onclick = opts.onAdd || null;
@@ -70,6 +69,14 @@ function hideSearch() {
   input.value = '';
 }
 
+/* ============================================================
+   MODAL — dengan dukungan back button HP
+   Saat modal dibuka, kita pushState supaya back HP nutup modal.
+   Saat modal ditutup manual, kita popState untuk bersihkan history.
+   ============================================================ */
+let activeModal = null;
+let modalHistoryActive = false;
+
 function openModal(innerHtml, onMount) {
   const wrap = document.createElement('div');
   wrap.className = 'admin-modal-bg';
@@ -78,11 +85,37 @@ function openModal(innerHtml, onMount) {
   wrap.addEventListener('click', (e) => { if (e.target === wrap) closeModal(wrap); });
   icons();
   if (onMount) onMount(wrap);
+  activeModal = wrap;
+
+  // Push history entry — biar back HP nutup modal, bukan keluar halaman
+  try {
+    history.pushState({ adminModal: true }, '');
+    modalHistoryActive = true;
+  } catch (_) {}
+
   return wrap;
 }
-function closeModal(wrap) {
-  if (wrap && wrap.parentNode) wrap.remove();
+
+function closeModal(wrap, opts = {}) {
+  if (!wrap || !wrap.parentNode) return;
+  wrap.remove();
+  if (activeModal === wrap) activeModal = null;
+
+  // Kalau ditutup bukan karena popstate (misal klik Batal), kita pop history entry
+  if (modalHistoryActive && !opts.fromPopstate) {
+    modalHistoryActive = false;
+    try { history.back(); } catch (_) {}
+  } else if (opts.fromPopstate) {
+    modalHistoryActive = false;
+  }
 }
+
+// Listener popstate — kalau ada modal aktif, tutup modalnya
+window.addEventListener('popstate', () => {
+  if (activeModal) {
+    closeModal(activeModal, { fromPopstate: true });
+  }
+});
 
 async function loadAudioBufferFor(url) {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
