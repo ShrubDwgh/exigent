@@ -1000,7 +1000,6 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
 
 /* ============================================
    EFFECT: TOMBOL TIMBUL & CARD NEUMORPHISM
-   (versi neumorphism klasik — lebih tegas)
    ============================================ */
 
 /* ---- TOMBOL: TIMBUL ---- */
@@ -1066,6 +1065,51 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
     inset -4px -4px 10px rgba(255,255,255,1) !important;
 }
 
+/* ---- SEARCH BAR: NEUMORPHISM ---- */
+.admin-search input,
+.admin-search-bar .admin-search input,
+#search-input {
+  box-shadow:
+    4px 4px 10px rgba(163,177,198,.5),
+    -3px -3px 8px rgba(255,255,255,1),
+    inset 3px 3px 8px rgba(163,177,198,.4),
+    inset -2px -2px 6px rgba(255,255,255,1) !important;
+  border-color: rgba(163,177,198,.35) !important;
+  transition: box-shadow .2s ease, border-color .2s ease !important;
+}
+.admin-search input:focus,
+.admin-search-bar .admin-search input:focus,
+#search-input:focus {
+  border-color: var(--blue) !important;
+  box-shadow:
+    4px 4px 10px rgba(37,99,235,.25),
+    -3px -3px 8px rgba(255,255,255,1),
+    inset 3px 3px 8px rgba(163,177,198,.35),
+    inset -2px -2px 6px rgba(255,255,255,1),
+    0 0 0 3px rgba(37,99,235,.15) !important;
+}
+
+/* ---- FORM INPUT: NEUMORPHISM ---- */
+.input:not([type="file"]),
+textarea.input {
+  box-shadow:
+    4px 4px 10px rgba(163,177,198,.45),
+    -3px -3px 8px rgba(255,255,255,1),
+    inset 3px 3px 8px rgba(163,177,198,.3),
+    inset -2px -2px 6px rgba(255,255,255,1) !important;
+  border-color: rgba(163,177,198,.3) !important;
+}
+.input:not([type="file"]):focus,
+textarea.input:focus {
+  border-color: var(--blue) !important;
+  box-shadow:
+    4px 4px 10px rgba(37,99,235,.2),
+    -3px -3px 8px rgba(255,255,255,1),
+    inset 3px 3px 8px rgba(163,177,198,.3),
+    inset -2px -2px 6px rgba(255,255,255,1),
+    0 0 0 3px rgba(37,99,235,.15) !important;
+}
+
 /* ---- DARK MODE OVERRIDES ---- */
 [data-theme="dark"] .btn,
 [data-theme="dark"] .btn-secondary,
@@ -1123,4 +1167,48 @@ a img, button img, .lucide { pointer-events: none; -webkit-user-drag: none; }
     -5px -5px 14px rgba(255,255,255,.04),
     inset 4px 4px 14px rgba(0,0,0,.75),
     inset -4px -4px 10px rgba(255,255,255,.04) !important;
+}
+
+[data-theme="dark"] .admin-search input,
+[data-theme="dark"] .admin-search-bar .admin-search input,
+[data-theme="dark"] #search-input {
+  background: #1E293B !important;
+  border-color: rgba(0,0,0,.5) !important;
+  box-shadow:
+    4px 4px 10px rgba(0,0,0,.7),
+    -3px -3px 8px rgba(255,255,255,.05),
+    inset 3px 3px 10px rgba(0,0,0,.65),
+    inset -2px -2px 6px rgba(255,255,255,.04) !important;
+}
+[data-theme="dark"] .admin-search input:focus,
+[data-theme="dark"] .admin-search-bar .admin-search input:focus,
+[data-theme="dark"] #search-input:focus {
+  border-color: var(--blue) !important;
+  box-shadow:
+    4px 4px 10px rgba(59,130,246,.35),
+    -3px -3px 8px rgba(255,255,255,.05),
+    inset 3px 3px 10px rgba(0,0,0,.6),
+    inset -2px -2px 6px rgba(255,255,255,.04),
+    0 0 0 3px rgba(59,130,246,.25) !important;
+}
+
+[data-theme="dark"] .input:not([type="file"]),
+[data-theme="dark"] textarea.input {
+  background: #0F172A !important;
+  border-color: rgba(0,0,0,.5) !important;
+  box-shadow:
+    4px 4px 10px rgba(0,0,0,.7),
+    -3px -3px 8px rgba(255,255,255,.04),
+    inset 3px 3px 10px rgba(0,0,0,.65),
+    inset -2px -2px 6px rgba(255,255,255,.04) !important;
+}
+[data-theme="dark"] .input:not([type="file"]):focus,
+[data-theme="dark"] textarea.input:focus {
+  border-color: var(--blue) !important;
+  box-shadow:
+    4px 4px 10px rgba(59,130,246,.3),
+    -3px -3px 8px rgba(255,255,255,.04),
+    inset 3px 3px 10px rgba(0,0,0,.6),
+    inset -2px -2px 6px rgba(255,255,255,.04),
+    0 0 0 3px rgba(59,130,246,.25) !important;
 }
