@@ -37,7 +37,7 @@
     .admin-shell {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 0 40px;
+      padding: calc(60px + env(safe-area-inset-top, 0px)) 0 40px;
     }
 
     /* Tab nav horizontal scroll */
@@ -479,7 +479,7 @@
     }
     .admin-row:first-child { border-top: 0; }
 
-    /* On desktop, hide bottom nav override */
+    /* On desktop */
     @media (min-width: 1024px) {
       .admin-tabs {
         top: 0;
