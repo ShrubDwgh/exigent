@@ -679,13 +679,11 @@ async function renderUsers() {
   const content = $('admin-content');
   content.innerHTML = `<div class="admin-loading">Memuat user...</div>`;
 
-  // Panggil RPC admin_list_users — dia join auth.users + cards + emergency_profiles
   const { data, error } = await supabase.rpc('admin_list_users');
 
   if (error) {
     content.innerHTML = `<div class="admin-empty">Gagal memuat: ${esc(error.message)}<br><br>
-      Pastikan RPC <code>admin_list_users</code> sudah dibuat di Supabase.<br>
-      Lihat panduan SQL di pesan.</div>`;
+      Pastikan RPC <code>admin_list_users</code> sudah dibuat di Supabase.</div>`;
     return;
   }
 
@@ -754,6 +752,15 @@ function userRowHtml(u) {
 
   const cardCode = u.card_code || '(belum punya kartu)';
 
+  // Provider label
+  const p = (u.provider || '').toLowerCase();
+  const providerLabel = p === 'google' ? 'Google'
+                      : p === 'email' ? 'Email'
+                      : p ? p.charAt(0).toUpperCase() + p.slice(1)
+                      : 'Tidak diketahui';
+  const providerIcon = p === 'google' ? 'chrome' : 'mail';
+  const providerColor = p === 'google' ? '#2563EB' : '#64748B';
+
   return `<div class="admin-item">
     <div class="admin-item-head">
       <div style="display:flex;gap:12px;align-items:center;min-width:0;flex:1">
@@ -762,9 +769,15 @@ function userRowHtml(u) {
           <p class="admin-item-title" style="word-break:break-word">${esc(displayName)}</p>
           <p class="admin-item-sub" style="font-family:monospace;word-break:break-all">${esc(u.email || '-')}</p>
           <p class="admin-item-sub" style="font-family:monospace">${esc(cardCode)}</p>
+          <p class="admin-item-sub" style="font-family:monospace;font-size:.7rem;word-break:break-all;color:var(--muted)">${esc(u.user_id || '-')}</p>
         </div>
       </div>
-      <span class="admin-badge ${u.card_active ? 'resolved' : 'read'}">${u.card_active ? 'Aktif' : 'Nonaktif'}</span>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+        <span class="admin-badge ${u.card_active ? 'resolved' : 'read'}">${u.card_active ? 'Aktif' : 'Nonaktif'}</span>
+        <span class="admin-badge" style="background:#F1F5F9;color:${providerColor};display:inline-flex;align-items:center;gap:4px">
+          <i data-lucide="${providerIcon}" style="width:12px;height:12px"></i>${esc(providerLabel)}
+        </span>
+      </div>
     </div>
     <div style="font-size:.75rem;color:var(--muted);margin-top:10px;display:flex;flex-direction:column;gap:2px">
       <span>Daftar: ${esc(fmtDate(u.account_created))}</span>
